@@ -23,6 +23,8 @@ test("server-renders the Berlin Trace product shell", async () => {
   assert.match(html, /从手绘轨迹推测乘车路线/);
   assert.match(html, /绘制路线/);
   assert.match(html, /平移地图/);
+  assert.match(html, /type="datetime-local"/);
+  assert.match(html, /VBB 实时行程接口已启用|VBB/);
   assert.doesNotMatch(html, /Starter Project|Building your site|react-loading-skeleton/);
 });
 

@@ -16,6 +16,12 @@ import {
   type TransitMode,
   type TransitNetwork,
 } from "./transit";
+import {
+  fetchVbbJourneys,
+  formatDateTimeLocal,
+  type LiveJourneyCandidate,
+  type ModeFilter,
+} from "./vbb";
 
 const BERLIN_CENTER: [number, number] = [52.52, 13.405];
 const DRAW_COLOR = "#F05A28";
@@ -27,8 +33,6 @@ const MODE_ORDER: TransitMode[] = [
   "rail",
   "ferry",
 ];
-
-type ModeFilter = Record<TransitMode, boolean>;
 
 const INITIAL_MODES: ModeFilter = {
   subway: true,
@@ -43,6 +47,34 @@ function confidenceLabel(confidence: number) {
   if (confidence >= 0.78) return "较高";
   if (confidence >= 0.55) return "中等";
   return "较低";
+}
+
+function formatTime(value: string) {
+  if (!value) return "—";
+  return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Europe/Berlin",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  }).format(new Date(value));
+}
+
+function formatDate(value: string) {
+  if (!value) return "";
+  return new Intl.DateTimeFormat("zh-CN", {
+    timeZone: "Europe/Berlin",
+    month: "numeric",
+    day: "numeric",
+    weekday: "short",
+  }).format(new Date(value));
+}
+
+function journeyLineSummary(journey: LiveJourneyCandidate) {
+  return journey.legs
+    .filter((leg) => !leg.walking)
+    .map((leg) => leg.lineRef)
+    .filter((line, index, all) => line && line !== all[index - 1])
+    .join(" → ");
 }
 
 export default function TransitMap() {
@@ -66,10 +98,15 @@ export default function TransitMap() {
   const [drawing, setDrawing] = useState(true);
   const [drawnPath, setDrawnPath] = useState<LL[] | null>(null);
   const [journey, setJourney] = useState<JourneyMatch | null>(null);
+  const [liveJourneys, setLiveJourneys] = useState<LiveJourneyCandidate[]>([]);
+  const [selectedJourneyIndex, setSelectedJourneyIndex] = useState(0);
+  const [departure, setDeparture] = useState(() => formatDateTimeLocal(new Date()));
+  const [journeyNotice, setJourneyNotice] = useState<string | null>(null);
   const [analyzing, setAnalyzing] = useState(false);
   const [hovered, setHovered] = useState<string | null>(null);
   const [modes, setModes] = useState<ModeFilter>(INITIAL_MODES);
   const [error, setError] = useState<string | null>(null);
+  const liveJourney = liveJourneys[selectedJourneyIndex] ?? null;
 
   useEffect(() => {
     let cancelled = false;
@@ -306,30 +343,51 @@ export default function TransitMap() {
   const commitPath = useCallback((path: LL[]) => {
     setDrawnPath(path);
     setJourney(null);
+    setLiveJourneys([]);
+    setSelectedJourneyIndex(0);
+    setJourneyNotice(null);
   }, []);
 
   useEffect(() => {
     commitPathRef.current = commitPath;
   }, [commitPath]);
 
-  // This effect also fixes the loading race: an existing drawing is evaluated
-  // as soon as the network arrives, and again whenever filters change.
+  // Ask VBB for journeys that were actually possible at the selected time,
+  // then use the drawing only to rank those schedule-valid alternatives.
   useEffect(() => {
     if (!drawnPath || !network) return;
-    let frame = 0;
-    const timeout = window.setTimeout(() => {
+    const controller = new AbortController();
+    const timeout = window.setTimeout(async () => {
       setAnalyzing(true);
-      frame = window.requestAnimationFrame(() => {
+      setJourneyNotice(null);
+      setJourney(null);
+      setLiveJourneys([]);
+      try {
+        const candidates = await fetchVbbJourneys({
+          drawn: drawnPath,
+          departure,
+          modes,
+          lines: network.lines,
+          signal: controller.signal,
+        });
+        if (controller.signal.aborted) return;
+        setLiveJourneys(candidates);
+        setSelectedJourneyIndex(0);
+      } catch (reason) {
+        if (controller.signal.aborted) return;
         const enabledLines = network.lines.filter((line) => modes[line.mode]);
         setJourney(inferJourney(drawnPath, enabledLines));
-        setAnalyzing(false);
-      });
+        const message = reason instanceof Error ? reason.message : "VBB 查询失败";
+        setJourneyNotice(`${message} 已切换为离线几何估算。`);
+      } finally {
+        if (!controller.signal.aborted) setAnalyzing(false);
+      }
     }, 0);
     return () => {
       window.clearTimeout(timeout);
-      window.cancelAnimationFrame(frame);
+      controller.abort();
     };
-  }, [drawnPath, modes, network]);
+  }, [departure, drawnPath, modes, network]);
 
   useEffect(() => {
     const L = LRef.current;
@@ -353,6 +411,61 @@ export default function TransitMap() {
     if (!L || !group) return;
     group.clearLayers();
     resultLayersRef.current.clear();
+    if (liveJourney) {
+      liveJourney.legs.forEach((leg, index) => {
+        if (leg.polyline.length < 2) return;
+        const layers = resultLayersRef.current.get(leg.id) ?? [];
+        if (!leg.walking) {
+          L.polyline(leg.polyline, {
+            color: "#FFFFFF",
+            weight: 10,
+            opacity: 0.8,
+            interactive: false,
+          }).addTo(group);
+        }
+        const layer = L.polyline(leg.polyline, {
+          color: leg.color,
+          weight: leg.walking ? 4 : 6,
+          opacity: leg.walking ? 0.72 : 0.98,
+          dashArray: leg.walking ? "4 7" : undefined,
+        })
+          .addTo(group)
+          .bindTooltip(
+            leg.walking
+              ? `步行 · ${leg.originName} → ${leg.destinationName}`
+              : `${leg.lineRef} 往 ${leg.direction ?? leg.destinationName} · ${formatTime(leg.departure)}–${formatTime(leg.arrival)}`,
+            { sticky: true }
+          );
+        layer.on("mouseover", () => setHovered(leg.id));
+        layer.on("mouseout", () => setHovered(null));
+        layers.push(layer);
+        resultLayersRef.current.set(leg.id, layers);
+
+        const start = leg.polyline[0];
+        if (index === 0 || (!leg.walking && liveJourney.legs[index - 1])) {
+          L.circleMarker(start, {
+            radius: index === 0 ? 6 : 5,
+            color: "#FFFFFF",
+            weight: 2,
+            fillColor: leg.color,
+            fillOpacity: 1,
+            interactive: false,
+          }).addTo(group);
+        }
+        if (index === liveJourney.legs.length - 1) {
+          L.circleMarker(leg.polyline[leg.polyline.length - 1], {
+            radius: 6,
+            color: "#FFFFFF",
+            weight: 2,
+            fillColor: leg.color,
+            fillOpacity: 1,
+            interactive: false,
+          }).addTo(group);
+        }
+      });
+      return;
+    }
+
     if (!journey) return;
 
     journey.alternatives.forEach((alternative) => {
@@ -411,7 +524,7 @@ export default function TransitMap() {
         }).addTo(group);
       }
     });
-  }, [journey]);
+  }, [journey, liveJourney]);
 
   useEffect(() => {
     resultLayersRef.current.forEach((layers, lineId) => {
@@ -426,6 +539,9 @@ export default function TransitMap() {
   const clearAll = useCallback(() => {
     setDrawnPath(null);
     setJourney(null);
+    setLiveJourneys([]);
+    setSelectedJourneyIndex(0);
+    setJourneyNotice(null);
     setAnalyzing(false);
     setHovered(null);
     drawnLayerRef.current?.remove();
@@ -463,7 +579,7 @@ export default function TransitMap() {
             </span>
           </div>
           <p className="mt-2 text-xs leading-5 text-stone-600 dark:text-stone-400">
-            沿着你走过的路径画一笔。系统会按顺序推测线路、上下车站和可能的换乘。
+            沿着你走过的路径画一笔。系统先查询当时真实可乘的 VBB 行程，再按轨迹相似度排序。
           </p>
           <p className="mt-1 text-[10px] leading-4 text-stone-400">
             键盘：平移至起点后，空格开始，方向键画线，再按空格完成。
@@ -514,12 +630,26 @@ export default function TransitMap() {
             ))}
           </div>
 
+          <label className="mt-3 block">
+            <span className="mb-1.5 flex items-center justify-between text-[10px] font-semibold text-stone-500">
+              <span>出发日期与时间</span>
+              <span className="font-normal text-stone-400">柏林当地时间</span>
+            </span>
+            <input
+              type="datetime-local"
+              value={departure}
+              onChange={(event) => setDeparture(event.target.value)}
+              className="w-full rounded-xl border border-stone-200 bg-white/70 px-3 py-2 text-xs text-stone-800 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:focus:ring-orange-950"
+              aria-label="历史行程的出发日期与时间"
+            />
+          </label>
+
           <div className="mt-3 flex items-center justify-between gap-3 border-t border-stone-200 pt-3 dark:border-stone-800">
             <p className="min-w-0 truncate text-[10px] text-stone-500" aria-live="polite">
               {error
                 ? error
                 : network
-                  ? `${network.lines.length} 条线路 · VBB ${network.sourceUpdatedAt}`
+                  ? `${network.lines.length} 条线路 · VBB 实时行程接口已启用`
                   : "正在加载 VBB 交通网络…"}
             </p>
             <button
@@ -544,20 +674,143 @@ export default function TransitMap() {
             {analyzing ? (
               <div className="flex items-center gap-3 py-2 text-sm text-stone-600 dark:text-stone-300">
                 <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-orange-500" />
-                正在组合可能的乘车路段…
+                正在查询 VBB 当时可乘方案并比对轨迹…
               </div>
+            ) : liveJourney ? (
+              <>
+                <div className="flex items-start justify-between gap-4">
+                  <div className="min-w-0">
+                    <div className="flex items-center gap-2">
+                      <p className="text-[10px] font-bold tracking-[0.14em] text-emerald-700 uppercase dark:text-emerald-400">
+                        VBB 可乘方案
+                      </p>
+                      <span className="rounded-full bg-emerald-50 px-1.5 py-0.5 text-[9px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
+                        时刻表验证
+                      </span>
+                    </div>
+                    <h2 className="mt-1 truncate text-base font-semibold">{journeyLineSummary(liveJourney)}</h2>
+                    <p className="mt-1 text-[10px] text-stone-400">
+                      {formatDate(liveJourney.departure)} · {formatTime(liveJourney.departure)}–{formatTime(liveJourney.arrival)}
+                    </p>
+                  </div>
+                  <div className="shrink-0 text-right">
+                    <div className="text-sm font-bold text-orange-600">
+                      {Math.round(liveJourney.similarity)}%
+                    </div>
+                    <div className="text-[10px] text-stone-400">轨迹相似度</div>
+                  </div>
+                </div>
+
+                {liveJourneys.length > 1 && (
+                  <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="真实行程候选">
+                    {liveJourneys.slice(0, 4).map((candidate, index) => (
+                      <button
+                        key={candidate.id}
+                        type="button"
+                        aria-pressed={selectedJourneyIndex === index}
+                        onClick={() => setSelectedJourneyIndex(index)}
+                        className={`shrink-0 rounded-xl border px-2.5 py-2 text-left transition ${
+                          selectedJourneyIndex === index
+                            ? "border-orange-500 bg-orange-50 dark:bg-orange-950/50"
+                            : "border-stone-200 bg-white/50 hover:border-stone-400 dark:border-stone-700 dark:bg-stone-900"
+                        }`}
+                      >
+                        <span className="block text-[10px] font-semibold">方案 {index + 1} · {Math.round(candidate.similarity)}%</span>
+                        <span className="mt-0.5 block max-w-32 truncate text-[9px] text-stone-400">
+                          {formatTime(candidate.departure)} · {journeyLineSummary(candidate)}
+                        </span>
+                      </button>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-3 grid grid-cols-3 divide-x divide-stone-200 rounded-xl bg-stone-100 px-1 py-2 text-center dark:divide-stone-700 dark:bg-stone-800">
+                  <div>
+                    <div className="text-xs font-semibold">{liveJourney.durationMinutes} 分钟</div>
+                    <div className="mt-0.5 text-[9px] text-stone-400">总耗时</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold">{liveJourney.transfers} 次</div>
+                    <div className="mt-0.5 text-[9px] text-stone-400">换乘</div>
+                  </div>
+                  <div>
+                    <div className="text-xs font-semibold">{Math.round(liveJourney.coverage * 100)}%</div>
+                    <div className="mt-0.5 text-[9px] text-stone-400">轨迹覆盖</div>
+                  </div>
+                </div>
+
+                {liveJourney.viaStopName && (
+                  <p className="mt-2 rounded-lg bg-sky-50 px-2.5 py-1.5 text-[10px] leading-4 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300">
+                    为贴合手绘弯折，候选经过 {liveJourney.viaStopName}。
+                  </p>
+                )}
+
+                <ol className="mt-4 space-y-1">
+                  {liveJourney.legs.map((leg) => (
+                    <li key={leg.id}>
+                      <button
+                        type="button"
+                        onMouseEnter={() => setHovered(leg.id)}
+                        onMouseLeave={() => setHovered(null)}
+                        onFocus={() => setHovered(leg.id)}
+                        onBlur={() => setHovered(null)}
+                        className={`flex w-full items-start gap-3 rounded-xl p-2 text-left transition ${
+                          hovered === leg.id
+                            ? "bg-stone-100 dark:bg-stone-800"
+                            : "hover:bg-stone-50 dark:hover:bg-stone-900"
+                        }`}
+                      >
+                        <span
+                          className="inline-flex h-8 min-w-10 items-center justify-center rounded-lg px-1.5 text-[11px] font-extrabold shadow-sm"
+                          style={{ backgroundColor: leg.color, color: leg.textColor }}
+                        >
+                          {leg.walking ? "步行" : leg.lineRef}
+                        </span>
+                        <span className="min-w-0 flex-1">
+                          <span className="flex items-center justify-between gap-2">
+                            <span className="text-xs font-semibold">
+                              {formatTime(leg.departure)} → {formatTime(leg.arrival)}
+                            </span>
+                            {typeof leg.delayMinutes === "number" && leg.delayMinutes !== 0 && (
+                              <span className={`text-[9px] font-semibold ${leg.delayMinutes > 0 ? "text-red-600" : "text-emerald-600"}`}>
+                                {leg.delayMinutes > 0 ? `晚 ${leg.delayMinutes}` : `早 ${Math.abs(leg.delayMinutes)}`} 分
+                              </span>
+                            )}
+                          </span>
+                          <span className="mt-1 block text-[11px] text-stone-500">
+                            {leg.originName} → {leg.destinationName}
+                          </span>
+                          {!leg.walking && leg.direction && (
+                            <span className="mt-0.5 block truncate text-[10px] text-stone-400">
+                              方向：{leg.direction}
+                            </span>
+                          )}
+                        </span>
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </>
             ) : !journey ? (
               <div>
                 <h2 className="text-sm font-semibold">暂未识别到连续的公共交通路段</h2>
                 <p className="mt-2 text-xs leading-5 text-stone-500">
                   轨迹可能太短、离线路较远，或当前交通方式已被关闭。请画得更长一些，或者重新打开筛选项。
                 </p>
+                {journeyNotice && (
+                  <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-2 text-[10px] leading-4 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                    {journeyNotice}
+                  </p>
+                )}
               </div>
             ) : (
               <>
                 <div className="flex items-start justify-between gap-4">
                   <div>
-                    <p className="text-[10px] font-bold tracking-[0.14em] text-stone-400 uppercase">推测行程</p>
+                    <div className="flex items-center gap-2">
+                      <p className="text-[10px] font-bold tracking-[0.14em] text-amber-700 uppercase dark:text-amber-400">离线估算</p>
+                      <span className="rounded-full bg-amber-50 px-1.5 py-0.5 text-[9px] font-semibold text-amber-700 dark:bg-amber-950 dark:text-amber-300">未验证时刻表</span>
+                    </div>
                     <h2 className="mt-1 text-base font-semibold">
                       {journey.segments.length === 1
                         ? `${journey.segments[0].line.ref} 直达`
@@ -577,6 +830,12 @@ export default function TransitMap() {
                 <div className="mt-3 rounded-xl bg-stone-100 px-3 py-2 text-[11px] text-stone-600 dark:bg-stone-800 dark:text-stone-300">
                   约 {journey.totalLengthKm.toFixed(1)} km · 已解释 {Math.round(journey.coverage * 100)}% 的手绘轨迹
                 </div>
+
+                {journeyNotice && (
+                  <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-2 text-[10px] leading-4 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                    {journeyNotice}
+                  </p>
+                )}
 
                 <ol className="mt-4 space-y-0">
                   {journey.segments.map((segment, index) => (
@@ -639,15 +898,17 @@ export default function TransitMap() {
             )}
 
             <p className="mt-4 border-t border-stone-200 pt-3 text-[10px] leading-4 text-stone-400 dark:border-stone-800">
-              结果仅依据轨迹与线路的空间接近度推测，不能证明实际乘坐。线路与站点数据：
+              {liveJourney
+                ? "结果来自 VBB 时刻表中的真实可乘方案，再按手绘轨迹排序；它仍不能证明你实际乘坐了该班次。数据："
+                : "离线结果仅依据轨迹与线路空间接近度估算，未验证班次、方向和换乘是否可行。数据："}
               {network ? (
                 <a
-                  href={network.sourceUrl}
+                  href={liveJourney ? "https://v6.vbb.transport.rest/" : network.sourceUrl}
                   target="_blank"
                   rel="noreferrer"
                   className="underline decoration-stone-300 underline-offset-2 hover:text-stone-600 dark:hover:text-stone-200"
                 >
-                  VBB GTFS（{network.license}）
+                  {liveJourney ? "VBB transport.rest" : `VBB GTFS（${network.license}）`}
                 </a>
               ) : (
                 "VBB GTFS"
