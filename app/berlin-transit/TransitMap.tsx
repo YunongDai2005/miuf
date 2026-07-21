@@ -17,10 +17,11 @@ import {
   type TransitNetwork,
 } from "./transit";
 import {
-  fetchVbbJourneys,
+  fetchVbbTraceJourneys,
   formatDateTimeLocal,
   type LiveJourneyCandidate,
   type ModeFilter,
+  VbbUnavailableError,
 } from "./vbb";
 
 const BERLIN_CENTER: [number, number] = [52.52, 13.405];
@@ -363,7 +364,7 @@ export default function TransitMap() {
       setJourney(null);
       setLiveJourneys([]);
       try {
-        const candidates = await fetchVbbJourneys({
+        const candidates = await fetchVbbTraceJourneys({
           drawn: drawnPath,
           departure,
           modes,
@@ -375,10 +376,15 @@ export default function TransitMap() {
         setSelectedJourneyIndex(0);
       } catch (reason) {
         if (controller.signal.aborted) return;
-        const enabledLines = network.lines.filter((line) => modes[line.mode]);
-        setJourney(inferJourney(drawnPath, enabledLines));
         const message = reason instanceof Error ? reason.message : "VBB 查询失败";
-        setJourneyNotice(`${message} 已切换为离线几何估算。`);
+        if (reason instanceof VbbUnavailableError) {
+          const enabledLines = network.lines.filter((line) => modes[line.mode]);
+          setJourney(inferJourney(drawnPath, enabledLines));
+          setJourneyNotice(`${message} 已切换为离线几何估算。`);
+        } else {
+          setJourney(null);
+          setJourneyNotice(message);
+        }
       } finally {
         if (!controller.signal.aborted) setAnalyzing(false);
       }
@@ -745,6 +751,12 @@ export default function TransitMap() {
                   </p>
                 )}
 
+                {liveJourney.checkpointCount > 0 && (
+                  <p className="mt-2 rounded-lg bg-sky-50 px-2.5 py-1.5 text-[10px] leading-4 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300">
+                    长轨迹已按 {liveJourney.checkpointCount} 个有序检查点逐段验证，后一段只会在前一段到达后出发。
+                  </p>
+                )}
+
                 <ol className="mt-4 space-y-1">
                   {liveJourney.legs.map((leg) => (
                     <li key={leg.id}>
@@ -793,12 +805,16 @@ export default function TransitMap() {
               </>
             ) : !journey ? (
               <div>
-                <h2 className="text-sm font-semibold">暂未识别到连续的公共交通路段</h2>
+                <h2 className="text-sm font-semibold">
+                  {journeyNotice ? "没有可信的真实可乘方案" : "暂未识别到连续的公共交通路段"}
+                </h2>
                 <p className="mt-2 text-xs leading-5 text-stone-500">
-                  轨迹可能太短、离线路较远，或当前交通方式已被关闭。请画得更长一些，或者重新打开筛选项。
+                  {journeyNotice
+                    ? "系统已停止展示低相似度路线，避免把只连接起终点的无关行程误认为你的历史路径。"
+                    : "轨迹可能太短、离线路较远，或当前交通方式已被关闭。请画得更长一些，或者重新打开筛选项。"}
                 </p>
                 {journeyNotice && (
-                  <p className="mt-2 rounded-lg bg-amber-50 px-2.5 py-2 text-[10px] leading-4 text-amber-800 dark:bg-amber-950/50 dark:text-amber-300">
+                  <p className="mt-2 rounded-lg bg-rose-50 px-2.5 py-2 text-[10px] leading-4 text-rose-800 dark:bg-rose-950/50 dark:text-rose-300">
                     {journeyNotice}
                   </p>
                 )}
@@ -900,7 +916,9 @@ export default function TransitMap() {
             <p className="mt-4 border-t border-stone-200 pt-3 text-[10px] leading-4 text-stone-400 dark:border-stone-800">
               {liveJourney
                 ? "结果来自 VBB 时刻表中的真实可乘方案，再按手绘轨迹排序；它仍不能证明你实际乘坐了该班次。数据："
-                : "离线结果仅依据轨迹与线路空间接近度估算，未验证班次、方向和换乘是否可行。数据："}
+                : journey
+                  ? "离线结果仅依据轨迹与线路空间接近度估算，未验证班次、方向和换乘是否可行。数据："
+                  : "低匹配结果不会展示。线路与站点参考数据："}
               {network ? (
                 <a
                   href={liveJourney ? "https://v6.vbb.transport.rest/" : network.sourceUrl}

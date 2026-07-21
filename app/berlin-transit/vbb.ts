@@ -41,6 +41,21 @@ export interface LiveJourneyCandidate {
   realtime: boolean;
   source: "live";
   viaStopName: string | null;
+  checkpointCount: number;
+}
+
+export class VbbNoMatchError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "VbbNoMatchError";
+  }
+}
+
+export class VbbUnavailableError extends Error {
+  constructor(message: string) {
+    super(message);
+    this.name = "VbbUnavailableError";
+  }
 }
 
 interface VbbPlace {
@@ -79,6 +94,9 @@ interface VbbResponse {
 }
 
 const API_URL = "https://v6.vbb.transport.rest/journeys";
+const MIN_PLAUSIBLE_SIMILARITY = 30;
+const MIN_PLAUSIBLE_COVERAGE = 0.2;
+const MAX_TRACE_SEGMENTS = 5;
 
 const MODE_COLORS: Record<TransitMode, string> = {
   subway: "#0067B1",
@@ -256,6 +274,62 @@ export function scoreJourneyGeometry(drawn: LL[], candidate: LL[]) {
   return { similarity, coverage, meanDistanceM };
 }
 
+interface TraceSpan {
+  start: number;
+  end: number;
+  priority: number;
+  splitAt: number;
+}
+
+function measureTraceSpan(samples: LL[], start: number, end: number): TraceSpan {
+  const section = samples.slice(start, end + 1);
+  const length = polylineLength(section);
+  let maxDeviation = 0;
+  let splitAt = Math.round((start + end) / 2);
+  for (let index = start + 1; index < end; index++) {
+    const deviation = pointToSegment(samples[index], samples[start], samples[end]);
+    if (deviation > maxDeviation) {
+      maxDeviation = deviation;
+      splitAt = index;
+    }
+  }
+  if (maxDeviation < 1_400 && length > 15_000) {
+    splitAt = Math.round((start + end) / 2);
+  }
+  return {
+    start,
+    end,
+    priority: Math.max(maxDeviation / 1_400, length / 15_000),
+    splitAt,
+  };
+}
+
+/**
+ * Split a long or looping trace into ordered chunks. A single VBB journey
+ * request only understands start/end and at most one via, which is not enough
+ * for the multi-turn trace shown in the reported failure.
+ */
+export function splitTrace(drawn: LL[], maxSegments = MAX_TRACE_SEGMENTS): LL[][] {
+  const samples = resample(drawn, 250);
+  if (samples.length < 3) return [drawn];
+  const boundaries = new Set([0, samples.length - 1]);
+
+  while (boundaries.size - 1 < maxSegments) {
+    const ordered = [...boundaries].sort((a, b) => a - b);
+    const spans = ordered
+      .slice(0, -1)
+      .map((start, index) => measureTraceSpan(samples, start, ordered[index + 1]))
+      .filter((span) => span.end - span.start >= 2)
+      .sort((a, b) => b.priority - a.priority);
+    const next = spans[0];
+    if (!next || next.priority <= 1) break;
+    boundaries.add(next.splitAt);
+  }
+
+  const ordered = [...boundaries].sort((a, b) => a - b);
+  return ordered.slice(0, -1).map((start, index) => samples.slice(start, ordered[index + 1] + 1));
+}
+
 function uniqueStops(lines: TransitLine[]): TransitStop[] {
   const stops = new Map<string, TransitStop>();
   for (const line of lines) {
@@ -366,6 +440,7 @@ function parseJourney(
     realtime: legs.some((leg) => leg.delayMinutes !== null),
     source: "live",
     viaStopName,
+    checkpointCount: 0,
   };
 }
 
@@ -422,6 +497,7 @@ export async function fetchVbbJourneys({
   lines,
   signal,
   fetcher = fetch,
+  allowVia = true,
 }: {
   drawn: LL[];
   departure: string;
@@ -429,13 +505,16 @@ export async function fetchVbbJourneys({
   lines: TransitLine[];
   signal?: AbortSignal;
   fetcher?: typeof fetch;
+  allowVia?: boolean;
 }): Promise<LiveJourneyCandidate[]> {
   if (drawn.length < 2 || polylineLength(drawn) < 150) {
-    throw new Error("轨迹太短，请至少画出几个街区。");
+    throw new VbbNoMatchError("轨迹太短，请至少画出几个街区。");
   }
-  if (!Object.values(modes).some(Boolean)) throw new Error("请至少打开一种交通方式。");
+  if (!Object.values(modes).some(Boolean)) {
+    throw new VbbNoMatchError("请至少打开一种交通方式。");
+  }
   if (!departure || Number.isNaN(Date.parse(`${departure}:00Z`))) {
-    throw new Error("请选择有效的出发时间。");
+    throw new VbbNoMatchError("请选择有效的出发时间。");
   }
 
   const enabledLines = lines.filter((line) => modes[line.mode]);
@@ -443,12 +522,19 @@ export async function fetchVbbJourneys({
   const requests: Array<{ url: string; via: TransitStop | null }> = [
     { url: buildUrl(drawn, departure, modes, null), via: null },
   ];
-  if (viaStop) requests.push({ url: buildUrl(drawn, departure, modes, viaStop), via: viaStop });
+  if (allowVia && viaStop) {
+    requests.push({ url: buildUrl(drawn, departure, modes, viaStop), via: viaStop });
+  }
 
   const responses = await Promise.allSettled(
     requests.map(async ({ url, via }) => {
       const response = await fetcher(url, { signal });
-      if (!response.ok) throw new Error(`VBB HTTP ${response.status}`);
+      if (!response.ok) {
+        if (response.status >= 400 && response.status < 500) {
+          throw new VbbNoMatchError(`VBB 不支持这个日期或查询条件（HTTP ${response.status}）。`);
+        }
+        throw new VbbUnavailableError(`VBB 服务暂时不可用（HTTP ${response.status}）。`);
+      }
       const payload = (await response.json()) as VbbResponse;
       return (payload.journeys ?? [])
         .map((journey, index) => parseJourney(journey, index, drawn, lines, via?.name ?? null))
@@ -459,7 +545,135 @@ export async function fetchVbbJourneys({
   if (signal?.aborted) throw new DOMException("Aborted", "AbortError");
   const candidates = dedupeJourneys(
     responses.flatMap((result) => (result.status === "fulfilled" ? result.value : []))
-  ).sort((a, b) => b.similarity - a.similarity || a.durationMinutes - b.durationMinutes);
-  if (!candidates.length) throw new Error("VBB 在这个时间没有返回可乘方案。");
+  )
+    .filter(
+      (candidate) =>
+        candidate.similarity >= MIN_PLAUSIBLE_SIMILARITY &&
+        candidate.coverage >= MIN_PLAUSIBLE_COVERAGE
+    )
+    .sort((a, b) => b.similarity - a.similarity || a.durationMinutes - b.durationMinutes);
+  if (!candidates.length) {
+    const failures = responses
+      .filter((result): result is PromiseRejectedResult => result.status === "rejected")
+      .map((result) => result.reason);
+    const hadSuccessfulResponse = responses.some((result) => result.status === "fulfilled");
+    if (hadSuccessfulResponse || failures.some((reason) => reason instanceof VbbNoMatchError)) {
+      throw new VbbNoMatchError("没有找到与这段手绘轨迹足够贴合的真实 VBB 行程。");
+    }
+    throw new VbbUnavailableError("无法连接 VBB 行程服务。");
+  }
   return candidates;
+}
+
+function combineJourneyParts(
+  parts: LiveJourneyCandidate[],
+  drawn: LL[],
+  candidateIndex: number
+): LiveJourneyCandidate {
+  const legs = parts.flatMap((part, partIndex) =>
+    part.legs.map((leg) => ({ ...leg, id: `${partIndex}-${leg.id}` }))
+  );
+  const polyline: LL[] = [];
+  for (const part of parts) appendPoints(polyline, part.polyline);
+  const transitLegs = legs.filter((leg) => !leg.walking);
+  const departure = legs[0]?.departure ?? "";
+  const arrival = legs.at(-1)?.arrival ?? "";
+  const duration = Date.parse(arrival) - Date.parse(departure);
+  return {
+    id: `trace-${candidateIndex}-${departure}-${transitLegs.map((leg) => leg.lineRef).join("-")}`,
+    legs,
+    polyline,
+    departure,
+    arrival,
+    durationMinutes: Number.isFinite(duration) ? Math.max(0, Math.round(duration / 60_000)) : 0,
+    transfers: Math.max(0, transitLegs.length - 1),
+    ...scoreJourneyGeometry(drawn, polyline),
+    realtime: legs.some((leg) => leg.delayMinutes !== null),
+    source: "live",
+    viaStopName: null,
+    checkpointCount: Math.max(0, parts.length - 1),
+  };
+}
+
+/**
+ * Resolve the whole drawing. Complex traces are queried in temporal order so
+ * every next chunk departs only after the preceding VBB journey has arrived.
+ */
+export async function fetchVbbTraceJourneys(args: {
+  drawn: LL[];
+  departure: string;
+  modes: ModeFilter;
+  lines: TransitLine[];
+  signal?: AbortSignal;
+  fetcher?: typeof fetch;
+}): Promise<LiveJourneyCandidate[]> {
+  const segments = splitTrace(args.drawn);
+  if (segments.length === 1) return fetchVbbJourneys(args);
+
+  type Beam = {
+    parts: LiveJourneyCandidate[];
+    weightedSimilarity: number;
+    weight: number;
+  };
+  let beams: Beam[] = [{ parts: [], weightedSimilarity: 0, weight: 0 }];
+
+  for (let segmentIndex = 0; segmentIndex < segments.length; segmentIndex++) {
+    const segment = segments[segmentIndex];
+    const segmentWeight = Math.max(1, polylineLength(segment));
+    const attempts = await Promise.allSettled(
+      beams.map(async (beam) => {
+        const previousArrival = beam.parts.at(-1)?.arrival;
+        const segmentDeparture = previousArrival
+          ? formatDateTimeLocal(new Date(previousArrival))
+          : args.departure;
+        const candidates = await fetchVbbJourneys({
+          ...args,
+          drawn: segment,
+          departure: segmentDeparture,
+          allowVia: false,
+        });
+        return candidates.slice(0, 2).map((candidate) => ({
+          parts: [...beam.parts, candidate],
+          weightedSimilarity:
+            beam.weightedSimilarity + candidate.similarity * segmentWeight,
+          weight: beam.weight + segmentWeight,
+        }));
+      })
+    );
+
+    if (args.signal?.aborted) throw new DOMException("Aborted", "AbortError");
+    const nextBeams = attempts
+      .flatMap((attempt) => (attempt.status === "fulfilled" ? attempt.value : []))
+      .sort(
+        (a, b) =>
+          b.weightedSimilarity / b.weight - a.weightedSimilarity / a.weight
+      )
+      .slice(0, 2);
+    if (!nextBeams.length) {
+      const failures = attempts
+        .filter((attempt): attempt is PromiseRejectedResult => attempt.status === "rejected")
+        .map((attempt) => attempt.reason);
+      if (failures.some((reason) => reason instanceof VbbUnavailableError)) {
+        throw new VbbUnavailableError("分段查询过程中 VBB 服务不可用。");
+      }
+      throw new VbbNoMatchError(
+        `轨迹第 ${segmentIndex + 1}/${segments.length} 段没有足够贴合的真实公共交通行程。`
+      );
+    }
+    beams = nextBeams;
+  }
+
+  const combined = dedupeJourneys(
+    beams.map((beam, index) => combineJourneyParts(beam.parts, args.drawn, index))
+  )
+    .filter(
+      (candidate) =>
+        candidate.similarity >= MIN_PLAUSIBLE_SIMILARITY &&
+        candidate.coverage >= MIN_PLAUSIBLE_COVERAGE
+    )
+    .sort((a, b) => b.similarity - a.similarity || a.durationMinutes - b.durationMinutes);
+  if (!combined.length) {
+    throw new VbbNoMatchError("分段行程可以乘坐，但组合后仍与整条手绘轨迹差异过大。");
+  }
+  return combined;
 }
