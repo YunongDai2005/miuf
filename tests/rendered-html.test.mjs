@@ -20,9 +20,10 @@ test("server-renders the Berlin Trace product shell", async () => {
   const html = await response.text();
   assert.match(html, /<html lang="zh-CN">/);
   assert.match(html, /Berlin Trace/);
-  assert.match(html, /从手绘轨迹推测乘车路线/);
-  assert.match(html, /绘制路线/);
+  assert.match(html, /用图钉与丝线串起柏林轨迹/);
+  assert.match(html, /穿线模式/);
   assert.match(html, /平移地图/);
+  assert.match(html, /固定丝线并匹配/);
   assert.match(html, /type="datetime-local"/);
   assert.match(html, /VBB 实时行程接口已启用|VBB/);
   assert.doesNotMatch(html, /Starter Project|Building your site|react-loading-skeleton/);

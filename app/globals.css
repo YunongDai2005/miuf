@@ -23,3 +23,149 @@ body {
   color: var(--foreground);
   font-family: var(--font-geist-sans), "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
 }
+
+.map-nail-icon {
+  background: transparent !important;
+  border: 0 !important;
+  overflow: visible !important;
+}
+
+.map-nail {
+  --nail-color: #f05a28;
+  display: block;
+  position: relative;
+  width: 34px;
+  height: 42px;
+  transform-origin: 50% 88%;
+  transition: transform 140ms ease, filter 140ms ease;
+  filter: drop-shadow(0 3px 2px rgb(41 23 18 / 0.28));
+}
+
+.map-nail-icon:hover .map-nail,
+.map-nail-icon:focus .map-nail,
+.map-nail--selected {
+  transform: translateY(-3px) scale(1.1);
+  filter: drop-shadow(0 6px 4px rgb(41 23 18 / 0.34));
+}
+
+.map-nail__shadow {
+  position: absolute;
+  left: 8px;
+  bottom: 1px;
+  width: 21px;
+  height: 7px;
+  border-radius: 50%;
+  background: rgb(41 23 18 / 0.22);
+  transform: rotate(-8deg);
+  filter: blur(1.5px);
+}
+
+.map-nail__stem {
+  position: absolute;
+  z-index: 1;
+  top: 18px;
+  left: 15px;
+  width: 4px;
+  height: 20px;
+  border-radius: 0 0 3px 3px;
+  background: linear-gradient(90deg, #6b7280 0%, #eef2f4 45%, #808892 68%, #3f464d 100%);
+  box-shadow: 1px 1px 1px rgb(0 0 0 / 0.2);
+  transform: rotate(4deg);
+  transform-origin: top;
+}
+
+.map-nail__head {
+  position: absolute;
+  z-index: 3;
+  top: 3px;
+  left: 6px;
+  display: flex;
+  width: 23px;
+  height: 23px;
+  align-items: center;
+  justify-content: center;
+  border: 2px solid rgb(255 255 255 / 0.88);
+  border-radius: 50%;
+  color: white;
+  background:
+    radial-gradient(circle at 36% 28%, rgb(255 255 255 / 0.48) 0 9%, transparent 10%),
+    radial-gradient(circle at 48% 45%, color-mix(in srgb, var(--nail-color), white 16%) 0 42%, var(--nail-color) 70%);
+  box-shadow:
+    inset -3px -4px 5px rgb(45 18 12 / 0.25),
+    inset 2px 2px 3px rgb(255 255 255 / 0.25),
+    0 2px 3px rgb(41 23 18 / 0.28);
+}
+
+.map-nail__shine {
+  position: absolute;
+  z-index: 4;
+  top: 7px;
+  left: 11px;
+  width: 6px;
+  height: 3px;
+  border-radius: 50%;
+  background: rgb(255 255 255 / 0.66);
+  transform: rotate(-24deg);
+  pointer-events: none;
+}
+
+.map-nail__number {
+  position: relative;
+  z-index: 5;
+  font-size: 9px;
+  font-weight: 900;
+  line-height: 1;
+  text-shadow: 0 1px 1px rgb(0 0 0 / 0.38);
+}
+
+.map-nail--selected .map-nail__head {
+  border-color: white;
+  box-shadow:
+    inset -3px -4px 5px rgb(45 18 12 / 0.28),
+    inset 2px 2px 3px rgb(255 255 255 / 0.3),
+    0 0 0 3px rgb(255 255 255 / 0.88),
+    0 4px 7px rgb(41 23 18 / 0.3);
+}
+
+.map-nail--bend .map-nail__head {
+  border-radius: 7px;
+  transform: rotate(45deg) scale(0.86);
+}
+
+.map-nail--bend .map-nail__number {
+  transform: rotate(-45deg);
+}
+
+.thread-line--shadow {
+  filter: blur(1.1px);
+}
+
+.thread-line--yarn {
+  filter: drop-shadow(0 2px 1px rgb(61 25 15 / 0.25));
+  stroke-dasharray: 1 1.6;
+}
+
+.thread-line--highlight {
+  stroke-dasharray: 3 2;
+}
+
+.thread-preview {
+  animation: thread-pulse 900ms ease-in-out infinite alternate;
+}
+
+@keyframes thread-pulse {
+  from {
+    stroke-opacity: 0.48;
+  }
+  to {
+    stroke-opacity: 0.9;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .map-nail,
+  .thread-preview {
+    transition: none;
+    animation: none;
+  }
+}

@@ -2,7 +2,6 @@
 
 import { useCallback, useEffect, useRef, useState } from "react";
 import type {
-  CircleMarker as LCircleMarker,
   LayerGroup as LLayerGroup,
   Map as LMap,
   Polyline as LPolyline,
@@ -23,9 +22,19 @@ import {
   type ModeFilter,
   VbbUnavailableError,
 } from "./vbb";
+import {
+  type Attraction,
+  type AttractionCategory,
+  type CategoryFilter,
+  ATTRACTION_CATEGORIES,
+  CATEGORY_META,
+  INITIAL_CATEGORY_FILTER,
+  attractionWikiUrl,
+} from "./attractions";
 
 const BERLIN_CENTER: [number, number] = [52.52, 13.405];
 const DRAW_COLOR = "#F05A28";
+const PIN_ROUTE_STORAGE_KEY = "berlin-trace-pin-route-v1";
 const MODE_ORDER: TransitMode[] = [
   "subway",
   "light_rail",
@@ -43,6 +52,78 @@ const INITIAL_MODES: ModeFilter = {
   rail: true,
   ferry: true,
 };
+
+type RoutePin = {
+  id: string;
+  point: LL;
+  kind: "attraction" | "bend";
+  label: string;
+  attractionId?: string;
+  color?: string;
+};
+
+function createRoutePin(
+  point: LL,
+  input?: Pick<RoutePin, "kind" | "label" | "attractionId" | "color">
+): RoutePin {
+  return {
+    id:
+      typeof crypto !== "undefined" && "randomUUID" in crypto
+        ? crypto.randomUUID()
+        : `pin-${Date.now()}-${Math.random().toString(36).slice(2)}`,
+    point,
+    kind: input?.kind ?? "bend",
+    label: input?.label ?? "路线拐点",
+    attractionId: input?.attractionId,
+    color: input?.color,
+  };
+}
+
+function isStoredRoutePin(value: unknown): value is RoutePin {
+  if (!value || typeof value !== "object") return false;
+  const candidate = value as Partial<RoutePin>;
+  return (
+    typeof candidate.id === "string" &&
+    (candidate.kind === "attraction" || candidate.kind === "bend") &&
+    typeof candidate.label === "string" &&
+    Array.isArray(candidate.point) &&
+    candidate.point.length === 2 &&
+    candidate.point.every((coordinate) => typeof coordinate === "number")
+  );
+}
+
+function nailIcon(
+  L: typeof import("leaflet"),
+  options: { color: string; selected?: boolean; number?: number; bend?: boolean }
+) {
+  const classes = [
+    "map-nail",
+    options.selected ? "map-nail--selected" : "",
+    options.bend ? "map-nail--bend" : "",
+  ]
+    .filter(Boolean)
+    .join(" ");
+  const number = options.number
+    ? `<span class="map-nail__number">${options.number}</span>`
+    : "";
+  return L.divIcon({
+    className: "map-nail-icon",
+    html: `<span class="${classes}" style="--nail-color:${options.color}"><span class="map-nail__shadow"></span><span class="map-nail__stem"></span><span class="map-nail__head">${number}</span><span class="map-nail__shine"></span></span>`,
+    iconSize: [34, 42],
+    iconAnchor: [17, 37],
+    tooltipAnchor: [0, -34],
+  });
+}
+
+function escapeHtml(value: string) {
+  return value.replace(
+    /[&<>"']/g,
+    (char) =>
+      ({ "&": "&amp;", "<": "&lt;", ">": "&gt;", '"': "&quot;", "'": "&#39;" })[
+        char
+      ] ?? char
+  );
+}
 
 function confidenceLabel(confidence: number) {
   if (confidence >= 0.78) return "较高";
@@ -83,20 +164,25 @@ export default function TransitMap() {
   const mapRef = useRef<LMap | null>(null);
   const LRef = useRef<typeof import("leaflet") | null>(null);
   const drawingRef = useRef(false);
-  const pointerDownRef = useRef(false);
-  const keyboardDrawingRef = useRef(false);
-  const keyboardMarkerRef = useRef<LCircleMarker | null>(null);
-  const pointsRef = useRef<LL[]>([]);
   const previewRef = useRef<LPolyline | null>(null);
-  const drawnLayerRef = useRef<LPolyline | null>(null);
+  const threadGroupRef = useRef<LLayerGroup | null>(null);
+  const threadLinesRef = useRef<LPolyline[]>([]);
+  const routePinsRef = useRef<RoutePin[]>([]);
+  const drawnPathRef = useRef<LL[] | null>(null);
   const resultsGroupRef = useRef<LLayerGroup | null>(null);
   const resultLayersRef = useRef<Map<string, LPolyline[]>>(new Map());
+  const attractionsGroupRef = useRef<LLayerGroup | null>(null);
   const resizeObsRef = useRef<ResizeObserver | null>(null);
   const commitPathRef = useRef<(path: LL[]) => void>(() => {});
+  const addBendPinRef = useRef<(point: LL) => void>(() => {});
+  const finishThreadRef = useRef<() => void>(() => {});
+  const undoPinRef = useRef<() => void>(() => {});
 
   const [network, setNetwork] = useState<TransitNetwork | null>(null);
   const [ready, setReady] = useState(false);
   const [drawing, setDrawing] = useState(true);
+  const [routePins, setRoutePins] = useState<RoutePin[]>([]);
+  const [routeHydrated, setRouteHydrated] = useState(false);
   const [drawnPath, setDrawnPath] = useState<LL[] | null>(null);
   const [journey, setJourney] = useState<JourneyMatch | null>(null);
   const [liveJourneys, setLiveJourneys] = useState<LiveJourneyCandidate[]>([]);
@@ -107,6 +193,11 @@ export default function TransitMap() {
   const [hovered, setHovered] = useState<string | null>(null);
   const [modes, setModes] = useState<ModeFilter>(INITIAL_MODES);
   const [error, setError] = useState<string | null>(null);
+  const [attractions, setAttractions] = useState<Attraction[] | null>(null);
+  const [showAttractions, setShowAttractions] = useState(true);
+  const [categoryFilter, setCategoryFilter] = useState<CategoryFilter>(
+    INITIAL_CATEGORY_FILTER
+  );
   const liveJourney = liveJourneys[selectedJourneyIndex] ?? null;
 
   useEffect(() => {
@@ -126,6 +217,54 @@ export default function TransitMap() {
       cancelled = true;
     };
   }, []);
+
+  // Load the sightseeing layer. A failure here is non-fatal for the core app.
+  useEffect(() => {
+    let cancelled = false;
+    fetch("/berlin-attractions.json")
+      .then((response) => (response.ok ? response.json() : null))
+      .then((data) => {
+        const set = data as { attractions?: Attraction[] } | null;
+        if (!cancelled && set?.attractions) setAttractions(set.attractions);
+      })
+      .catch(() => {});
+    return () => {
+      cancelled = true;
+    };
+  }, []);
+
+  useEffect(() => {
+    const timeout = window.setTimeout(() => {
+      try {
+        const stored = window.localStorage.getItem(PIN_ROUTE_STORAGE_KEY);
+        if (stored) {
+          const parsed = JSON.parse(stored) as unknown;
+          if (Array.isArray(parsed)) {
+            setRoutePins(parsed.filter(isStoredRoutePin).slice(0, 80));
+          }
+        }
+      } catch {
+        // A blocked or invalid local store should never stop the map from working.
+      } finally {
+        setRouteHydrated(true);
+      }
+    }, 0);
+    return () => window.clearTimeout(timeout);
+  }, []);
+
+  useEffect(() => {
+    routePinsRef.current = routePins;
+    if (!routeHydrated) return;
+    try {
+      window.localStorage.setItem(PIN_ROUTE_STORAGE_KEY, JSON.stringify(routePins));
+    } catch {
+      // Device persistence is a convenience; in-memory routing still works.
+    }
+  }, [routeHydrated, routePins]);
+
+  useEffect(() => {
+    drawnPathRef.current = drawnPath;
+  }, [drawnPath]);
 
   useEffect(() => {
     let disposed = false;
@@ -158,138 +297,80 @@ export default function TransitMap() {
           }
         ).addTo(map);
 
+        const threadPane = map.createPane("threadPane");
+        threadPane.style.zIndex = "450";
+        threadPane.style.pointerEvents = "none";
+
+        // Pins sit above the map, with the thread and matched routes beneath them.
+        attractionsGroupRef.current = L.layerGroup().addTo(map);
+        threadGroupRef.current = L.layerGroup().addTo(map);
         resultsGroupRef.current = L.layerGroup().addTo(map);
         const element = containerRef.current;
-        const toLatLng = (event: PointerEvent): LL => {
-          const rect = element.getBoundingClientRect();
-          const point = map.containerPointToLatLng([
-            event.clientX - rect.left,
-            event.clientY - rect.top,
-          ]);
-          return [point.lat, point.lng];
-        };
-
-        const onPointerDown = (event: PointerEvent) => {
-          if (!drawingRef.current || event.button !== 0) return;
-          if ((event.target as HTMLElement)?.closest(".leaflet-control")) return;
-          event.preventDefault();
-          keyboardDrawingRef.current = false;
-          keyboardMarkerRef.current?.remove();
-          keyboardMarkerRef.current = null;
-          pointerDownRef.current = true;
-          try {
-            element.setPointerCapture(event.pointerId);
-          } catch {
-            // Pointer capture may already belong to the map.
-          }
-          pointsRef.current = [toLatLng(event)];
-          previewRef.current?.remove();
-          previewRef.current = L.polyline(pointsRef.current, {
-            color: DRAW_COLOR,
-            weight: 5,
-            opacity: 0.9,
-            dashArray: "8 7",
-          }).addTo(map);
-        };
-
-        const onPointerMove = (event: PointerEvent) => {
-          if (!pointerDownRef.current) return;
-          pointsRef.current.push(toLatLng(event));
-          previewRef.current?.setLatLngs(pointsRef.current);
-        };
-
-        const onPointerUp = (event: PointerEvent) => {
-          if (!pointerDownRef.current) return;
-          pointerDownRef.current = false;
-          try {
-            element.releasePointerCapture(event.pointerId);
-          } catch {
-            // The browser may release capture before pointercancel.
-          }
-          const path = pointsRef.current.slice();
+        const clearPreview = () => {
           previewRef.current?.remove();
           previewRef.current = null;
-          if (path.length >= 2) commitPathRef.current(path);
+        };
+
+        const onMapClick = (event: import("leaflet").LeafletMouseEvent) => {
+          if (!drawingRef.current) return;
+          addBendPinRef.current([event.latlng.lat, event.latlng.lng]);
+        };
+
+        const onMapMove = (event: import("leaflet").LeafletMouseEvent) => {
+          const pins = routePinsRef.current;
+          if (!drawingRef.current || pins.length === 0) {
+            clearPreview();
+            return;
+          }
+          const positions: LL[] = [
+            pins[pins.length - 1].point,
+            [event.latlng.lat, event.latlng.lng],
+          ];
+          if (!previewRef.current) {
+            previewRef.current = L.polyline(positions, {
+              pane: "threadPane",
+              className: "thread-preview",
+              color: DRAW_COLOR,
+              weight: 3,
+              opacity: 0.72,
+              dashArray: "4 7",
+              interactive: false,
+            }).addTo(map);
+          } else {
+            previewRef.current.setLatLngs(positions);
+          }
         };
 
         const onKeyDown = (event: KeyboardEvent) => {
           if (!drawingRef.current) return;
-          const arrows: Record<string, [number, number]> = {
-            ArrowUp: [0, -28],
-            ArrowDown: [0, 28],
-            ArrowLeft: [-28, 0],
-            ArrowRight: [28, 0],
-          };
-
           if (event.code === "Space") {
             event.preventDefault();
             event.stopImmediatePropagation();
-            if (!keyboardDrawingRef.current) {
-              const center = map.getCenter();
-              const start: LL = [center.lat, center.lng];
-              keyboardDrawingRef.current = true;
-              pointsRef.current = [start];
-              previewRef.current?.remove();
-              previewRef.current = L.polyline(pointsRef.current, {
-                color: DRAW_COLOR,
-                weight: 5,
-                opacity: 0.9,
-                dashArray: "8 7",
-              }).addTo(map);
-              keyboardMarkerRef.current?.remove();
-              keyboardMarkerRef.current = L.circleMarker(start, {
-                radius: 6,
-                color: "#FFFFFF",
-                weight: 2,
-                fillColor: DRAW_COLOR,
-                fillOpacity: 1,
-              }).addTo(map);
-            } else {
-              keyboardDrawingRef.current = false;
-              const path = pointsRef.current.slice();
-              previewRef.current?.remove();
-              previewRef.current = null;
-              keyboardMarkerRef.current?.remove();
-              keyboardMarkerRef.current = null;
-              if (path.length >= 2) commitPathRef.current(path);
-            }
+            const center = map.getCenter();
+            addBendPinRef.current([center.lat, center.lng]);
             return;
           }
-
-          if (event.key === "Escape" && keyboardDrawingRef.current) {
+          if (event.key === "Enter") {
             event.preventDefault();
             event.stopImmediatePropagation();
-            keyboardDrawingRef.current = false;
-            previewRef.current?.remove();
-            previewRef.current = null;
-            keyboardMarkerRef.current?.remove();
-            keyboardMarkerRef.current = null;
+            finishThreadRef.current();
             return;
           }
-
-          const delta = arrows[event.key];
-          if (!delta || !keyboardDrawingRef.current) return;
-          event.preventDefault();
-          event.stopImmediatePropagation();
-          const current = pointsRef.current[pointsRef.current.length - 1];
-          const screenPoint = map.latLngToContainerPoint(current);
-          const next = map.containerPointToLatLng([screenPoint.x + delta[0], screenPoint.y + delta[1]]);
-          const point: LL = [next.lat, next.lng];
-          pointsRef.current.push(point);
-          previewRef.current?.setLatLngs(pointsRef.current);
-          keyboardMarkerRef.current?.setLatLng(point);
+          if (event.key === "Backspace" || event.key === "Delete") {
+            event.preventDefault();
+            event.stopImmediatePropagation();
+            undoPinRef.current();
+          }
         };
 
-        element.addEventListener("pointerdown", onPointerDown);
-        element.addEventListener("pointermove", onPointerMove);
-        element.addEventListener("pointerup", onPointerUp);
-        element.addEventListener("pointercancel", onPointerUp);
+        map.on("click", onMapClick);
+        map.on("mousemove", onMapMove);
+        map.on("mouseout", clearPreview);
         element.addEventListener("keydown", onKeyDown, true);
         cleanupInput = () => {
-          element.removeEventListener("pointerdown", onPointerDown);
-          element.removeEventListener("pointermove", onPointerMove);
-          element.removeEventListener("pointerup", onPointerUp);
-          element.removeEventListener("pointercancel", onPointerUp);
+          map.off("click", onMapClick);
+          map.off("mousemove", onMapMove);
+          map.off("mouseout", clearPreview);
           element.removeEventListener("keydown", onKeyDown, true);
         };
 
@@ -328,9 +409,6 @@ export default function TransitMap() {
       element.style.cursor = "crosshair";
       element.style.touchAction = "none";
     } else {
-      keyboardDrawingRef.current = false;
-      keyboardMarkerRef.current?.remove();
-      keyboardMarkerRef.current = null;
       previewRef.current?.remove();
       previewRef.current = null;
       map.dragging.enable();
@@ -340,6 +418,18 @@ export default function TransitMap() {
       element.style.touchAction = "";
     }
   }, [drawing, ready]);
+
+  const resetAnalysis = useCallback(() => {
+    setDrawnPath(null);
+    setJourney(null);
+    setLiveJourneys([]);
+    setSelectedJourneyIndex(0);
+    setJourneyNotice(null);
+    setAnalyzing(false);
+    setHovered(null);
+    resultsGroupRef.current?.clearLayers();
+    resultLayersRef.current.clear();
+  }, []);
 
   const commitPath = useCallback((path: LL[]) => {
     setDrawnPath(path);
@@ -352,6 +442,72 @@ export default function TransitMap() {
   useEffect(() => {
     commitPathRef.current = commitPath;
   }, [commitPath]);
+
+  const addBendPin = useCallback(
+    (point: LL) => {
+      resetAnalysis();
+      setRoutePins((current) => [
+        ...current,
+        createRoutePin(point, {
+          kind: "bend",
+          label: `拐点 ${current.filter((pin) => pin.kind === "bend").length + 1}`,
+          color: DRAW_COLOR,
+        }),
+      ]);
+    },
+    [resetAnalysis]
+  );
+
+  const addAttractionPin = useCallback(
+    (attraction: Attraction) => {
+      if (routePinsRef.current[routePinsRef.current.length - 1]?.attractionId === attraction.id) {
+        return;
+      }
+      resetAnalysis();
+      setRoutePins((current) => {
+        if (current[current.length - 1]?.attractionId === attraction.id) return current;
+        const meta = CATEGORY_META[attraction.category];
+        return [
+          ...current,
+          createRoutePin(attraction.point, {
+            kind: "attraction",
+            label: attraction.name,
+            attractionId: attraction.id,
+            color: meta.color,
+          }),
+        ];
+      });
+    },
+    [resetAnalysis]
+  );
+
+  const finishThread = useCallback(() => {
+    const positions = routePinsRef.current.map((pin) => pin.point);
+    if (positions.length < 2) return;
+    previewRef.current?.remove();
+    previewRef.current = null;
+    commitPath(positions);
+  }, [commitPath]);
+
+  const undoPin = useCallback(() => {
+    if (routePinsRef.current.length === 0) return;
+    resetAnalysis();
+    setRoutePins((current) => current.slice(0, -1));
+  }, [resetAnalysis]);
+
+  const removePin = useCallback(
+    (id: string) => {
+      resetAnalysis();
+      setRoutePins((current) => current.filter((pin) => pin.id !== id));
+    },
+    [resetAnalysis]
+  );
+
+  useEffect(() => {
+    addBendPinRef.current = addBendPin;
+    finishThreadRef.current = finishThread;
+    undoPinRef.current = undoPin;
+  }, [addBendPin, finishThread, undoPin]);
 
   // Ask VBB for journeys that were actually possible at the selected time,
   // then use the drawing only to rank those schedule-valid alternatives.
@@ -397,19 +553,91 @@ export default function TransitMap() {
 
   useEffect(() => {
     const L = LRef.current;
-    const map = mapRef.current;
-    if (!L || !map) return;
-    drawnLayerRef.current?.remove();
-    drawnLayerRef.current = drawnPath
-      ? L.polyline(drawnPath, {
-          color: DRAW_COLOR,
-          weight: 5,
-          opacity: 0.9,
-          dashArray: "8 7",
-          interactive: false,
-        }).addTo(map)
-      : null;
-  }, [drawnPath]);
+    const group = threadGroupRef.current;
+    if (!L || !group) return;
+    group.clearLayers();
+    threadLinesRef.current = [];
+    const positions = routePins.map((pin) => pin.point);
+
+    if (positions.length >= 2) {
+      const shadow = L.polyline(positions, {
+        pane: "threadPane",
+        className: "thread-line thread-line--shadow",
+        color: "#4b1f18",
+        weight: 7,
+        opacity: 0.28,
+        lineCap: "round",
+        lineJoin: "round",
+        interactive: false,
+      }).addTo(group);
+      const yarn = L.polyline(positions, {
+        pane: "threadPane",
+        className: "thread-line thread-line--yarn",
+        color: DRAW_COLOR,
+        weight: 4,
+        opacity: 0.98,
+        lineCap: "round",
+        lineJoin: "round",
+        interactive: false,
+      }).addTo(group);
+      const highlight = L.polyline(positions, {
+        pane: "threadPane",
+        className: "thread-line thread-line--highlight",
+        color: "#ffb393",
+        weight: 1,
+        opacity: 0.9,
+        lineCap: "round",
+        lineJoin: "round",
+        interactive: false,
+      }).addTo(group);
+      threadLinesRef.current = [shadow, yarn, highlight];
+    }
+
+    routePins.forEach((pin, index) => {
+      const marker = L.marker(pin.point, {
+        icon: nailIcon(L, {
+          color: pin.color ?? DRAW_COLOR,
+          selected: true,
+          number: index + 1,
+          bend: pin.kind === "bend",
+        }),
+        draggable: pin.kind === "bend",
+        keyboard: true,
+        riseOnHover: true,
+        zIndexOffset: 800 + index,
+        title: `${index + 1}. ${pin.label}`,
+      })
+        .addTo(group)
+        .bindTooltip(
+          `${index + 1}. ${pin.label}${pin.kind === "bend" ? " · 可拖动调整" : ""}`,
+          { direction: "top", offset: [0, -28] }
+        );
+      marker.on("click", (event) => event.originalEvent?.stopPropagation());
+      if (pin.kind === "bend") {
+        marker.on("drag", () => {
+          const next = marker.getLatLng();
+          const nextPositions = routePinsRef.current.map((current, currentIndex) =>
+            currentIndex === index
+              ? ([next.lat, next.lng] as LL)
+              : current.point
+          );
+          threadLinesRef.current.forEach((line) => line.setLatLngs(nextPositions));
+        });
+        marker.on("dragend", () => {
+          const next = marker.getLatLng();
+          const updated = routePinsRef.current.map((current, currentIndex) =>
+            currentIndex === index
+              ? { ...current, point: [next.lat, next.lng] as LL }
+              : current
+          );
+          setRoutePins(updated);
+          if (drawnPathRef.current) {
+            commitPathRef.current(updated.map((current) => current.point));
+          }
+        });
+      }
+    });
+  }, [ready, routePins]);
 
   useEffect(() => {
     const L = LRef.current;
@@ -542,23 +770,77 @@ export default function TransitMap() {
     });
   }, [hovered]);
 
+  // Render attraction markers for the enabled categories.
+  useEffect(() => {
+    const L = LRef.current;
+    const group = attractionsGroupRef.current;
+    const map = mapRef.current;
+    if (!L || !group || !map) return;
+    group.clearLayers();
+    if (!showAttractions || !attractions) return;
+    for (const attraction of attractions) {
+      if (!categoryFilter[attraction.category]) continue;
+      const meta = CATEGORY_META[attraction.category];
+      const marker = L.marker(attraction.point, {
+        icon: nailIcon(L, { color: meta.color }),
+        keyboard: true,
+        riseOnHover: true,
+        title: attraction.name,
+      })
+        .addTo(group)
+        .bindTooltip(`${meta.emoji} ${attraction.name} · ${drawing ? "点击穿线" : "点击查看"}`, {
+          direction: "top",
+          offset: [0, -28],
+        });
+      const url = attractionWikiUrl(attraction);
+      const popupHtml =
+        `<div style="min-width:150px;line-height:1.4">` +
+          `<div style="font-weight:600">${meta.emoji} ${escapeHtml(attraction.name)}</div>` +
+          (attraction.nameEn
+            ? `<div style="color:#78716c;font-size:11px">${escapeHtml(attraction.nameEn)}</div>`
+            : "") +
+          `<div style="color:${meta.color};font-size:11px;margin-top:2px">${meta.label}</div>` +
+          (url
+            ? `<a href="${url}" target="_blank" rel="noreferrer" style="color:#ea580c;font-size:11px">维基百科 ↗</a>`
+            : "") +
+          `</div>`;
+      marker.on("click", (event) => {
+        event.originalEvent?.stopPropagation();
+        if (drawingRef.current) {
+          addAttractionPin(attraction);
+          return;
+        }
+        L.popup({ offset: [0, -28] })
+          .setLatLng(attraction.point)
+          .setContent(popupHtml)
+          .openOn(map);
+      });
+    }
+  }, [addAttractionPin, attractions, showAttractions, categoryFilter, drawing, ready]);
+
   const clearAll = useCallback(() => {
-    setDrawnPath(null);
-    setJourney(null);
-    setLiveJourneys([]);
-    setSelectedJourneyIndex(0);
-    setJourneyNotice(null);
-    setAnalyzing(false);
-    setHovered(null);
-    drawnLayerRef.current?.remove();
-    drawnLayerRef.current = null;
-    resultsGroupRef.current?.clearLayers();
-    resultLayersRef.current.clear();
-  }, []);
+    previewRef.current?.remove();
+    previewRef.current = null;
+    setRoutePins([]);
+    resetAnalysis();
+  }, [resetAnalysis]);
 
   const toggleMode = (mode: TransitMode) => {
     setModes((current) => ({ ...current, [mode]: !current[mode] }));
   };
+
+  const toggleCategory = (category: AttractionCategory) => {
+    setCategoryFilter((current) => ({
+      ...current,
+      [category]: !current[category],
+    }));
+  };
+
+  const visibleAttractions =
+    showAttractions && attractions
+      ? attractions.filter((attraction) => categoryFilter[attraction.category])
+          .length
+      : 0;
 
   return (
     <main className="relative h-dvh w-full overflow-hidden bg-stone-200 font-sans text-stone-950 dark:bg-stone-900 dark:text-stone-50">
@@ -567,28 +849,28 @@ export default function TransitMap() {
         className="absolute inset-0 z-0"
         role="application"
         tabIndex={0}
-        aria-keyshortcuts="Space ArrowUp ArrowDown ArrowLeft ArrowRight Escape"
-        aria-label="柏林交互地图。可按住并拖动来画轨迹；也可先平移到起点，再按空格开始、用方向键画线、再次按空格完成。"
+        aria-keyshortcuts="Space Enter Backspace Delete"
+        aria-label="柏林图钉路线地图。在穿线模式中点击景点图钉或地图空白处记录节点；空格在地图中心加拐点，回车完成，退格撤销。"
       />
 
       <section className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex justify-center p-3 sm:justify-start sm:p-5">
-        <div className="pointer-events-auto w-full max-w-[420px] rounded-[22px] border border-white/70 bg-white/92 p-4 shadow-[0_18px_55px_rgba(28,25,23,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-stone-950/90 sm:p-5">
+        <div className="pointer-events-auto max-h-[74dvh] w-full max-w-[430px] overflow-y-auto rounded-[22px] border border-white/70 bg-white/92 p-4 shadow-[0_18px_55px_rgba(28,25,23,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-stone-950/90 sm:max-h-[calc(100dvh-2.5rem)] sm:p-5">
           <div className="flex items-start justify-between gap-4">
             <div>
               <p className="text-[11px] font-bold tracking-[0.16em] text-orange-600 uppercase">
                 Berlin Trace
               </p>
-              <h1 className="mt-1 text-lg font-semibold tracking-tight">从手绘轨迹推测乘车路线</h1>
+              <h1 className="mt-1 text-lg font-semibold tracking-tight">用图钉与丝线串起柏林轨迹</h1>
             </div>
             <span className="mt-0.5 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
               仅限柏林
             </span>
           </div>
           <p className="mt-2 text-xs leading-5 text-stone-600 dark:text-stone-400">
-            沿着你走过的路径画一笔。系统先查询当时真实可乘的 VBB 行程，再按轨迹相似度排序。
+            点一个景点钉开始，移动时丝线会跟着你；继续点景点，或在空白处落下一个可拖动的拐点。
           </p>
           <p className="mt-1 text-[10px] leading-4 text-stone-400">
-            键盘：平移至起点后，空格开始，方向键画线，再按空格完成。
+            每个落点都会记录坐标并保存在本机。至少两个点后即可完成穿线并推测行程。
           </p>
 
           <div className="mt-4 grid grid-cols-2 rounded-xl bg-stone-100 p-1 dark:bg-stone-800" aria-label="地图操作模式">
@@ -602,7 +884,7 @@ export default function TransitMap() {
                   : "text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-white"
               }`}
             >
-              绘制路线
+              穿线模式
             </button>
             <button
               type="button"
@@ -616,6 +898,84 @@ export default function TransitMap() {
             >
               平移地图
             </button>
+          </div>
+
+          <div className="mt-3 rounded-2xl border border-orange-200/80 bg-orange-50/85 p-3 dark:border-orange-900/70 dark:bg-orange-950/35">
+            <div className="flex items-start justify-between gap-3">
+              <div className="min-w-0">
+                <p className="text-[10px] font-bold tracking-[0.12em] text-orange-700 uppercase dark:text-orange-300">
+                  {drawnPath ? "丝线已固定" : routePins.length ? "正在拉线" : "等待第一枚图钉"}
+                </p>
+                <p className="mt-1 text-xs leading-5 text-stone-700 dark:text-stone-200" aria-live="polite">
+                  {drawnPath
+                    ? `已用 ${routePins.length} 个节点固定路线；继续点击可延长。`
+                    : routePins.length
+                      ? `已记录 ${routePins.length} 个节点，点击下一处让丝线转向。`
+                      : "点击任意景点钉，或点击地图空白处开始。"}
+                </p>
+              </div>
+              <span className="relative mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500 text-xs font-black text-white shadow-[0_4px_10px_rgba(194,65,12,0.35)] ring-2 ring-white dark:ring-stone-900">
+                {routePins.length || "+"}
+              </span>
+            </div>
+
+            <div className="mt-3 grid grid-cols-[1fr_1.35fr] gap-2">
+              <button
+                type="button"
+                onClick={undoPin}
+                disabled={routePins.length === 0}
+                className="rounded-xl border border-orange-200 bg-white/75 px-3 py-2 text-[11px] font-semibold text-stone-600 transition hover:border-orange-400 hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-orange-900 dark:bg-stone-900/60 dark:text-stone-300"
+              >
+                撤回上一钉
+              </button>
+              <button
+                type="button"
+                onClick={finishThread}
+                disabled={routePins.length < 2}
+                className="rounded-xl bg-orange-600 px-3 py-2 text-[11px] font-bold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-300 dark:disabled:bg-orange-950 dark:disabled:text-orange-700"
+              >
+                {drawnPath ? "重新匹配路线" : "固定丝线并匹配"}
+              </button>
+            </div>
+
+            {routePins.length > 0 && (
+              <details className="mt-2 border-t border-orange-200/80 pt-2 dark:border-orange-900/70">
+                <summary className="cursor-pointer text-[10px] font-semibold text-orange-800 outline-none dark:text-orange-300">
+                  节点记录 · {routePins.length} 个精确坐标
+                </summary>
+                <ol className="mt-2 max-h-28 space-y-1 overflow-y-auto pr-1">
+                  {routePins.map((pin, index) => (
+                    <li
+                      key={pin.id}
+                      className="grid grid-cols-[20px_1fr_auto] items-center gap-2 rounded-lg bg-white/70 px-2 py-1.5 text-[10px] dark:bg-stone-900/60"
+                    >
+                      <span
+                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-black text-white"
+                        style={{ backgroundColor: pin.color ?? DRAW_COLOR }}
+                      >
+                        {index + 1}
+                      </span>
+                      <span className="min-w-0">
+                        <span className="block truncate font-semibold text-stone-700 dark:text-stone-200">
+                          {pin.label}
+                        </span>
+                        <span className="block font-mono text-[9px] text-stone-400">
+                          {pin.point[0].toFixed(5)}, {pin.point[1].toFixed(5)}
+                        </span>
+                      </span>
+                      <button
+                        type="button"
+                        onClick={() => removePin(pin.id)}
+                        className="rounded-full px-1.5 py-1 text-stone-400 transition hover:bg-stone-100 hover:text-red-600 dark:hover:bg-stone-800"
+                        aria-label={`删除节点 ${index + 1}：${pin.label}`}
+                      >
+                        ×
+                      </button>
+                    </li>
+                  ))}
+                </ol>
+              </details>
+            )}
           </div>
 
           <div className="mt-3 flex flex-wrap gap-1.5" aria-label="交通方式筛选">
@@ -650,6 +1010,60 @@ export default function TransitMap() {
             />
           </label>
 
+          <div className="mt-3 border-t border-stone-200 pt-3 dark:border-stone-800">
+            <div className="flex items-center justify-between">
+              <span className="text-[10px] font-semibold text-stone-500">
+                景点图层
+                {showAttractions && attractions ? ` · ${visibleAttractions}` : ""}
+              </span>
+              <button
+                type="button"
+                role="switch"
+                aria-checked={showAttractions}
+                onClick={() => setShowAttractions((value) => !value)}
+                className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition ${
+                  showAttractions
+                    ? "bg-orange-500 text-white"
+                    : "bg-stone-100 text-stone-500 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-400"
+                }`}
+              >
+                {showAttractions ? "显示中" : "已隐藏"}
+              </button>
+            </div>
+            {showAttractions && (
+              <div className="mt-2 flex flex-wrap gap-1" aria-label="景点分类筛选">
+                {ATTRACTION_CATEGORIES.map((category) => {
+                  const meta = CATEGORY_META[category];
+                  const on = categoryFilter[category];
+                  return (
+                    <button
+                      key={category}
+                      type="button"
+                      aria-pressed={on}
+                      onClick={() => toggleCategory(category)}
+                      style={on ? { borderColor: meta.color } : undefined}
+                      className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition ${
+                        on
+                          ? "bg-white text-stone-800 dark:bg-stone-800 dark:text-stone-100"
+                          : "border-stone-200 text-stone-400 dark:border-stone-700"
+                      }`}
+                    >
+                      <span
+                        aria-hidden
+                        className="inline-block h-2 w-2 rounded-full"
+                        style={{
+                          backgroundColor: on ? meta.color : "transparent",
+                          border: on ? undefined : `1px solid ${meta.color}`,
+                        }}
+                      />
+                      {meta.emoji} {meta.label}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
+          </div>
+
           <div className="mt-3 flex items-center justify-between gap-3 border-t border-stone-200 pt-3 dark:border-stone-800">
             <p className="min-w-0 truncate text-[10px] text-stone-500" aria-live="polite">
               {error
@@ -661,10 +1075,10 @@ export default function TransitMap() {
             <button
               type="button"
               onClick={clearAll}
-              disabled={!drawnPath}
+              disabled={routePins.length === 0}
               className="shrink-0 text-[11px] font-semibold text-orange-600 transition hover:text-orange-700 disabled:cursor-not-allowed disabled:text-stone-300 dark:disabled:text-stone-700"
             >
-              清除轨迹
+              清空图钉
             </button>
           </div>
         </div>

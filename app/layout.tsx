@@ -16,9 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const forwardedProtocol = requestHeaders.get("x-forwarded-proto");
   const protocol = forwardedProtocol === "http" || host.startsWith("localhost") ? "http" : "https";
   const metadataBase = new URL(`${protocol}://${host}`);
-  const title = "Berlin Trace｜柏林公共交通轨迹推测";
+  const title = "Berlin Trace｜用图钉与丝线串起柏林轨迹";
   const description =
-    "在柏林地图上手绘历史行动轨迹，推测可能乘坐的公交、地铁、城铁、电车、区域列车与渡轮路线。";
+    "在柏林地图上用景点图钉、丝线与拐点记录行动轨迹，推测可能乘坐的公交、地铁、城铁、电车、区域列车与渡轮路线。";
 
   return {
     metadataBase,
@@ -29,13 +29,13 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: "zh_CN",
       title,
       description,
-      images: [{ url: "/og.png", width: 1731, height: 909, alt: "Berlin Trace 手绘轨迹与公共交通路线示意" }],
+      images: [{ url: "/og-pin-thread.png", width: 1734, height: 907, alt: "Berlin Trace 图钉、丝线路线与公共交通示意" }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og.png"],
+      images: ["/og-pin-thread.png"],
     },
   };
 }
