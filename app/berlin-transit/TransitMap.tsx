@@ -94,12 +94,19 @@ function isStoredRoutePin(value: unknown): value is RoutePin {
 
 function nailIcon(
   L: typeof import("leaflet"),
-  options: { color: string; selected?: boolean; number?: number; bend?: boolean }
+  options: {
+    color: string;
+    selected?: boolean;
+    number?: number;
+    bend?: boolean;
+    ambient?: boolean;
+  }
 ) {
   const classes = [
     "map-nail",
     options.selected ? "map-nail--selected" : "",
     options.bend ? "map-nail--bend" : "",
+    options.ambient ? "map-nail--ambient" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -181,6 +188,10 @@ export default function TransitMap() {
   const [network, setNetwork] = useState<TransitNetwork | null>(null);
   const [ready, setReady] = useState(false);
   const [drawing, setDrawing] = useState(true);
+  const [controlsOpen, setControlsOpen] = useState(true);
+  const [preferencesOpen, setPreferencesOpen] = useState(false);
+  const [resultsOpen, setResultsOpen] = useState(true);
+  const [renderedAttractionCount, setRenderedAttractionCount] = useState(0);
   const [routePins, setRoutePins] = useState<RoutePin[]>([]);
   const [routeHydrated, setRouteHydrated] = useState(false);
   const [drawnPath, setDrawnPath] = useState<LL[] | null>(null);
@@ -279,12 +290,13 @@ export default function TransitMap() {
         const map = L.map(containerRef.current, {
           center: BERLIN_CENTER,
           zoom: 12,
-          zoomControl: true,
+          zoomControl: false,
           maxBounds: L.latLngBounds([52.28, 12.98], [52.72, 13.86]),
           maxBoundsViscosity: 0.7,
           minZoom: 10,
         });
         mapRef.current = map;
+        L.control.zoom({ position: "bottomleft" }).addTo(map);
 
         const dark = window.matchMedia?.("(prefers-color-scheme: dark)").matches;
         L.tileLayer(
@@ -486,6 +498,7 @@ export default function TransitMap() {
     if (positions.length < 2) return;
     previewRef.current?.remove();
     previewRef.current = null;
+    setResultsOpen(true);
     commitPath(positions);
   }, [commitPath]);
 
@@ -776,46 +789,85 @@ export default function TransitMap() {
     const group = attractionsGroupRef.current;
     const map = mapRef.current;
     if (!L || !group || !map) return;
-    group.clearLayers();
-    if (!showAttractions || !attractions) return;
-    for (const attraction of attractions) {
-      if (!categoryFilter[attraction.category]) continue;
-      const meta = CATEGORY_META[attraction.category];
-      const marker = L.marker(attraction.point, {
-        icon: nailIcon(L, { color: meta.color }),
-        keyboard: true,
-        riseOnHover: true,
-        title: attraction.name,
-      })
-        .addTo(group)
-        .bindTooltip(`${meta.emoji} ${attraction.name} · ${drawing ? "点击穿线" : "点击查看"}`, {
-          direction: "top",
-          offset: [0, -28],
-        });
-      const url = attractionWikiUrl(attraction);
-      const popupHtml =
-        `<div style="min-width:150px;line-height:1.4">` +
-          `<div style="font-weight:600">${meta.emoji} ${escapeHtml(attraction.name)}</div>` +
+    let frame = 0;
+    const renderPins = () => {
+      group.clearLayers();
+      if (!showAttractions || !attractions) {
+        setRenderedAttractionCount(0);
+        return;
+      }
+
+      const zoom = map.getZoom();
+      const gridSize = zoom <= 10 ? 76 : zoom === 11 ? 62 : zoom === 12 ? 50 : zoom === 13 ? 38 : zoom === 14 ? 28 : 18;
+      const bounds = map.getBounds().pad(0.08);
+      const occupied = new Set<string>();
+      const candidates = attractions
+        .filter(
+          (attraction) =>
+            categoryFilter[attraction.category] && bounds.contains(attraction.point)
+        )
+        .sort(
+          (first, second) =>
+            ATTRACTION_CATEGORIES.indexOf(first.category) -
+            ATTRACTION_CATEGORIES.indexOf(second.category)
+        );
+      let rendered = 0;
+
+      for (const attraction of candidates) {
+        const projected = map.latLngToContainerPoint(attraction.point);
+        const gridKey = `${Math.floor(projected.x / gridSize)}:${Math.floor(projected.y / gridSize)}`;
+        if (zoom < 16 && occupied.has(gridKey)) continue;
+        occupied.add(gridKey);
+        const meta = CATEGORY_META[attraction.category];
+        const marker = L.marker(attraction.point, {
+          icon: nailIcon(L, { color: meta.color, ambient: true }),
+          keyboard: true,
+          riseOnHover: true,
+          title: attraction.name,
+        })
+          .addTo(group)
+          .bindTooltip(
+            `${meta.emoji} ${attraction.name} · ${drawing ? "加入线迹" : "查看详情"}`,
+            { direction: "top", offset: [0, -24] }
+          );
+        const url = attractionWikiUrl(attraction);
+        const popupHtml =
+          `<div style="min-width:164px;line-height:1.5">` +
+          `<div style="font-weight:700">${meta.emoji} ${escapeHtml(attraction.name)}</div>` +
           (attraction.nameEn
             ? `<div style="color:#78716c;font-size:11px">${escapeHtml(attraction.nameEn)}</div>`
             : "") +
-          `<div style="color:${meta.color};font-size:11px;margin-top:2px">${meta.label}</div>` +
+          `<div style="color:${meta.color};font-size:11px;margin-top:3px">${meta.label}</div>` +
           (url
             ? `<a href="${url}" target="_blank" rel="noreferrer" style="color:#ea580c;font-size:11px">维基百科 ↗</a>`
             : "") +
           `</div>`;
-      marker.on("click", (event) => {
-        event.originalEvent?.stopPropagation();
-        if (drawingRef.current) {
-          addAttractionPin(attraction);
-          return;
-        }
-        L.popup({ offset: [0, -28] })
-          .setLatLng(attraction.point)
-          .setContent(popupHtml)
-          .openOn(map);
-      });
-    }
+        marker.on("click", (event) => {
+          event.originalEvent?.stopPropagation();
+          if (drawingRef.current) {
+            addAttractionPin(attraction);
+            return;
+          }
+          L.popup({ offset: [0, -24] })
+            .setLatLng(attraction.point)
+            .setContent(popupHtml)
+            .openOn(map);
+        });
+        rendered += 1;
+      }
+      setRenderedAttractionCount(rendered);
+    };
+
+    const scheduleRender = () => {
+      window.cancelAnimationFrame(frame);
+      frame = window.requestAnimationFrame(renderPins);
+    };
+    scheduleRender();
+    map.on("moveend zoomend", scheduleRender);
+    return () => {
+      window.cancelAnimationFrame(frame);
+      map.off("moveend zoomend", scheduleRender);
+    };
   }, [addAttractionPin, attractions, showAttractions, categoryFilter, drawing, ready]);
 
   const clearAll = useCallback(() => {
@@ -836,7 +888,7 @@ export default function TransitMap() {
     }));
   };
 
-  const visibleAttractions =
+  const availableAttractions =
     showAttractions && attractions
       ? attractions.filter((attraction) => categoryFilter[attraction.category])
           .length
@@ -853,248 +905,289 @@ export default function TransitMap() {
         aria-label="柏林图钉路线地图。在穿线模式中点击景点图钉或地图空白处记录节点；空格在地图中心加拐点，回车完成，退格撤销。"
       />
 
-      <section className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex justify-center p-3 sm:justify-start sm:p-5">
-        <div className="pointer-events-auto max-h-[74dvh] w-full max-w-[430px] overflow-y-auto rounded-[22px] border border-white/70 bg-white/92 p-4 shadow-[0_18px_55px_rgba(28,25,23,0.18)] backdrop-blur-xl dark:border-white/10 dark:bg-stone-950/90 sm:max-h-[calc(100dvh-2.5rem)] sm:p-5">
-          <div className="flex items-start justify-between gap-4">
-            <div>
-              <p className="text-[11px] font-bold tracking-[0.16em] text-orange-600 uppercase">
+      <section className="pointer-events-none absolute inset-x-0 top-0 z-[1000] flex justify-center p-3 sm:justify-start sm:p-4 lg:p-5">
+        <div
+          className={`pointer-events-auto w-full overflow-hidden rounded-[26px] border border-white/75 bg-white/88 shadow-[0_24px_70px_rgba(38,30,23,0.16)] backdrop-blur-2xl transition-[max-width] duration-300 dark:border-white/10 dark:bg-stone-950/88 ${
+            controlsOpen ? "max-w-[390px]" : "max-w-[248px]"
+          }`}
+        >
+          <header className="flex items-center gap-3 px-4 py-3.5">
+            <span className="brand-mark" aria-hidden>
+              <span />
+              <span />
+              <span />
+            </span>
+            <div className="min-w-0 flex-1">
+              <p className="truncate text-[10px] font-black tracking-[0.2em] text-orange-600 uppercase">
                 Berlin Trace
               </p>
-              <h1 className="mt-1 text-lg font-semibold tracking-tight">用图钉与丝线串起柏林轨迹</h1>
+              <p className="truncate text-[11px] font-semibold text-stone-500 dark:text-stone-400">
+                图钉线迹规划器
+              </p>
             </div>
-            <span className="mt-0.5 rounded-full bg-emerald-50 px-2 py-1 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-950 dark:text-emerald-300">
-              仅限柏林
-            </span>
-          </div>
-          <p className="mt-2 text-xs leading-5 text-stone-600 dark:text-stone-400">
-            点一个景点钉开始，移动时丝线会跟着你；继续点景点，或在空白处落下一个可拖动的拐点。
-          </p>
-          <p className="mt-1 text-[10px] leading-4 text-stone-400">
-            每个落点都会记录坐标并保存在本机。至少两个点后即可完成穿线并推测行程。
-          </p>
-
-          <div className="mt-4 grid grid-cols-2 rounded-xl bg-stone-100 p-1 dark:bg-stone-800" aria-label="地图操作模式">
-            <button
-              type="button"
-              aria-pressed={drawing}
-              onClick={() => setDrawing(true)}
-              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                drawing
-                  ? "bg-white text-stone-950 shadow-sm dark:bg-stone-700 dark:text-white"
-                  : "text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-white"
-              }`}
-            >
-              穿线模式
-            </button>
-            <button
-              type="button"
-              aria-pressed={!drawing}
-              onClick={() => setDrawing(false)}
-              className={`rounded-lg px-3 py-2 text-xs font-semibold transition ${
-                !drawing
-                  ? "bg-white text-stone-950 shadow-sm dark:bg-stone-700 dark:text-white"
-                  : "text-stone-500 hover:text-stone-800 dark:text-stone-400 dark:hover:text-white"
-              }`}
-            >
-              平移地图
-            </button>
-          </div>
-
-          <div className="mt-3 rounded-2xl border border-orange-200/80 bg-orange-50/85 p-3 dark:border-orange-900/70 dark:bg-orange-950/35">
-            <div className="flex items-start justify-between gap-3">
-              <div className="min-w-0">
-                <p className="text-[10px] font-bold tracking-[0.12em] text-orange-700 uppercase dark:text-orange-300">
-                  {drawnPath ? "丝线已固定" : routePins.length ? "正在拉线" : "等待第一枚图钉"}
-                </p>
-                <p className="mt-1 text-xs leading-5 text-stone-700 dark:text-stone-200" aria-live="polite">
-                  {drawnPath
-                    ? `已用 ${routePins.length} 个节点固定路线；继续点击可延长。`
-                    : routePins.length
-                      ? `已记录 ${routePins.length} 个节点，点击下一处让丝线转向。`
-                      : "点击任意景点钉，或点击地图空白处开始。"}
-                </p>
-              </div>
-              <span className="relative mt-0.5 inline-flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-orange-500 text-xs font-black text-white shadow-[0_4px_10px_rgba(194,65,12,0.35)] ring-2 ring-white dark:ring-stone-900">
-                {routePins.length || "+"}
-              </span>
-            </div>
-
-            <div className="mt-3 grid grid-cols-[1fr_1.35fr] gap-2">
-              <button
-                type="button"
-                onClick={undoPin}
-                disabled={routePins.length === 0}
-                className="rounded-xl border border-orange-200 bg-white/75 px-3 py-2 text-[11px] font-semibold text-stone-600 transition hover:border-orange-400 hover:text-stone-900 disabled:cursor-not-allowed disabled:opacity-40 dark:border-orange-900 dark:bg-stone-900/60 dark:text-stone-300"
-              >
-                撤回上一钉
-              </button>
-              <button
-                type="button"
-                onClick={finishThread}
-                disabled={routePins.length < 2}
-                className="rounded-xl bg-orange-600 px-3 py-2 text-[11px] font-bold text-white shadow-sm transition hover:bg-orange-700 disabled:cursor-not-allowed disabled:bg-orange-300 dark:disabled:bg-orange-950 dark:disabled:text-orange-700"
-              >
-                {drawnPath ? "重新匹配路线" : "固定丝线并匹配"}
-              </button>
-            </div>
-
-            {routePins.length > 0 && (
-              <details className="mt-2 border-t border-orange-200/80 pt-2 dark:border-orange-900/70">
-                <summary className="cursor-pointer text-[10px] font-semibold text-orange-800 outline-none dark:text-orange-300">
-                  节点记录 · {routePins.length} 个精确坐标
-                </summary>
-                <ol className="mt-2 max-h-28 space-y-1 overflow-y-auto pr-1">
-                  {routePins.map((pin, index) => (
-                    <li
-                      key={pin.id}
-                      className="grid grid-cols-[20px_1fr_auto] items-center gap-2 rounded-lg bg-white/70 px-2 py-1.5 text-[10px] dark:bg-stone-900/60"
-                    >
-                      <span
-                        className="inline-flex h-5 w-5 items-center justify-center rounded-full text-[9px] font-black text-white"
-                        style={{ backgroundColor: pin.color ?? DRAW_COLOR }}
-                      >
-                        {index + 1}
-                      </span>
-                      <span className="min-w-0">
-                        <span className="block truncate font-semibold text-stone-700 dark:text-stone-200">
-                          {pin.label}
-                        </span>
-                        <span className="block font-mono text-[9px] text-stone-400">
-                          {pin.point[0].toFixed(5)}, {pin.point[1].toFixed(5)}
-                        </span>
-                      </span>
-                      <button
-                        type="button"
-                        onClick={() => removePin(pin.id)}
-                        className="rounded-full px-1.5 py-1 text-stone-400 transition hover:bg-stone-100 hover:text-red-600 dark:hover:bg-stone-800"
-                        aria-label={`删除节点 ${index + 1}：${pin.label}`}
-                      >
-                        ×
-                      </button>
-                    </li>
-                  ))}
-                </ol>
-              </details>
-            )}
-          </div>
-
-          <div className="mt-3 flex flex-wrap gap-1.5" aria-label="交通方式筛选">
-            {MODE_ORDER.map((mode) => (
-              <button
-                key={mode}
-                type="button"
-                aria-pressed={modes[mode]}
-                onClick={() => toggleMode(mode)}
-                className={`rounded-full border px-2.5 py-1 text-[11px] font-semibold transition ${
-                  modes[mode]
-                    ? "border-stone-900 bg-stone-900 text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-950"
-                    : "border-stone-300 bg-white/60 text-stone-500 hover:border-stone-500 dark:border-stone-700 dark:bg-transparent dark:text-stone-500"
-                }`}
-              >
-                {modeLabel(mode)}
-              </button>
-            ))}
-          </div>
-
-          <label className="mt-3 block">
-            <span className="mb-1.5 flex items-center justify-between text-[10px] font-semibold text-stone-500">
-              <span>出发日期与时间</span>
-              <span className="font-normal text-stone-400">柏林当地时间</span>
-            </span>
-            <input
-              type="datetime-local"
-              value={departure}
-              onChange={(event) => setDeparture(event.target.value)}
-              className="w-full rounded-xl border border-stone-200 bg-white/70 px-3 py-2 text-xs text-stone-800 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:focus:ring-orange-950"
-              aria-label="历史行程的出发日期与时间"
+            <span
+              className={`h-2 w-2 rounded-full ${network ? "bg-emerald-500 shadow-[0_0_0_4px_rgba(16,185,129,0.12)]" : "animate-pulse bg-amber-400"}`}
+              title={network ? "VBB 网络已连接" : "正在连接 VBB 网络"}
             />
-          </label>
-
-          <div className="mt-3 border-t border-stone-200 pt-3 dark:border-stone-800">
-            <div className="flex items-center justify-between">
-              <span className="text-[10px] font-semibold text-stone-500">
-                景点图层
-                {showAttractions && attractions ? ` · ${visibleAttractions}` : ""}
-              </span>
-              <button
-                type="button"
-                role="switch"
-                aria-checked={showAttractions}
-                onClick={() => setShowAttractions((value) => !value)}
-                className={`rounded-full px-2.5 py-1 text-[10px] font-semibold transition ${
-                  showAttractions
-                    ? "bg-orange-500 text-white"
-                    : "bg-stone-100 text-stone-500 hover:bg-stone-200 dark:bg-stone-800 dark:text-stone-400"
-                }`}
-              >
-                {showAttractions ? "显示中" : "已隐藏"}
-              </button>
-            </div>
-            {showAttractions && (
-              <div className="mt-2 flex flex-wrap gap-1" aria-label="景点分类筛选">
-                {ATTRACTION_CATEGORIES.map((category) => {
-                  const meta = CATEGORY_META[category];
-                  const on = categoryFilter[category];
-                  return (
-                    <button
-                      key={category}
-                      type="button"
-                      aria-pressed={on}
-                      onClick={() => toggleCategory(category)}
-                      style={on ? { borderColor: meta.color } : undefined}
-                      className={`flex items-center gap-1 rounded-full border px-2 py-0.5 text-[10px] font-medium transition ${
-                        on
-                          ? "bg-white text-stone-800 dark:bg-stone-800 dark:text-stone-100"
-                          : "border-stone-200 text-stone-400 dark:border-stone-700"
-                      }`}
-                    >
-                      <span
-                        aria-hidden
-                        className="inline-block h-2 w-2 rounded-full"
-                        style={{
-                          backgroundColor: on ? meta.color : "transparent",
-                          border: on ? undefined : `1px solid ${meta.color}`,
-                        }}
-                      />
-                      {meta.emoji} {meta.label}
-                    </button>
-                  );
-                })}
-              </div>
-            )}
-          </div>
-
-          <div className="mt-3 flex items-center justify-between gap-3 border-t border-stone-200 pt-3 dark:border-stone-800">
-            <p className="min-w-0 truncate text-[10px] text-stone-500" aria-live="polite">
-              {error
-                ? error
-                : network
-                  ? `${network.lines.length} 条线路 · VBB 实时行程接口已启用`
-                  : "正在加载 VBB 交通网络…"}
-            </p>
             <button
               type="button"
-              onClick={clearAll}
-              disabled={routePins.length === 0}
-              className="shrink-0 text-[11px] font-semibold text-orange-600 transition hover:text-orange-700 disabled:cursor-not-allowed disabled:text-stone-300 dark:disabled:text-stone-700"
+              onClick={() => setControlsOpen((value) => !value)}
+              className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-sm font-semibold text-stone-500 transition hover:bg-stone-200 hover:text-stone-900 dark:bg-stone-800 dark:text-stone-400 dark:hover:text-white"
+              aria-expanded={controlsOpen}
+              aria-label={controlsOpen ? "收起控制台" : "展开控制台"}
             >
-              清空图钉
+              {controlsOpen ? "−" : "+"}
             </button>
-          </div>
+          </header>
+
+          {controlsOpen && (
+            <div className="max-h-[calc(100dvh-96px)] overflow-y-auto border-t border-stone-200/70 px-4 pb-4 dark:border-stone-800">
+              <div className="pt-4">
+                <div className="flex items-center gap-1.5 text-[9px] font-bold tracking-[0.08em] text-stone-400 uppercase">
+                  <span className={routePins.length ? "text-orange-600" : "text-stone-700 dark:text-stone-200"}>01 落钉</span>
+                  <span className="h-px flex-1 bg-stone-200 dark:bg-stone-700" />
+                  <span className={routePins.length >= 2 ? "text-orange-600" : ""}>02 拉线</span>
+                  <span className="h-px flex-1 bg-stone-200 dark:bg-stone-700" />
+                  <span className={drawnPath ? "text-emerald-600" : ""}>03 匹配</span>
+                </div>
+                <h1 className="mt-3 text-xl font-semibold tracking-[-0.025em] text-stone-950 dark:text-white">
+                  {drawnPath ? "路线已经固定" : routePins.length ? "继续选择下一站" : "从一个地点开始"}
+                </h1>
+                <p className="mt-1.5 text-[11px] leading-[1.65] text-stone-500 dark:text-stone-400">
+                  {drawnPath
+                    ? "匹配结果已生成。你仍可继续落钉延长路线。"
+                    : routePins.length
+                      ? "点景点继续串联；点地图空白处添加可拖动拐点。"
+                      : "选择地图上的景点钉，丝线会自动跟随到下一处。"}
+                </p>
+              </div>
+
+              <div className="mt-4 grid grid-cols-2 rounded-[14px] bg-stone-100/90 p-1 dark:bg-stone-800" aria-label="地图操作模式">
+                <button
+                  type="button"
+                  aria-pressed={drawing}
+                  onClick={() => setDrawing(true)}
+                  className={`rounded-[10px] px-3 py-2 text-[11px] font-bold transition ${
+                    drawing
+                      ? "bg-white text-stone-950 shadow-sm dark:bg-stone-700 dark:text-white"
+                      : "text-stone-500 hover:text-stone-800 dark:text-stone-400"
+                  }`}
+                >
+                  ◎ 穿线
+                </button>
+                <button
+                  type="button"
+                  aria-pressed={!drawing}
+                  onClick={() => setDrawing(false)}
+                  className={`rounded-[10px] px-3 py-2 text-[11px] font-bold transition ${
+                    !drawing
+                      ? "bg-white text-stone-950 shadow-sm dark:bg-stone-700 dark:text-white"
+                      : "text-stone-500 hover:text-stone-800 dark:text-stone-400"
+                  }`}
+                >
+                  ✥ 浏览
+                </button>
+              </div>
+
+              <div className={`mt-3 rounded-[18px] border p-3.5 transition ${
+                routePins.length
+                  ? "border-orange-200 bg-[linear-gradient(145deg,rgba(255,247,237,.96),rgba(255,255,255,.9))] dark:border-orange-900/80 dark:bg-orange-950/30"
+                  : "border-stone-200 bg-white/60 dark:border-stone-800 dark:bg-stone-900/50"
+              }`}>
+                <div className="flex items-center gap-3">
+                  <span className={`inline-flex h-10 w-10 shrink-0 items-center justify-center rounded-2xl text-sm font-black ${
+                    routePins.length ? "bg-orange-600 text-white shadow-[0_7px_18px_rgba(234,88,12,.28)]" : "bg-stone-100 text-stone-400 dark:bg-stone-800"
+                  }`}>
+                    {routePins.length || "+"}
+                  </span>
+                  <div className="min-w-0 flex-1" aria-live="polite">
+                    <p className="text-[11px] font-bold text-stone-800 dark:text-stone-100">
+                      {drawnPath ? "线迹已固定" : routePins.length ? `${routePins.length} 个节点正在串联` : "等待第一个落点"}
+                    </p>
+                    <p className="mt-0.5 truncate text-[10px] text-stone-400">
+                      {routePins.length ? routePins[routePins.length - 1].label : "点击任意景点或地图空白处"}
+                    </p>
+                  </div>
+                </div>
+
+                {routePins.length > 0 && (
+                  <div className="mt-3 flex items-center overflow-hidden rounded-xl bg-white/80 px-2.5 py-2 dark:bg-stone-900/70" aria-label="线迹节点概览">
+                    {routePins.slice(-6).map((pin, index, visible) => (
+                      <div key={pin.id} className="flex min-w-0 flex-1 items-center last:flex-none">
+                        <span
+                          className="inline-flex h-6 w-6 shrink-0 items-center justify-center rounded-full text-[8px] font-black text-white ring-2 ring-white dark:ring-stone-900"
+                          style={{ backgroundColor: pin.color ?? DRAW_COLOR }}
+                          title={pin.label}
+                        >
+                          {routePins.length - visible.length + index + 1}
+                        </span>
+                        {index < visible.length - 1 && <span className="h-0.5 min-w-2 flex-1 bg-orange-300 dark:bg-orange-800" />}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                <div className="mt-3 grid grid-cols-[auto_auto_1fr] gap-2">
+                  <button
+                    type="button"
+                    onClick={clearAll}
+                    disabled={routePins.length === 0}
+                    className="rounded-xl px-3 py-2 text-[10px] font-semibold text-stone-400 transition hover:bg-white hover:text-red-600 disabled:cursor-not-allowed disabled:opacity-30 dark:hover:bg-stone-900"
+                  >
+                    清空
+                  </button>
+                  <button
+                    type="button"
+                    onClick={undoPin}
+                    disabled={routePins.length === 0}
+                    className="rounded-xl border border-stone-200 bg-white/80 px-3 py-2 text-[10px] font-semibold text-stone-600 transition hover:border-stone-400 disabled:cursor-not-allowed disabled:opacity-35 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-300"
+                  >
+                    ↶ 撤回
+                  </button>
+                  <button
+                    type="button"
+                    onClick={finishThread}
+                    disabled={routePins.length < 2}
+                    className="rounded-xl bg-stone-950 px-3 py-2 text-[10px] font-bold text-white shadow-sm transition hover:bg-orange-600 disabled:cursor-not-allowed disabled:bg-stone-300 dark:bg-white dark:text-stone-950 dark:hover:bg-orange-500 dark:disabled:bg-stone-800 dark:disabled:text-stone-600"
+                  >
+                    {drawnPath ? "重新匹配 →" : "完成并匹配 →"}
+                  </button>
+                </div>
+
+                {routePins.length > 0 && (
+                  <details className="mt-2 border-t border-stone-200/80 pt-2 dark:border-stone-800">
+                    <summary className="cursor-pointer text-[10px] font-semibold text-stone-500 outline-none hover:text-stone-900 dark:hover:text-white">
+                      查看 {routePins.length} 个坐标记录
+                    </summary>
+                    <ol className="mt-2 max-h-32 space-y-1 overflow-y-auto pr-1">
+                      {routePins.map((pin, index) => (
+                        <li key={pin.id} className="grid grid-cols-[20px_1fr_auto] items-center gap-2 rounded-lg bg-white/80 px-2 py-1.5 text-[10px] dark:bg-stone-900/70">
+                          <span className="font-black text-orange-600">{String(index + 1).padStart(2, "0")}</span>
+                          <span className="min-w-0">
+                            <span className="block truncate font-semibold text-stone-700 dark:text-stone-200">{pin.label}</span>
+                            <span className="block font-mono text-[8px] text-stone-400">{pin.point[0].toFixed(5)}, {pin.point[1].toFixed(5)}</span>
+                          </span>
+                          <button type="button" onClick={() => removePin(pin.id)} className="rounded-full px-1.5 py-1 text-stone-400 hover:bg-stone-100 hover:text-red-600 dark:hover:bg-stone-800" aria-label={`删除节点 ${index + 1}：${pin.label}`}>×</button>
+                        </li>
+                      ))}
+                    </ol>
+                  </details>
+                )}
+              </div>
+
+              <button
+                type="button"
+                onClick={() => setPreferencesOpen((value) => !value)}
+                className="mt-3 flex w-full items-center justify-between rounded-[14px] border border-stone-200 bg-white/60 px-3.5 py-3 text-left transition hover:border-stone-300 hover:bg-white dark:border-stone-800 dark:bg-stone-900/40 dark:hover:bg-stone-900"
+                aria-expanded={preferencesOpen}
+              >
+                <span>
+                  <span className="block text-[11px] font-bold text-stone-800 dark:text-stone-100">路线偏好</span>
+                  <span className="mt-0.5 block text-[9px] text-stone-400">时间、交通方式与景点图层</span>
+                </span>
+                <span className={`text-sm text-stone-400 transition-transform ${preferencesOpen ? "rotate-180" : ""}`}>⌄</span>
+              </button>
+
+              {preferencesOpen && (
+                <div className="mt-2 space-y-4 rounded-[16px] border border-stone-200/80 bg-white/65 p-3.5 dark:border-stone-800 dark:bg-stone-900/50">
+                  <label className="block">
+                    <span className="mb-1.5 flex items-center justify-between text-[9px] font-bold text-stone-500">
+                      <span>出发时间</span>
+                      <span className="font-normal text-stone-400">柏林当地时间</span>
+                    </span>
+                    <input type="datetime-local" value={departure} onChange={(event) => setDeparture(event.target.value)} className="w-full rounded-xl border border-stone-200 bg-white px-3 py-2 text-[11px] text-stone-800 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-100" aria-label="历史行程的出发日期与时间" />
+                  </label>
+
+                  <div>
+                    <p className="mb-2 text-[9px] font-bold text-stone-500">交通方式</p>
+                    <div className="flex flex-wrap gap-1.5" aria-label="交通方式筛选">
+                      {MODE_ORDER.map((mode) => (
+                        <button key={mode} type="button" aria-pressed={modes[mode]} onClick={() => toggleMode(mode)} className={`rounded-full border px-2.5 py-1 text-[10px] font-semibold transition ${modes[mode] ? "border-stone-900 bg-stone-900 text-white dark:border-stone-100 dark:bg-stone-100 dark:text-stone-950" : "border-stone-200 text-stone-400 hover:border-stone-400 dark:border-stone-700"}`}>{modeLabel(mode)}</button>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div className="border-t border-stone-200 pt-3 dark:border-stone-800">
+                    <div className="flex items-center justify-between">
+                      <span className="text-[9px] font-bold text-stone-500">景点钉 · 当前显示 {renderedAttractionCount}/{availableAttractions}</span>
+                      <button type="button" role="switch" aria-checked={showAttractions} onClick={() => setShowAttractions((value) => !value)} className={`relative h-5 w-9 rounded-full transition ${showAttractions ? "bg-orange-500" : "bg-stone-300 dark:bg-stone-700"}`}>
+                        <span className={`absolute top-0.5 h-4 w-4 rounded-full bg-white shadow transition-transform ${showAttractions ? "translate-x-4" : "translate-x-0.5"}`} />
+                        <span className="sr-only">{showAttractions ? "隐藏景点" : "显示景点"}</span>
+                      </button>
+                    </div>
+                    {showAttractions && (
+                      <div className="mt-2 flex flex-wrap gap-1.5" aria-label="景点分类筛选">
+                        {ATTRACTION_CATEGORIES.map((category) => {
+                          const meta = CATEGORY_META[category];
+                          const on = categoryFilter[category];
+                          return (
+                            <button key={category} type="button" aria-pressed={on} onClick={() => toggleCategory(category)} className={`flex items-center gap-1 rounded-full border px-2 py-1 text-[9px] font-medium transition ${on ? "border-stone-300 bg-white text-stone-700 dark:border-stone-700 dark:bg-stone-800 dark:text-stone-100" : "border-transparent bg-stone-100 text-stone-400 dark:bg-stone-800/60"}`}>
+                              <span className="inline-block h-1.5 w-1.5 rounded-full" style={{ backgroundColor: on ? meta.color : "transparent", boxShadow: on ? undefined : `inset 0 0 0 1px ${meta.color}` }} />
+                              {meta.label}
+                            </button>
+                          );
+                        })}
+                      </div>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              <div className="mt-3 flex items-center justify-between px-1 text-[9px] text-stone-400" aria-live="polite">
+                <span>{error ? "地图数据连接失败" : network ? `${network.lines.length} 条 VBB 线路已就绪` : "正在连接 VBB 网络…"}</span>
+                <span>自动保存</span>
+              </div>
+            </div>
+          )}
         </div>
       </section>
 
-      {drawnPath && (
+      {drawnPath && !resultsOpen && (
+        <button
+          type="button"
+          onClick={() => setResultsOpen(true)}
+          className="absolute right-3 bottom-4 z-[1000] inline-flex items-center gap-2 rounded-full border border-white/80 bg-stone-950 px-4 py-2.5 text-[11px] font-bold text-white shadow-[0_14px_35px_rgba(28,25,23,.28)] backdrop-blur-xl transition hover:-translate-y-0.5 hover:bg-orange-600 sm:right-5 sm:bottom-auto sm:top-5"
+        >
+          <span className="h-2 w-2 rounded-full bg-emerald-400" />
+          查看行程
+          {(liveJourney || journey) && (
+            <span className="text-orange-300">
+              {liveJourney ? Math.round(liveJourney.similarity) : Math.round((journey?.confidence ?? 0) * 100)}%
+            </span>
+          )}
+        </button>
+      )}
+
+      {drawnPath && resultsOpen && (
         <section
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1000] flex justify-center p-3 sm:right-5 sm:left-auto sm:justify-end sm:p-5"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1000] flex justify-center p-3 lg:inset-y-5 lg:right-5 lg:left-auto lg:w-[410px] lg:p-0"
           aria-live="polite"
           aria-busy={analyzing}
         >
-          <div className="pointer-events-auto max-h-[48dvh] w-full max-w-[420px] overflow-y-auto rounded-[22px] border border-white/70 bg-white/94 p-4 shadow-[0_18px_55px_rgba(28,25,23,0.2)] backdrop-blur-xl dark:border-white/10 dark:bg-stone-950/92 sm:max-h-[62dvh] sm:p-5">
+          <div className="pointer-events-auto flex max-h-[62dvh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-[26px] border border-white/75 bg-white/92 shadow-[0_24px_70px_rgba(28,25,23,0.22)] backdrop-blur-2xl dark:border-white/10 dark:bg-stone-950/92 sm:rounded-[26px] lg:h-full lg:max-h-none">
+            <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-stone-300 sm:hidden dark:bg-stone-700" />
+            <header className="flex shrink-0 items-center justify-between border-b border-stone-200/80 px-4 py-3.5 dark:border-stone-800">
+              <div>
+                <p className="text-[9px] font-black tracking-[0.18em] text-emerald-600 uppercase">Journey Match</p>
+                <p className="mt-0.5 text-[11px] font-semibold text-stone-500 dark:text-stone-400">VBB 行程建议</p>
+              </div>
+              <button
+                type="button"
+                onClick={() => setResultsOpen(false)}
+                className="inline-flex h-8 w-8 items-center justify-center rounded-full bg-stone-100 text-sm text-stone-500 transition hover:bg-stone-200 hover:text-stone-950 dark:bg-stone-800 dark:text-stone-400 dark:hover:text-white"
+                aria-label="收起行程结果"
+              >
+                ×
+              </button>
+            </header>
+            <div className="min-h-0 flex-1 overflow-y-auto p-4 sm:p-5">
             {analyzing ? (
-              <div className="flex items-center gap-3 py-2 text-sm text-stone-600 dark:text-stone-300">
-                <span className="h-2.5 w-2.5 animate-pulse rounded-full bg-orange-500" />
-                正在查询 VBB 当时可乘方案并比对轨迹…
+              <div className="py-3">
+                <div className="flex items-center gap-3 text-sm font-semibold text-stone-700 dark:text-stone-200">
+                  <span className="relative h-3 w-3 rounded-full bg-orange-500 after:absolute after:inset-[-5px] after:animate-ping after:rounded-full after:bg-orange-400/30" />
+                  正在生成行程建议
+                </div>
+                <p className="mt-2 pl-6 text-[11px] leading-5 text-stone-400">比对 VBB 时刻表、路线方向和你的线迹拐点…</p>
               </div>
             ) : liveJourney ? (
               <>
@@ -1347,6 +1440,7 @@ export default function TransitMap() {
               )}
               。
             </p>
+            </div>
           </div>
         </section>
       )}

@@ -29,13 +29,13 @@ export async function generateMetadata(): Promise<Metadata> {
       locale: "zh_CN",
       title,
       description,
-      images: [{ url: "/og-pin-thread.png", width: 1734, height: 907, alt: "Berlin Trace 图钉、丝线路线与公共交通示意" }],
+      images: [{ url: "/og-modern.png", width: 1734, height: 907, alt: "Berlin Trace 现代图钉线迹规划器" }],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og-pin-thread.png"],
+      images: ["/og-modern.png"],
     },
   };
 }
