@@ -84,8 +84,8 @@ const MODE_LABEL: Record<TransitMode, string> = {
   light_rail: "S-Bahn",
   tram: "Tram",
   bus: "Bus",
-  rail: "区域列车",
-  ferry: "渡轮",
+  rail: "Regional train",
+  ferry: "Ferry",
 };
 
 export function modeLabel(mode: TransitMode): string {

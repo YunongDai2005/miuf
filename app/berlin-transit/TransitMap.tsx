@@ -7,7 +7,7 @@ import type {
   Polyline as LPolyline,
 } from "leaflet";
 import "leaflet/dist/leaflet.css";
-import type { LL } from "./geo";
+import { polylineLength, type LL } from "./geo";
 import {
   inferJourney,
   type JourneyMatch,
@@ -100,6 +100,7 @@ function nailIcon(
     number?: number;
     bend?: boolean;
     ambient?: boolean;
+    muted?: boolean;
   }
 ) {
   const classes = [
@@ -107,6 +108,7 @@ function nailIcon(
     options.selected ? "map-nail--selected" : "",
     options.bend ? "map-nail--bend" : "",
     options.ambient ? "map-nail--ambient" : "",
+    options.muted ? "map-nail--muted" : "",
   ]
     .filter(Boolean)
     .join(" ");
@@ -166,6 +168,25 @@ function journeyLineSummary(journey: LiveJourneyCandidate) {
     .join(" → ");
 }
 
+function visibleJourneyLegs(journey: LiveJourneyCandidate) {
+  return journey.legs.filter((leg) => {
+    if (!leg.walking) return true;
+    const duration = Date.parse(leg.arrival) - Date.parse(leg.departure);
+    return !(
+      Number.isFinite(duration) &&
+      duration <= 0 &&
+      (leg.originName === leg.destinationName || polylineLength(leg.polyline) < 50)
+    );
+  });
+}
+
+function legDurationLabel(departure: string, arrival: string) {
+  const duration = Date.parse(arrival) - Date.parse(departure);
+  if (!Number.isFinite(duration) || duration <= 0) return null;
+  const minutes = Math.max(1, Math.round(duration / 60_000));
+  return `${minutes} 分钟`;
+}
+
 export default function TransitMap() {
   const containerRef = useRef<HTMLDivElement | null>(null);
   const mapRef = useRef<LMap | null>(null);
@@ -210,6 +231,7 @@ export default function TransitMap() {
     INITIAL_CATEGORY_FILTER
   );
   const liveJourney = liveJourneys[selectedJourneyIndex] ?? null;
+  const displayedLiveLegs = liveJourney ? visibleJourneyLegs(liveJourney) : [];
 
   useEffect(() => {
     let cancelled = false;
@@ -658,22 +680,37 @@ export default function TransitMap() {
     if (!L || !group) return;
     group.clearLayers();
     resultLayersRef.current.clear();
+    const showingResult = Boolean(liveJourney || journey);
+    threadLinesRef.current.forEach((line, index) => {
+      const focusedStyles = [
+        { weight: 5, opacity: 0.12 },
+        { weight: 3, opacity: 0.45 },
+        { weight: 1, opacity: 0.32 },
+      ];
+      const defaultStyles = [
+        { weight: 7, opacity: 0.28 },
+        { weight: 4, opacity: 0.98 },
+        { weight: 1, opacity: 0.9 },
+      ];
+      line.setStyle((showingResult ? focusedStyles : defaultStyles)[index]);
+    });
     if (liveJourney) {
-      liveJourney.legs.forEach((leg, index) => {
+      const legs = visibleJourneyLegs(liveJourney);
+      legs.forEach((leg, index) => {
         if (leg.polyline.length < 2) return;
         const layers = resultLayersRef.current.get(leg.id) ?? [];
         if (!leg.walking) {
           L.polyline(leg.polyline, {
             color: "#FFFFFF",
-            weight: 10,
-            opacity: 0.8,
+            weight: 11,
+            opacity: 0.86,
             interactive: false,
           }).addTo(group);
         }
         const layer = L.polyline(leg.polyline, {
           color: leg.color,
-          weight: leg.walking ? 4 : 6,
-          opacity: leg.walking ? 0.72 : 0.98,
+          weight: leg.walking ? 3 : 7,
+          opacity: leg.walking ? 0.54 : 1,
           dashArray: leg.walking ? "4 7" : undefined,
         })
           .addTo(group)
@@ -689,7 +726,7 @@ export default function TransitMap() {
         resultLayersRef.current.set(leg.id, layers);
 
         const start = leg.polyline[0];
-        if (index === 0 || (!leg.walking && liveJourney.legs[index - 1])) {
+        if (index === 0 || (!leg.walking && legs[index - 1])) {
           L.circleMarker(start, {
             radius: index === 0 ? 6 : 5,
             color: "#FFFFFF",
@@ -699,7 +736,7 @@ export default function TransitMap() {
             interactive: false,
           }).addTo(group);
         }
-        if (index === liveJourney.legs.length - 1) {
+        if (index === legs.length - 1) {
           L.circleMarker(leg.polyline[leg.polyline.length - 1], {
             radius: 6,
             color: "#FFFFFF",
@@ -798,7 +835,10 @@ export default function TransitMap() {
       }
 
       const zoom = map.getZoom();
-      const gridSize = zoom <= 10 ? 76 : zoom === 11 ? 62 : zoom === 12 ? 50 : zoom === 13 ? 38 : zoom === 14 ? 28 : 18;
+      const focusScale = drawnPath && resultsOpen ? 1.65 : 1;
+      const gridSize =
+        (zoom <= 10 ? 76 : zoom === 11 ? 62 : zoom === 12 ? 50 : zoom === 13 ? 38 : zoom === 14 ? 28 : 18) *
+        focusScale;
       const bounds = map.getBounds().pad(0.08);
       const occupied = new Set<string>();
       const candidates = attractions
@@ -820,7 +860,11 @@ export default function TransitMap() {
         occupied.add(gridKey);
         const meta = CATEGORY_META[attraction.category];
         const marker = L.marker(attraction.point, {
-          icon: nailIcon(L, { color: meta.color, ambient: true }),
+          icon: nailIcon(L, {
+            color: meta.color,
+            ambient: true,
+            muted: Boolean(drawnPath && resultsOpen),
+          }),
           keyboard: true,
           riseOnHover: true,
           title: attraction.name,
@@ -868,7 +912,7 @@ export default function TransitMap() {
       window.cancelAnimationFrame(frame);
       map.off("moveend zoomend", scheduleRender);
     };
-  }, [addAttractionPin, attractions, showAttractions, categoryFilter, drawing, ready]);
+  }, [addAttractionPin, attractions, showAttractions, categoryFilter, drawing, drawnPath, ready, resultsOpen]);
 
   const clearAll = useCallback(() => {
     previewRef.current?.remove();
@@ -1160,11 +1204,11 @@ export default function TransitMap() {
 
       {drawnPath && resultsOpen && (
         <section
-          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1000] flex justify-center p-3 lg:inset-y-5 lg:right-5 lg:left-auto lg:w-[410px] lg:p-0"
+          className="pointer-events-none absolute inset-x-0 bottom-0 z-[1000] flex justify-center p-3 lg:inset-y-4 lg:right-4 lg:left-auto lg:w-[440px] lg:p-0"
           aria-live="polite"
           aria-busy={analyzing}
         >
-          <div className="pointer-events-auto flex max-h-[62dvh] w-full max-w-[430px] flex-col overflow-hidden rounded-t-[26px] border border-white/75 bg-white/92 shadow-[0_24px_70px_rgba(28,25,23,0.22)] backdrop-blur-2xl dark:border-white/10 dark:bg-stone-950/92 sm:rounded-[26px] lg:h-full lg:max-h-none">
+          <div className="pointer-events-auto flex max-h-[68dvh] w-full max-w-[460px] flex-col overflow-hidden rounded-t-[26px] border border-white/75 bg-white/94 shadow-[0_24px_70px_rgba(28,25,23,0.22)] backdrop-blur-2xl dark:border-white/10 dark:bg-stone-950/94 sm:rounded-[26px] lg:h-full lg:max-h-none">
             <div className="mx-auto mt-2 h-1 w-10 rounded-full bg-stone-300 sm:hidden dark:bg-stone-700" />
             <header className="flex shrink-0 items-center justify-between border-b border-stone-200/80 px-4 py-3.5 dark:border-stone-800">
               <div>
@@ -1237,7 +1281,7 @@ export default function TransitMap() {
                   </div>
                 )}
 
-                <div className="mt-3 grid grid-cols-3 divide-x divide-stone-200 rounded-xl bg-stone-100 px-1 py-2 text-center dark:divide-stone-700 dark:bg-stone-800">
+                <div className="mt-4 grid grid-cols-3 divide-x divide-stone-200 rounded-2xl border border-stone-200/70 bg-stone-50 px-1 py-3 text-center dark:divide-stone-700 dark:border-stone-800 dark:bg-stone-900">
                   <div>
                     <div className="text-xs font-semibold">{liveJourney.durationMinutes} 分钟</div>
                     <div className="mt-0.5 text-[9px] text-stone-400">总耗时</div>
@@ -1260,36 +1304,45 @@ export default function TransitMap() {
 
                 {liveJourney.checkpointCount > 0 && (
                   <p className="mt-2 rounded-lg bg-sky-50 px-2.5 py-1.5 text-[10px] leading-4 text-sky-800 dark:bg-sky-950/50 dark:text-sky-300">
-                    长轨迹已按 {liveJourney.checkpointCount} 个有序检查点逐段验证，后一段只会在前一段到达后出发。
+                    已按 {liveJourney.checkpointCount} 个路径节点分段核验，并保持行程时间顺序。
                   </p>
                 )}
 
-                <ol className="mt-4 space-y-1">
-                  {liveJourney.legs.map((leg) => (
-                    <li key={leg.id}>
+                <div className="mt-5 flex items-center justify-between">
+                  <h3 className="text-[11px] font-bold text-stone-800 dark:text-stone-100">行程时间线</h3>
+                  <span className="text-[9px] text-stone-400">{displayedLiveLegs.length} 段</span>
+                </div>
+                <ol className="relative mt-2 space-y-1 before:absolute before:top-4 before:bottom-4 before:left-[19px] before:w-px before:bg-stone-200 dark:before:bg-stone-800">
+                  {displayedLiveLegs.map((leg) => (
+                    <li key={leg.id} className="relative">
                       <button
                         type="button"
                         onMouseEnter={() => setHovered(leg.id)}
                         onMouseLeave={() => setHovered(null)}
                         onFocus={() => setHovered(leg.id)}
                         onBlur={() => setHovered(null)}
-                        className={`flex w-full items-start gap-3 rounded-xl p-2 text-left transition ${
+                        className={`relative flex w-full items-start gap-3 rounded-xl px-2 py-2.5 text-left transition ${
                           hovered === leg.id
                             ? "bg-stone-100 dark:bg-stone-800"
                             : "hover:bg-stone-50 dark:hover:bg-stone-900"
                         }`}
                       >
                         <span
-                          className="inline-flex h-8 min-w-10 items-center justify-center rounded-lg px-1.5 text-[11px] font-extrabold shadow-sm"
+                          className="relative z-10 inline-flex h-8 min-w-10 items-center justify-center rounded-lg border-2 border-white px-1.5 text-[11px] font-extrabold shadow-sm dark:border-stone-950"
                           style={{ backgroundColor: leg.color, color: leg.textColor }}
                         >
                           {leg.walking ? "步行" : leg.lineRef}
                         </span>
                         <span className="min-w-0 flex-1">
                           <span className="flex items-center justify-between gap-2">
-                            <span className="text-xs font-semibold">
+                            <span className="text-xs font-semibold tabular-nums">
                               {formatTime(leg.departure)} → {formatTime(leg.arrival)}
                             </span>
+                            {legDurationLabel(leg.departure, leg.arrival) && (
+                              <span className="text-[9px] font-medium text-stone-400">
+                                {legDurationLabel(leg.departure, leg.arrival)}
+                              </span>
+                            )}
                             {typeof leg.delayMinutes === "number" && leg.delayMinutes !== 0 && (
                               <span className={`text-[9px] font-semibold ${leg.delayMinutes > 0 ? "text-red-600" : "text-emerald-600"}`}>
                                 {leg.delayMinutes > 0 ? `晚 ${leg.delayMinutes}` : `早 ${Math.abs(leg.delayMinutes)}`} 分

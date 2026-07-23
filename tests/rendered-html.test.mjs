@@ -13,18 +13,17 @@ async function render() {
   );
 }
 
-test("server-renders the Berlin Trace product shell", async () => {
+test("server-renders the lost-and-found product shell", async () => {
   const response = await render();
   assert.equal(response.status, 200);
   assert.match(response.headers.get("content-type") ?? "", /^text\/html\b/i);
   const html = await response.text();
-  assert.match(html, /<html lang="zh-CN">/);
-  assert.match(html, /Berlin Trace/);
-  assert.match(html, /图钉线迹规划器/);
-  assert.match(html, /穿线/);
-  assert.match(html, /浏览/);
-  assert.match(html, /完成并匹配/);
-  assert.match(html, /路线偏好/);
+  assert.match(html, /<html lang="en">/);
+  assert.match(html, /Berlin/);
+  assert.match(html, /Lost &amp; Found/);
+  assert.match(html, /Retrace/);
+  assert.match(html, /Offices/);
+  assert.match(html, /What did you lose/);
   assert.match(html, /VBB/);
   assert.doesNotMatch(html, /Starter Project|Building your site|react-loading-skeleton/);
 });

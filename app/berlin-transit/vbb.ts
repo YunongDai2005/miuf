@@ -61,6 +61,9 @@ export class VbbUnavailableError extends Error {
 interface VbbPlace {
   id?: string;
   name?: string;
+  address?: string;
+  latitude?: number;
+  longitude?: number;
   location?: { latitude?: number; longitude?: number };
 }
 
@@ -144,7 +147,7 @@ export function formatDateTimeLocal(date: Date): string {
 /** Interpret a datetime-local value as Berlin time even when the viewer is abroad. */
 export function berlinLocalToIso(value: string): string {
   const match = value.match(/^(\d{4})-(\d{2})-(\d{2})T(\d{2}):(\d{2})/);
-  if (!match) throw new Error("无效的柏林当地时间");
+  if (!match) throw new Error("Invalid Berlin local time.");
   const requestedUtc = Date.UTC(
     Number(match[1]),
     Number(match[2]) - 1,
@@ -186,23 +189,43 @@ export function toApiStopId(stopId: string): string {
 }
 
 function placePoint(place?: VbbPlace): LL | null {
-  const lat = place?.location?.latitude;
-  const lng = place?.location?.longitude;
+  // Stops contain a nested `location`, while free-form journey endpoints are
+  // returned by VBB as location objects with coordinates at the top level.
+  const lat = place?.location?.latitude ?? place?.latitude;
+  const lng = place?.location?.longitude ?? place?.longitude;
   return typeof lat === "number" && typeof lng === "number" ? [lat, lng] : null;
+}
+
+function placeName(place: VbbPlace | undefined, fallback: string): string {
+  const name = place?.name?.trim();
+  if (name) return name;
+  const address = place?.address?.trim();
+  // The API often turns an unnamed coordinate into an address-looking
+  // "latitude, longitude" string. Keep the clearer trace endpoint label then.
+  if (address && !/^[-+]?\d{1,3}(?:\.\d+)?\s*[,;]\s*[-+]?\d{1,3}(?:\.\d+)?$/.test(address)) {
+    return address;
+  }
+  return fallback;
 }
 
 function polylinePoints(leg: VbbLeg): LL[] {
   const points: LL[] = [];
-  for (const feature of leg.polyline?.features ?? []) {
-    const coordinates = feature.geometry?.coordinates;
+
+  const appendCoordinates = (coordinates: unknown) => {
+    if (!Array.isArray(coordinates)) return;
     if (
-      Array.isArray(coordinates) &&
       coordinates.length >= 2 &&
       typeof coordinates[0] === "number" &&
       typeof coordinates[1] === "number"
     ) {
       points.push([coordinates[1], coordinates[0]]);
+      return;
     }
+    for (const child of coordinates) appendCoordinates(child);
+  };
+
+  for (const feature of leg.polyline?.features ?? []) {
+    appendCoordinates(feature.geometry?.coordinates);
   }
   if (points.length >= 2) return points;
   const origin = placePoint(leg.origin);
@@ -255,18 +278,23 @@ export function scoreJourneyGeometry(drawn: LL[], candidate: LL[]) {
   }
   const drawnSamples = decimate(resample(drawn, 75));
   const candidateSamples = decimate(resample(candidate, 75));
+  const drawnLength = polylineLength(drawnSamples);
+  // Let long, roughly drawn routes breathe without allowing an entirely
+  // parallel corridor on the other side of a neighbourhood to score as a
+  // match. The cap is deliberately below the spacing between most competing
+  // Berlin rail corridors.
+  const toleranceM = clamp(250 + drawnLength * 0.025, 250, 750);
   const distances = drawnSamples.map((point) => pointToPolyline(point, candidateSamples));
-  const coverage = distances.filter((distance) => distance <= 250).length / distances.length;
+  const coverage = distances.filter((distance) => distance <= toleranceM).length / distances.length;
   const meanDistanceM = distances.reduce((sum, distance) => sum + distance, 0) / distances.length;
   const frechet = discreteFrechet(drawnSamples, candidateSamples);
-  const drawnLength = polylineLength(drawnSamples);
   const candidateLength = polylineLength(candidateSamples);
   const lengthRatio = Math.min(drawnLength, candidateLength) / Math.max(drawnLength, candidateLength, 1);
   const similarity = clamp(
     100 *
       (coverage * 0.45 +
-        Math.exp(-meanDistanceM / 250) * 0.25 +
-        Math.exp(-frechet / 600) * 0.2 +
+        Math.exp(-meanDistanceM / toleranceM) * 0.25 +
+        Math.exp(-frechet / (toleranceM * 2.4)) * 0.2 +
         lengthRatio * 0.1),
     0,
     100
@@ -398,8 +426,8 @@ function parseLeg(leg: VbbLeg, index: number, lines: TransitLine[]): LiveJourney
     lineId: style.lineId,
     mode,
     direction: walking ? null : leg.direction ?? null,
-    originName: leg.origin?.name ?? "轨迹起点",
-    destinationName: leg.destination?.name ?? "轨迹终点",
+    originName: placeName(leg.origin, "Photo route start"),
+    destinationName: placeName(leg.destination, "Photo route end"),
     departure,
     arrival,
     delayMinutes,
@@ -416,9 +444,9 @@ function parseJourney(
   lines: TransitLine[],
   viaStopName: string | null
 ): LiveJourneyCandidate | null {
-  const legs = (journey.legs ?? [])
+  const legs = normalizeJourneyLegs((journey.legs ?? [])
     .map((leg, legIndex) => parseLeg(leg, legIndex, lines))
-    .filter((leg): leg is LiveJourneyLeg => Boolean(leg));
+    .filter((leg): leg is LiveJourneyLeg => Boolean(leg)));
   const transitLegs = legs.filter((leg) => !leg.walking);
   if (!transitLegs.length) return null;
   const polyline: LL[] = [];
@@ -444,6 +472,47 @@ function parseJourney(
   };
 }
 
+function normalizeJourneyLegs(legs: LiveJourneyLeg[]): LiveJourneyLeg[] {
+  const normalized: LiveJourneyLeg[] = [];
+  for (const leg of legs) {
+    const duration = Date.parse(leg.arrival) - Date.parse(leg.departure);
+    if (
+      leg.walking &&
+      Number.isFinite(duration) &&
+      duration <= 0 &&
+      (leg.originName === leg.destinationName || polylineLength(leg.polyline) < 50)
+    ) {
+      continue;
+    }
+
+    const previous = normalized.at(-1);
+    const gap = previous ? Date.parse(leg.departure) - Date.parse(previous.arrival) : Infinity;
+    if (
+      previous &&
+      !previous.walking &&
+      !leg.walking &&
+      previous.lineId === leg.lineId &&
+      previous.direction === leg.direction &&
+      Number.isFinite(gap) &&
+      gap >= 0 &&
+      gap <= 2 * 60_000
+    ) {
+      const polyline = [...previous.polyline];
+      appendPoints(polyline, leg.polyline);
+      normalized[normalized.length - 1] = {
+        ...previous,
+        destinationName: leg.destinationName,
+        arrival: leg.arrival,
+        delayMinutes: leg.delayMinutes,
+        polyline,
+      };
+      continue;
+    }
+    normalized.push(leg);
+  }
+  return normalized;
+}
+
 function buildUrl(
   drawn: LL[],
   departure: string,
@@ -455,10 +524,10 @@ function buildUrl(
   const params = new URLSearchParams({
     "from.latitude": String(fromLat),
     "from.longitude": String(fromLng),
-    "from.address": "手绘轨迹起点",
+    "from.address": "Photo route start",
     "to.latitude": String(toLat),
     "to.longitude": String(toLng),
-    "to.address": "手绘轨迹终点",
+    "to.address": "Photo route end",
     departure: berlinLocalToIso(departure),
     results: "6",
     stopovers: "true",
@@ -497,7 +566,7 @@ export async function fetchVbbJourneys({
   lines,
   signal,
   fetcher = fetch,
-  allowVia = true,
+  viaMode = "fallback",
 }: {
   drawn: LL[];
   departure: string;
@@ -505,24 +574,25 @@ export async function fetchVbbJourneys({
   lines: TransitLine[];
   signal?: AbortSignal;
   fetcher?: typeof fetch;
-  allowVia?: boolean;
+  viaMode?: "none" | "fallback" | "only";
 }): Promise<LiveJourneyCandidate[]> {
   if (drawn.length < 2 || polylineLength(drawn) < 150) {
-    throw new VbbNoMatchError("轨迹太短，请至少画出几个街区。");
+    throw new VbbNoMatchError("The route is too short; choose photos at least a few blocks apart.");
   }
   if (!Object.values(modes).some(Boolean)) {
-    throw new VbbNoMatchError("请至少打开一种交通方式。");
+    throw new VbbNoMatchError("Select at least one transport mode.");
   }
   if (!departure || Number.isNaN(Date.parse(`${departure}:00Z`))) {
-    throw new VbbNoMatchError("请选择有效的出发时间。");
+    throw new VbbNoMatchError("Choose a valid departure time.");
   }
 
   const enabledLines = lines.filter((line) => modes[line.mode]);
-  const viaStop = findViaStop(drawn, enabledLines);
-  const requests: Array<{ url: string; via: TransitStop | null }> = [
-    { url: buildUrl(drawn, departure, modes, null), via: null },
-  ];
-  if (allowVia && viaStop) {
+  const viaStop = viaMode === "none" ? null : findViaStop(drawn, enabledLines);
+  const requests: Array<{ url: string; via: TransitStop | null }> = [];
+  if (viaMode !== "only" || !viaStop) {
+    requests.push({ url: buildUrl(drawn, departure, modes, null), via: null });
+  }
+  if (viaStop) {
     requests.push({ url: buildUrl(drawn, departure, modes, viaStop), via: viaStop });
   }
 
@@ -531,9 +601,13 @@ export async function fetchVbbJourneys({
       const response = await fetcher(url, { signal });
       if (!response.ok) {
         if (response.status >= 400 && response.status < 500) {
-          throw new VbbNoMatchError(`VBB 不支持这个日期或查询条件（HTTP ${response.status}）。`);
+          throw new VbbNoMatchError(
+            `VBB does not support this date or query (HTTP ${response.status}).`
+          );
         }
-        throw new VbbUnavailableError(`VBB 服务暂时不可用（HTTP ${response.status}）。`);
+        throw new VbbUnavailableError(
+          `The VBB journey service is temporarily unavailable (HTTP ${response.status}).`
+        );
       }
       const payload = (await response.json()) as VbbResponse;
       return (payload.journeys ?? [])
@@ -558,9 +632,9 @@ export async function fetchVbbJourneys({
       .map((result) => result.reason);
     const hadSuccessfulResponse = responses.some((result) => result.status === "fulfilled");
     if (hadSuccessfulResponse || failures.some((reason) => reason instanceof VbbNoMatchError)) {
-      throw new VbbNoMatchError("没有找到与这段手绘轨迹足够贴合的真实 VBB 行程。");
+      throw new VbbNoMatchError("No scheduled VBB journey matched the photo route closely enough.");
     }
-    throw new VbbUnavailableError("无法连接 VBB 行程服务。");
+    throw new VbbUnavailableError("Could not connect to the VBB journey service.");
   }
   return candidates;
 }
@@ -570,8 +644,10 @@ function combineJourneyParts(
   drawn: LL[],
   candidateIndex: number
 ): LiveJourneyCandidate {
-  const legs = parts.flatMap((part, partIndex) =>
-    part.legs.map((leg) => ({ ...leg, id: `${partIndex}-${leg.id}` }))
+  const legs = normalizeJourneyLegs(
+    parts.flatMap((part, partIndex) =>
+      part.legs.map((leg) => ({ ...leg, id: `${partIndex}-${leg.id}` }))
+    )
   );
   const polyline: LL[] = [];
   for (const part of parts) appendPoints(polyline, part.polyline);
@@ -630,7 +706,9 @@ export async function fetchVbbTraceJourneys(args: {
           ...args,
           drawn: segment,
           departure: segmentDeparture,
-          allowVia: false,
+          // Curved chunks still need a via point; otherwise the journey API
+          // usually returns a faster chord through the middle of the trace.
+          viaMode: "only",
         });
         return candidates.slice(0, 2).map((candidate) => ({
           parts: [...beam.parts, candidate],
@@ -654,10 +732,12 @@ export async function fetchVbbTraceJourneys(args: {
         .filter((attempt): attempt is PromiseRejectedResult => attempt.status === "rejected")
         .map((attempt) => attempt.reason);
       if (failures.some((reason) => reason instanceof VbbUnavailableError)) {
-        throw new VbbUnavailableError("分段查询过程中 VBB 服务不可用。");
+        throw new VbbUnavailableError(
+          "The VBB journey service became unavailable while checking the route."
+        );
       }
       throw new VbbNoMatchError(
-        `轨迹第 ${segmentIndex + 1}/${segments.length} 段没有足够贴合的真实公共交通行程。`
+        `No scheduled journey matched photo-route section ${segmentIndex + 1} of ${segments.length}.`
       );
     }
     beams = nextBeams;
@@ -673,7 +753,9 @@ export async function fetchVbbTraceJourneys(args: {
     )
     .sort((a, b) => b.similarity - a.similarity || a.durationMinutes - b.durationMinutes);
   if (!combined.length) {
-    throw new VbbNoMatchError("分段行程可以乘坐，但组合后仍与整条手绘轨迹差异过大。");
+    throw new VbbNoMatchError(
+      "The route sections are rideable, but their combined path differs too much from the photo route."
+    );
   }
   return combined;
 }

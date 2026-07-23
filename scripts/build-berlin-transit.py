@@ -304,7 +304,23 @@ def main():
 
     args.output.parent.mkdir(parents=True, exist_ok=True)
     args.output.write_text(json.dumps(payload, ensure_ascii=False, separators=(",", ":")), encoding="utf-8")
+    line_index_path = args.output.with_name("berlin-lines.json")
+    line_index = {
+        **{key: payload[key] for key in ("source", "sourceUrl", "sourceUpdatedAt", "license")},
+        "lines": [
+            {
+                key: line[key]
+                for key in ("id", "mode", "ref", "name", "color", "textColor")
+            }
+            for line in output_lines
+        ],
+    }
+    line_index_path.write_text(
+        json.dumps(line_index, ensure_ascii=False, separators=(",", ":")),
+        encoding="utf-8",
+    )
     print(f"Wrote {len(output_lines)} lines to {args.output}")
+    print(f"Wrote lightweight line index to {line_index_path}")
 
 
 if __name__ == "__main__":

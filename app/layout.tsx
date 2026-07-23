@@ -16,9 +16,9 @@ export async function generateMetadata(): Promise<Metadata> {
   const forwardedProtocol = requestHeaders.get("x-forwarded-proto");
   const protocol = forwardedProtocol === "http" || host.startsWith("localhost") ? "http" : "https";
   const metadataBase = new URL(`${protocol}://${host}`);
-  const title = "Berlin Trace｜用图钉与丝线串起柏林轨迹";
+  const title = "Berlin Lost & Found｜Retrace your day, reach the right lost-property offices";
   const description =
-    "在柏林地图上用景点图钉、丝线与拐点记录行动轨迹，推测可能乘坐的公交、地铁、城铁、电车、区域列车与渡轮路线。";
+    "Lost something in Berlin? Retrace the public transport you took and the sights you visited, find every lost-property office responsible along the way, and generate ready-to-send German/English reports.";
 
   return {
     metadataBase,
@@ -26,16 +26,23 @@ export async function generateMetadata(): Promise<Metadata> {
     description,
     openGraph: {
       type: "website",
-      locale: "zh_CN",
+      locale: "en_US",
       title,
       description,
-      images: [{ url: "/og-modern.png", width: 1734, height: 907, alt: "Berlin Trace 现代图钉线迹规划器" }],
+      images: [
+        {
+          url: "/og-lost-found.png",
+          width: 1732,
+          height: 908,
+          alt: "Berlin Lost & Found — retrace your day and reach the right office",
+        },
+      ],
     },
     twitter: {
       card: "summary_large_image",
       title,
       description,
-      images: ["/og-modern.png"],
+      images: ["/og-lost-found.png"],
     },
   };
 }
@@ -46,7 +53,7 @@ export default function RootLayout({
   children: React.ReactNode;
 }>) {
   return (
-    <html lang="zh-CN">
+    <html lang="en">
       <body className={`${geistSans.variable} antialiased`}>{children}</body>
     </html>
   );

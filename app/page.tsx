@@ -1,12 +1,12 @@
 import type { Metadata } from "next";
-import TransitMap from "./berlin-transit/TransitMap";
+import LostFound from "./lost-found/LostFound";
 
 export const metadata: Metadata = {
-  title: "Berlin Trace｜用图钉与丝线串起柏林轨迹",
+  title: "Berlin Lost & Found｜Retrace your day, reach the right lost-property offices",
   description:
-    "在柏林地图上用景点图钉、丝线与可拖动拐点记录轨迹，再推测可能的线路、上下车站与换乘。",
+    "Lost something in Berlin? Retrace the public transport you took and the sights you visited, find every lost-property office responsible along the way, and generate ready-to-send German/English reports.",
 };
 
 export default function Home() {
-  return <TransitMap />;
+  return <LostFound />;
 }

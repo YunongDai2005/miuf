@@ -1,46 +1,71 @@
-# Berlin Trace
+# Berlin Lost & Found
 
-在柏林地图上像在纸质地图上一样落下图钉，用丝线串起景点和拐点，再从 VBB 在指定日期和时间真实可乘的行程中找出最贴近轨迹的公共交通方案。
+Berlin Lost & Found helps visitors work out which lost-property offices to contact after losing something on public transport or at a venue. It preserves the useful details of the day, routes the traveller to the right operators, and drafts German and English reports.
 
-## 功能
+## Product flow
 
-- 点击景点图钉或地图空白处逐段拉线，实时显示下一段丝线预览
-- 空白处会生成可拖动拐点，并记录每个节点的名称与经纬度
-- 节点自动保存在当前设备，也可通过键盘在地图中心落钉、完成或撤销
-- 查询 VBB 行程规划接口，验证班次、方向、步行接驳和换乘在当时确实可行
-- 使用有序轨迹距离为真实候选排序，而不是把附近线路直接当成乘车结果
-- 长距离、多转折轨迹会拆成有序检查点，逐段按真实到达时间继续查询
-- 相似度或轨迹覆盖不足的结果会直接拒绝，不展示“虽然可乘但与轨迹无关”的路线
-- 支持 U-Bahn、S-Bahn、Tram、Bus、区域列车和渡轮
-- 显示发到时间、方向、上下车站、换乘、实时延误和多个候选
-- VBB 接口不可用时明确降级为离线几何估算
-- 仅处理柏林范围内的线路与站点
+1. **Item** — Choose a category, describe the item, and enter the Berlin date and approximate time.
+2. **Retrace** — Add transit lines and places manually, or read GPS and capture times from selected photos on the device.
+3. **Offices** — See each responsible lost-property office and the reason it applies. Passports and identity documents are also routed to Berlin Police and the traveller’s embassy.
+4. **Report** — Open the verified official form, copy a report that includes boarding stop, alighting stop, departure time and direction, track progress, download a follow-up calendar reminder, or print a case sheet.
 
-## 本地开发
+The current case and contact details are stored locally in the browser.
+
+## Photo privacy
+
+Photo originals never leave the device. Selecting photos only reads their EXIF GPS coordinates and capture times locally and matches nearby attractions.
+
+Route comparison is a separate, optional action. Only after the traveller presses **Compare this route with VBB** are the route’s start, intermediate and end coordinates plus a departure timestamp sent to the community-run [`v6.vbb.transport.rest`](https://v6.vbb.transport.rest/) API. The full 2.9 MB transit geometry is also loaded only at that point.
+
+## Contact-data trust
+
+Every published contact and operational field in [`app/lost-found/parties.ts`](app/lost-found/parties.ts) has:
+
+- a `lastVerifiedAt` date;
+- an official source URL in `fieldSources`;
+- a visible source link in the report UI.
+
+The current records were checked on 23 July 2026. `npm run check:party-links` probes every official destination with `HEAD` (and a small `GET` fallback where required). The same check runs in CI and on a weekly schedule.
+
+## Data and licences
+
+- Transit lines, stops and geometry: VBB GTFS, CC BY 4.0.
+- Attractions: © OpenStreetMap contributors, Open Database License (ODbL).
+
+`public/berlin-lines.json` is the lightweight first-load line index. `public/berlin-transit.json` contains the full geometry used by optional photo-route inference. `public/berlin-attractions.json` contains the OpenStreetMap attraction index.
+
+## Local development
 
 ```bash
 npm install
 npm run dev
 ```
 
-验证：
+Fast inner-loop checks:
+
+```bash
+npm run test:unit
+npm run lint
+npm run typecheck
+```
+
+Full deployment-equivalent verification:
 
 ```bash
 npm test
-npm run lint
-npx tsc --noEmit
+npm run check:party-links
 ```
 
-## 数据来源
+## Refreshing transit data
 
-真实可乘行程由 [`v6.vbb.transport.rest`](https://v6.vbb.transport.rest/) 提供；页面会直接查询 `/journeys`，请求 stopovers 与 polylines，并按手绘轨迹排序。
-
-## 离线数据更新
-
-离线降级所需的线路和站点来自 VBB GTFS，许可为 CC BY 4.0。下载最新的官方 GTFS ZIP 后运行：
+Download the latest official VBB GTFS ZIP, then run:
 
 ```bash
 python3 scripts/build-berlin-transit.py /path/to/GTFS.zip
 ```
 
-生成脚本会保留服务柏林站点的线路，压缩线路几何，并写入 `public/berlin-transit.json`。
+The generator updates both the full geometry and the lightweight line index. If only `public/berlin-transit.json` has changed, regenerate its index with:
+
+```bash
+npm run data:lines
+```
