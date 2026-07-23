@@ -1,4 +1,7 @@
-import type { TransitMode } from "../berlin-transit/transit";
+import type {
+  TransitMode,
+  TransitOperator,
+} from "../berlin-transit/transit";
 import type {
   ItemCategory,
   ItineraryEntry,
@@ -65,6 +68,10 @@ const DOCUMENTS_SOURCE =
 const POLICE_ONLINE = "https://www.internetwache-polizei-berlin.de/";
 const EMBASSIES =
   "https://www.berlin.de/en/tourism/travel-information/2917712-2862820-embassies-in-berlin.en.html";
+const ODEG_SOURCE = "https://www.odeg.de/kontakt/kontaktformulare/fundsachen";
+const NEB_SOURCE = "https://www.neb.de/service/fundbuero/";
+const NEB_CONTACT = "https://www.neb.de/kontakt/";
+const VBB_DATA_SOURCE = "https://unternehmen.vbb.de/digitale-services/datensaetze/";
 
 export const PARTIES: Record<string, Party> = {
   documents: {
@@ -172,6 +179,55 @@ export const PARTIES: Record<string, Party> = {
     },
     note: "DB may charge a handling fee when an item is returned.",
   },
+  odeg: {
+    id: "odeg",
+    name: "ODEG Lost Property",
+    operatorName: "Ostdeutsche Eisenbahn GmbH (ODEG)",
+    scope: "ODEG regional trains serving Berlin and Brandenburg",
+    website: ODEG_SOURCE,
+    formUrl: ODEG_SOURCE,
+    formLabel: "Open ODEG loss report",
+    phone: "+49 30 514 88 88 88",
+    address: "Möllendorffstraße 49 (2nd floor), 10367 Berlin",
+    nextStep:
+      "Send the ODEG lost-property form with the train, boarding/alighting stops and time. ODEG’s Berlin service centre also handles collection.",
+    followUpAfterDays: 3,
+    verified: true,
+    lastVerifiedAt: VERIFIED_AT,
+    fieldSources: {
+      scope: ODEG_SOURCE,
+      website: ODEG_SOURCE,
+      formUrl: ODEG_SOURCE,
+      phone: ODEG_SOURCE,
+      address: ODEG_SOURCE,
+      nextStep: ODEG_SOURCE,
+    },
+  },
+  neb: {
+    id: "neb",
+    name: "NEB Lost Property",
+    operatorName: "Niederbarnimer Eisenbahn (NEB)",
+    scope: "NEB regional trains serving Berlin and Brandenburg",
+    website: NEB_SOURCE,
+    email: "info@NEB.de",
+    phone: "+49 30 396011-344",
+    address: "Weitlingstraße 15, 10317 Berlin",
+    hours: "Mon–Fri 06:15–19:00",
+    nextStep:
+      "Contact NEB’s lost-property office with the line, boarding/alighting stops and time. The Berlin-Lichtenberg customer centre can help in person.",
+    followUpAfterDays: 3,
+    verified: true,
+    lastVerifiedAt: VERIFIED_AT,
+    fieldSources: {
+      scope: NEB_SOURCE,
+      website: NEB_SOURCE,
+      email: NEB_SOURCE,
+      phone: NEB_SOURCE,
+      address: NEB_CONTACT,
+      hours: NEB_CONTACT,
+      nextStep: NEB_SOURCE,
+    },
+  },
   zentral: {
     id: "zentral",
     name: "Berlin Central Lost Property (Zentrales Fundbüro)",
@@ -242,12 +298,111 @@ export function partyIdForMode(mode: TransitMode): string {
   }
 }
 
+const OPERATOR_ALIASES: Array<{ partyId: string; patterns: RegExp[] }> = [
+  {
+    partyId: "bvg",
+    patterns: [/berlinerverkehrsbetriebe/, /^bvg(?:aor)?$/],
+  },
+  {
+    partyId: "sbahn",
+    patterns: [/sbahnberlin/],
+  },
+  {
+    partyId: "odeg",
+    patterns: [/ostdeutscheeisenbahn/, /^odeg/],
+  },
+  {
+    partyId: "neb",
+    patterns: [/niederbarnimereisenbahn/, /nebbetriebsgesellschaft/, /^neb$/],
+  },
+  {
+    partyId: "db",
+    patterns: [/deutschebahn/, /^dbregioag$/, /^dbfernverkehr/],
+  },
+];
+
+function normalizedOperator(value: string): string {
+  return value
+    .normalize("NFKD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]/g, "");
+}
+
+/** Match an exact VBB/GTFS operator identity to its verified contact record. */
+export function partyIdForOperator(operator: TransitOperator): string | null {
+  const candidates = [operator.id, operator.name].map(normalizedOperator);
+  return (
+    OPERATOR_ALIASES.find(({ patterns }) =>
+      candidates.some((candidate) => patterns.some((pattern) => pattern.test(candidate)))
+    )?.partyId ?? null
+  );
+}
+
 export interface ResolvedParty {
   party: Party;
   reasons: string[];
   lines: string[];
   venues: string[];
   entries: ItineraryEntry[];
+}
+
+function venueParty(entry: ItineraryEntry): Party | null {
+  const website = entry.officialWebsite;
+  if (!website) return null;
+  const source = entry.contactSourceUrl ?? website;
+  const websiteSource = entry.officialWebsiteSourceUrl ?? source;
+  return {
+    id: `venue:${entry.refId}`,
+    name: `${entry.label} contact candidate`,
+    operatorName: entry.label,
+    scope: `Items possibly lost at ${entry.label}`,
+    website,
+    formUrl: entry.lostFoundUrl,
+    formLabel: entry.lostFoundUrl
+      ? "Open the venue’s lost-property page"
+      : "Open the public official-site candidate",
+    email: entry.officialEmail,
+    phone: entry.officialPhone,
+    nextStep: entry.lostFoundUrl
+      ? "Use the venue’s lost-property page first and include the visit time and a precise item description."
+      : "Open the official website and contact reception or visitor service. This contact was found from public venue data and should be checked before sending personal details.",
+    followUpAfterDays: 2,
+    verified: false,
+    lastVerifiedAt: entry.contactUpdatedAt ?? VERIFIED_AT,
+    fieldSources: {
+      scope: source,
+      website: websiteSource,
+      formUrl: entry.lostFoundUrl ? websiteSource : undefined,
+      email: entry.officialEmail ? source : undefined,
+      phone: entry.officialPhone ? source : undefined,
+      nextStep: source,
+    },
+  };
+}
+
+function uncuratedOperatorParty(operator: TransitOperator, entry: ItineraryEntry): Party | null {
+  if (!operator.website) return null;
+  return {
+    id: `operator:${operator.id}`,
+    name: `${operator.name} service`,
+    operatorName: operator.name,
+    scope: `${entry.label} service operated by ${operator.name}`,
+    website: operator.website,
+    phone: operator.phone || undefined,
+    formLabel: "Open the operator’s official website",
+    nextStep:
+      "Open the operator’s official website and look for Fundbüro, Fundsachen or contact service. VBB identifies the company, but this homepage has not yet been curated as a dedicated lost-property form.",
+    followUpAfterDays: 3,
+    verified: false,
+    lastVerifiedAt: VERIFIED_AT,
+    fieldSources: {
+      scope: VBB_DATA_SOURCE,
+      website: VBB_DATA_SOURCE,
+      phone: operator.phone ? VBB_DATA_SOURCE : undefined,
+      nextStep: VBB_DATA_SOURCE,
+    },
+  };
 }
 
 function journeyReason(label: string, journey: ItineraryJourney): string {
@@ -272,15 +427,16 @@ export function resolveParties(
   const order: string[] = [];
   const map = new Map<string, ResolvedParty>();
 
-  const ensure = (id: string): ResolvedParty => {
-    let resolved = map.get(id);
+  const ensureParty = (party: Party): ResolvedParty => {
+    let resolved = map.get(party.id);
     if (!resolved) {
-      resolved = { party: PARTIES[id], reasons: [], lines: [], venues: [], entries: [] };
-      map.set(id, resolved);
-      order.push(id);
+      resolved = { party, reasons: [], lines: [], venues: [], entries: [] };
+      map.set(party.id, resolved);
+      order.push(party.id);
     }
     return resolved;
   };
+  const ensure = (id: string): ResolvedParty => ensureParty(PARTIES[id]);
 
   if (category === "documents") {
     const documents = ensure("documents");
@@ -288,30 +444,58 @@ export function resolveParties(
   }
 
   let usedTransit = false;
+  let usedVenue = false;
   for (const entry of itinerary) {
     if (entry.kind === "line" && entry.mode) {
       usedTransit = true;
-      const resolved = ensure(partyIdForMode(entry.mode));
-      resolved.entries.push(entry);
-      if (!resolved.lines.includes(entry.label)) resolved.lines.push(entry.label);
-      if (entry.journeys?.length) {
-        for (const journey of entry.journeys) {
-          resolved.reasons.push(journeyReason(entry.label, journey));
+      const partyTargets = new Map<string, Party>();
+      for (const operator of entry.operators ?? []) {
+        const partyId = partyIdForOperator(operator);
+        if (partyId) partyTargets.set(partyId, PARTIES[partyId]);
+        else {
+          const dynamic = uncuratedOperatorParty(operator, entry);
+          if (dynamic) partyTargets.set(dynamic.id, dynamic);
         }
-      } else {
-        const detail =
-          entry.sublabel && entry.sublabel !== entry.label ? ` (${entry.sublabel})` : "";
-        resolved.reasons.push(`You rode ${entry.label}${detail}`);
+      }
+      if (!entry.operators?.length) {
+        const fallbackId = partyIdForMode(entry.mode);
+        partyTargets.set(fallbackId, PARTIES[fallbackId]);
+      }
+      for (const [partyId, party] of partyTargets) {
+        const resolved = ensureParty(party);
+        resolved.entries.push(entry);
+        if (!resolved.lines.includes(entry.label)) resolved.lines.push(entry.label);
+        const operatorNames = (entry.operators ?? [])
+          .filter(
+            (operator) =>
+              partyIdForOperator(operator) === partyId ||
+              `operator:${operator.id}` === partyId
+          )
+          .map((operator) => operator.name);
+        if (operatorNames.length) {
+          resolved.reasons.push(`VBB identifies ${operatorNames.join(", ")} as the operator`);
+        }
+        if (entry.journeys?.length) {
+          for (const journey of entry.journeys) {
+            resolved.reasons.push(journeyReason(entry.label, journey));
+          }
+        } else {
+          const detail =
+            entry.sublabel && entry.sublabel !== entry.label ? ` (${entry.sublabel})` : "";
+          resolved.reasons.push(`You rode ${entry.label}${detail}`);
+        }
       }
     } else if (entry.kind === "venue") {
-      const resolved = ensure("venues");
+      usedVenue = true;
+      const directParty = venueParty(entry);
+      const resolved = directParty ? ensureParty(directParty) : ensure("venues");
       resolved.entries.push(entry);
       if (!resolved.venues.includes(entry.label)) resolved.venues.push(entry.label);
       resolved.reasons.push(`You visited ${entry.label}`);
     }
   }
 
-  if (usedTransit && !map.has("zentral")) {
+  if ((usedTransit || usedVenue) && !map.has("zentral")) {
     const central = ensure("zentral");
     central.reasons.push(
       "A separate city-wide report is useful when the exact loss location is uncertain"

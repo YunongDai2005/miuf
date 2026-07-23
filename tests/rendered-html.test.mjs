@@ -22,7 +22,7 @@ test("server-renders the lost-and-found product shell", async () => {
   assert.match(html, /Berlin/);
   assert.match(html, /Lost &amp; Found/);
   assert.match(html, /Retrace/);
-  assert.match(html, /Offices/);
+  assert.match(html, /Contacts/);
   assert.match(html, /What did you lose/);
   assert.match(html, /VBB/);
   assert.doesNotMatch(html, /Starter Project|Building your site|react-loading-skeleton/);
@@ -40,6 +40,7 @@ test("bundles a current, Berlin-only multimodal VBB network", async () => {
     assert.ok(modes.has(mode), `missing ${mode}`);
   }
   for (const line of network.lines) {
+    assert.ok(line.operators.length > 0);
     assert.ok(line.polylines.length > 0);
     assert.equal(line.polylineBboxes.length, line.polylines.length);
     assert.ok(line.stops.length > 0);

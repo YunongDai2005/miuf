@@ -69,7 +69,14 @@ function journey(points: LL[], line = "U2") {
         arrival: "2026-07-21T16:10:00+02:00",
         plannedArrival: "2026-07-21T16:08:00+02:00",
         direction: "Pankow",
-        line: { name: line, product: "subway" },
+        line: {
+          name: line,
+          product: "subway",
+          operator: {
+            id: "berliner-verkehrsbetriebe",
+            name: "Berliner Verkehrsbetriebe",
+          },
+        },
         polyline: { features: points.map(pointFeature) },
       },
       {
@@ -113,6 +120,10 @@ test("parses real VBB journey semantics and ranks the closest scheduled geometry
   assert.equal(results.length, 2);
   assert.equal(results[0].legs[1].lineRef, "U2");
   assert.equal(results[0].legs[1].direction, "Pankow");
+  assert.deepEqual(results[0].legs[1].operator, {
+    id: "berliner-verkehrsbetriebe",
+    name: "Berliner Verkehrsbetriebe",
+  });
   assert.equal(results[0].legs[1].delayMinutes, 2);
   assert.equal(results[0].legs[1].color, "#DA421E");
   assert.equal(results[0].durationMinutes, 14);

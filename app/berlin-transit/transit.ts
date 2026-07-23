@@ -18,6 +18,15 @@ export type TransitMode =
   | "rail"
   | "ferry";
 
+export interface TransitOperator {
+  /** Stable ID from the live VBB response or the bundled GTFS feed. */
+  id: string;
+  name: string;
+  /** Official operator homepage supplied by the VBB GTFS agency record. */
+  website?: string;
+  phone?: string;
+}
+
 export interface TransitStop {
   id: string;
   name: string;
@@ -31,6 +40,8 @@ export interface TransitLine {
   name: string;
   color: string;
   textColor: string;
+  /** One line can be served by more than one company in the timetable. */
+  operators?: TransitOperator[];
   polylines: LL[][];
   polylineBboxes: BBox[];
   bbox: BBox;

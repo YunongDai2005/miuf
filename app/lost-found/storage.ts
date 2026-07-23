@@ -1,4 +1,5 @@
 import type { TransitMode } from "../berlin-transit/transit";
+import type { TransitOperator } from "../berlin-transit/transit";
 import {
   emptyCase,
   type Contact,
@@ -67,6 +68,24 @@ function sanitizeJourneys(value: unknown): ItineraryJourney[] | undefined {
   return journeys.length ? journeys : undefined;
 }
 
+function sanitizeOperators(value: unknown): TransitOperator[] | undefined {
+  if (!Array.isArray(value)) return undefined;
+  const operators = value
+    .filter((entry): entry is Record<string, unknown> => Boolean(entry && typeof entry === "object"))
+    .map((entry) => ({
+      id: typeof entry.id === "string" ? entry.id.trim() : "",
+      name: typeof entry.name === "string" ? entry.name.trim() : "",
+    }))
+    .filter((entry) => entry.id && entry.name);
+  return operators.length ? operators : undefined;
+}
+
+function optionalString(entry: Record<string, unknown>, key: string): string | undefined {
+  return typeof entry[key] === "string" && entry[key].trim()
+    ? entry[key].trim()
+    : undefined;
+}
+
 function sanitizeItinerary(value: unknown): ItineraryEntry[] {
   if (!Array.isArray(value)) return [];
   const output: ItineraryEntry[] = [];
@@ -102,6 +121,14 @@ function sanitizeItinerary(value: unknown): ItineraryEntry[] {
           ? (entry.category as ItineraryEntry["category"])
           : undefined,
       journeys: sanitizeJourneys(entry.journeys),
+      operators: sanitizeOperators(entry.operators),
+      officialWebsite: optionalString(entry, "officialWebsite"),
+      officialPhone: optionalString(entry, "officialPhone"),
+      officialEmail: optionalString(entry, "officialEmail"),
+      lostFoundUrl: optionalString(entry, "lostFoundUrl"),
+      contactSourceUrl: optionalString(entry, "contactSourceUrl"),
+      officialWebsiteSourceUrl: optionalString(entry, "officialWebsiteSourceUrl"),
+      contactUpdatedAt: optionalString(entry, "contactUpdatedAt"),
     });
   }
   return output;

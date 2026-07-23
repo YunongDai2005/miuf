@@ -137,18 +137,27 @@ export default function StepRetrace({
   const inferredItems = useMemo(() => {
     if (!index) return [];
     const items = new Map<string, SearchItem>();
-    const merge = (item: SearchItem, journey?: NonNullable<SearchItem["journeys"]>[number]) => {
+    const merge = (
+      item: SearchItem,
+      journey?: NonNullable<SearchItem["journeys"]>[number],
+      operator?: NonNullable<SearchItem["operators"]>[number]
+    ) => {
       const existing = items.get(item.refId);
       const journeys = [...(existing?.journeys ?? [])];
+      const operators = [...(existing?.operators ?? item.operators ?? [])];
       if (journey) {
         const signature = JSON.stringify(journey);
         if (!journeys.some((candidate) => JSON.stringify(candidate) === signature)) {
           journeys.push(journey);
         }
       }
+      if (operator && !operators.some((candidate) => candidate.id === operator.id)) {
+        operators.push(operator);
+      }
       items.set(item.refId, {
         ...(existing ?? item),
         journeys: journeys.length ? journeys : undefined,
+        operators: operators.length ? operators : undefined,
       });
     };
     for (const anchor of anchors) {
@@ -165,12 +174,16 @@ export default function StepRetrace({
             (item.label === leg.lineRef && (!leg.mode || item.mode === leg.mode)))
       );
       if (line) {
-        merge(line, {
-          from: leg.originName,
-          to: leg.destinationName,
-          departure: leg.departure,
-          direction: leg.direction ?? undefined,
-        });
+        merge(
+          line,
+          {
+            from: leg.originName,
+            to: leg.destinationName,
+            departure: leg.departure,
+            direction: leg.direction ?? undefined,
+          },
+          leg.operator ?? undefined
+        );
       }
     }
     const photoDeparture = anchors.find((anchor) => anchor.time != null)?.time;
@@ -208,6 +221,16 @@ export default function StepRetrace({
     inferredItems.every((item) => {
       const existing = itinerary.find((entry) => entry.refId === item.refId);
       if (!existing) return false;
+      const existingOperatorIds = new Set(
+        (existing.operators ?? []).map((operator) => operator.id)
+      );
+      if (
+        item.operators?.some(
+          (operator) => !existingOperatorIds.has(operator.id)
+        )
+      ) {
+        return false;
+      }
       if (!item.journeys?.length) return true;
       const existingJourneys = new Set(
         (existing.journeys ?? []).map((journey) => JSON.stringify(journey))

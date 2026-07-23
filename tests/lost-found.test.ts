@@ -1,7 +1,11 @@
 import assert from "node:assert/strict";
 import { readFile } from "node:fs/promises";
 import test from "node:test";
-import { PARTIES, resolveParties } from "../app/lost-found/parties";
+import {
+  PARTIES,
+  partyIdForOperator,
+  resolveParties,
+} from "../app/lost-found/parties";
 import {
   buildReportDrafts,
   calendarReminderHref,
@@ -22,6 +26,79 @@ test("routes documents to police and embassy guidance before lost-property offic
   assert.equal(resolved[0].party.guidanceOnly, true);
   assert.match(resolved[0].party.nextStep ?? "", /police immediately/i);
   assert.ok(resolved[0].party.relatedLinks?.some((link) => /embassy/i.test(link.label)));
+});
+
+test("uses the actual VBB operator instead of guessing regional trains belong to DB", () => {
+  assert.equal(
+    partyIdForOperator({
+      id: "ostdeutsche-eisenbahn-gmbh",
+      name: "Ostdeutsche Eisenbahn GmbH",
+    }),
+    "odeg"
+  );
+  const resolved = resolveParties([
+    {
+      uid: "re1",
+      kind: "line",
+      refId: "rail:RE1",
+      label: "RE1",
+      mode: "rail",
+      operators: [
+        {
+          id: "ostdeutsche-eisenbahn-gmbh",
+          name: "Ostdeutsche Eisenbahn GmbH",
+        },
+      ],
+    },
+  ]);
+  assert.ok(resolved.some((entry) => entry.party.id === "odeg"));
+  assert.ok(!resolved.some((entry) => entry.party.id === "db"));
+  assert.ok(resolved.some((entry) => entry.party.id === "zentral"));
+});
+
+test("keeps an exact GTFS operator homepage when its lost-property form is not curated yet", () => {
+  const resolved = resolveParties([
+    {
+      uid: "bus",
+      kind: "line",
+      refId: "bus:824",
+      label: "824",
+      mode: "bus",
+      operators: [
+        {
+          id: "32",
+          name: "Oberhavel Verkehrsgesellschaft mbH",
+          website: "https://www.ovg-online.de",
+        },
+      ],
+    },
+  ]);
+  const operator = resolved.find((entry) => entry.party.id === "operator:32");
+  assert.ok(operator);
+  assert.equal(operator.party.website, "https://www.ovg-online.de");
+  assert.equal(operator.party.verified, false);
+  assert.ok(!resolved.some((entry) => entry.party.id === "bvg"));
+});
+
+test("creates a separate venue contact when offline public data has an official website", () => {
+  const resolved = resolveParties([
+    {
+      uid: "museum",
+      kind: "venue",
+      refId: "node/123",
+      label: "Example Museum",
+      category: "museum",
+      officialWebsite: "https://museum.example/",
+      officialEmail: "lost@museum.example",
+      contactSourceUrl: "https://www.openstreetmap.org/node/123",
+      contactUpdatedAt: "2026-07-24",
+    },
+  ]);
+  const venue = resolved.find((entry) => entry.party.id === "venue:node/123");
+  assert.ok(venue);
+  assert.equal(venue.party.website, "https://museum.example/");
+  assert.equal(venue.party.verified, false);
+  assert.ok(resolved.some((entry) => entry.party.id === "zentral"));
 });
 
 test("retains journey details and includes category plus description in both reports", () => {
@@ -147,4 +224,5 @@ test("ships a lightweight first-load line index without route geometry", async (
   assert.ok(index.lines.length > 300);
   assert.equal(index.lines[0].polylines, undefined);
   assert.equal(index.lines[0].stops, undefined);
+  assert.ok(index.operators && Object.keys(index.operators).length > 5);
 });

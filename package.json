@@ -14,6 +14,8 @@
     "lint": "eslint . --ignore-pattern dist --ignore-pattern .next",
     "typecheck": "tsc --noEmit",
     "data:lines": "node scripts/build-line-index.mjs",
+    "data:venue-sources": "node --import tsx scripts/enrich-venue-sources.mts",
+    "data:discover-venues": "node --import tsx scripts/discover-venue-pages.mts",
     "check:party-links": "node --import tsx scripts/check-party-links.mts",
     "db:generate": "drizzle-kit generate"
   },

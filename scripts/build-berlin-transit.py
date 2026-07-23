@@ -129,11 +129,28 @@ def main():
     args = parser.parse_args()
 
     with zipfile.ZipFile(args.gtfs) as zf:
+        agencies = {}
+        for agency in rows(zf, "agency.txt"):
+            agency_id = agency.get("agency_id") or agency.get("agency_name") or ""
+            agency_name = agency.get("agency_name") or agency_id
+            if agency_id and agency_name:
+                agencies[agency_id] = {
+                    "id": agency_id,
+                    "name": agency_name,
+                    "website": agency.get("agency_url") or "",
+                    "phone": agency.get("agency_phone") or "",
+                }
+
         route_rows = {}
         for route in rows(zf, "routes.txt"):
             mode = MODE_BY_ROUTE_TYPE.get(route["route_type"])
             if mode:
-                route_rows[route["route_id"]] = {**route, "mode": mode}
+                agency_id = route.get("agency_id") or ""
+                route_rows[route["route_id"]] = {
+                    **route,
+                    "mode": mode,
+                    "operator": agencies.get(agency_id),
+                }
 
         stops = {}
         for stop in rows(zf, "stops.txt"):
@@ -239,6 +256,7 @@ def main():
             all_stops = {}
             names = []
             colors = []
+            operators = {}
             for route_id, route, candidates in route_groups:
                 all_candidates.extend(candidates)
                 all_stops.update(route_stops[route_id])
@@ -246,6 +264,8 @@ def main():
                     names.append(route["route_long_name"])
                 if route["route_color"]:
                     colors.append("#" + route["route_color"].upper())
+                if route["operator"]:
+                    operators[route["operator"]["id"]] = route["operator"]
 
             # Prefer broad, distinct variants while capping pathological timetable variations.
             chosen = []
@@ -278,6 +298,7 @@ def main():
                     "name": Counter(names).most_common(1)[0][0] if names else ref,
                     "color": color,
                     "textColor": text_color(color),
+                    "operators": sorted(operators.values(), key=lambda operator: operator["name"]),
                     "polylines": polylines,
                     "polylineBboxes": [bbox([polyline]) for polyline in polylines],
                     "bbox": bbox(polylines),
@@ -293,6 +314,11 @@ def main():
 
         mode_order = {"subway": 0, "light_rail": 1, "tram": 2, "bus": 3, "rail": 4, "ferry": 5}
         output_lines.sort(key=lambda line: (mode_order[line["mode"]], line["ref"]))
+        operator_directory = {
+            operator["id"]: operator
+            for line in output_lines
+            for operator in line["operators"]
+        }
         source_date = max(zf.getinfo(name).date_time for name in zf.namelist())[:3]
         payload = {
             "source": "VBB GTFS",
@@ -307,10 +333,14 @@ def main():
     line_index_path = args.output.with_name("berlin-lines.json")
     line_index = {
         **{key: payload[key] for key in ("source", "sourceUrl", "sourceUpdatedAt", "license")},
+        "operators": dict(sorted(operator_directory.items())),
         "lines": [
             {
-                key: line[key]
-                for key in ("id", "mode", "ref", "name", "color", "textColor")
+                **{
+                    key: line[key]
+                    for key in ("id", "mode", "ref", "name", "color", "textColor")
+                },
+                "operatorIds": [operator["id"] for operator in line["operators"]],
             }
             for line in output_lines
         ],

@@ -108,7 +108,7 @@ function PartyCard({
         <p className="mt-1 text-xs text-stone-400">{party.operatorName} · {party.scope}</p>
 
         <div className="mt-3 space-y-1.5">
-          <ContactRow label="Official" source={party.fieldSources.website}>
+          <ContactRow label="Website" source={party.fieldSources.website}>
             <a
               href={party.website}
               target="_blank"
@@ -392,7 +392,7 @@ export default function StepReport({
         </div>
       )}
       <p className="text-sm text-stone-500 dark:text-stone-400">
-        Each office already has a German / English report drafted from your details. Ones with an intake
+        Each contact already has a German / English report drafted from your details. Ones with an intake
         email can be sent in one tap; for the rest, copy the text into the official form and track your
         progress below.
       </p>

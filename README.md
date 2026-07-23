@@ -6,7 +6,7 @@ Berlin Lost & Found helps visitors work out which lost-property offices to conta
 
 1. **Item** — Choose a category, describe the item, and enter the Berlin date and approximate time.
 2. **Retrace** — Add transit lines and places manually, or read GPS and capture times from selected photos on the device.
-3. **Offices** — See each responsible lost-property office and the reason it applies. Passports and identity documents are also routed to Berlin Police and the traveller’s embassy.
+3. **Contacts** — See each responsible operator or venue contact and the reason it applies. Passports and identity documents are also routed to Berlin Police and the traveller’s embassy.
 4. **Report** — Open the verified official form, copy a report that includes boarding stop, alighting stop, departure time and direction, track progress, download a follow-up calendar reminder, or print a case sheet.
 
 The current case and contact details are stored locally in the browser.
@@ -19,18 +19,20 @@ Route comparison is a separate, optional action. Only after the traveller presse
 
 ## Contact-data trust
 
-Every published contact and operational field in [`app/lost-found/parties.ts`](app/lost-found/parties.ts) has:
+Every curated transport contact and operational field in [`app/lost-found/parties.ts`](app/lost-found/parties.ts) has:
 
 - a `lastVerifiedAt` date;
 - an official source URL in `fieldSources`;
 - a visible source link in the report UI.
 
-The current records were checked on 23 July 2026. `npm run check:party-links` probes every official destination with `HEAD` (and a small `GET` fallback where required). The same check runs in CI and on a weekly schedule.
+The current records were checked in July 2026. `npm run check:party-links` probes every official destination with `HEAD` (and a small `GET` fallback where required). The same check runs in CI and on a weekly schedule.
+
+Venue website, phone and email candidates come from the bundled OpenStreetMap and Wikidata snapshots and are visibly marked as needing verification. No itinerary is sent to a venue-discovery service at runtime.
 
 ## Data and licences
 
 - Transit lines, stops and geometry: VBB GTFS, CC BY 4.0.
-- Attractions: © OpenStreetMap contributors, Open Database License (ODbL).
+- Attractions: © OpenStreetMap contributors, Open Database License (ODbL). Official website candidates may also use Wikidata (CC0).
 
 `public/berlin-lines.json` is the lightweight first-load line index. `public/berlin-transit.json` contains the full geometry used by optional photo-route inference. `public/berlin-attractions.json` contains the OpenStreetMap attraction index.
 
@@ -69,3 +71,19 @@ The generator updates both the full geometry and the lightweight line index. If 
 ```bash
 npm run data:lines
 ```
+
+## Refreshing venue contacts
+
+Refresh offline venue contact candidates from OSM/Overpass:
+
+```bash
+npm run data:venue-sources
+```
+
+To scan those official homepages for likely lost-property or contact pages, without publishing unreviewed links:
+
+```bash
+npm run data:discover-venues
+```
+
+The discovery output is a review queue in `data/venue-responsibility-candidates.json`; a candidate is not treated as verified automatically.

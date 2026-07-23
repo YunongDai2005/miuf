@@ -21,7 +21,7 @@ import StepRetrace from "./steps/StepRetrace";
 const STEPS = [
   { n: "01", tab: "Item", heading: "What did you lose?", sub: "Just describe it — everything else can wait." },
   { n: "02", tab: "Retrace", heading: "Where did you go today?", sub: "Tick the lines you rode and the places you visited." },
-  { n: "03", tab: "Offices", heading: "Who to contact", sub: "The lost-property office for each leg — and why." },
+  { n: "03", tab: "Contacts", heading: "Who to contact", sub: "The operator or venue contact for each leg — and why." },
   { n: "04", tab: "Report", heading: "Send the report", sub: "Leave one contact detail, then send or copy the German / English report." },
 ] as const;
 
@@ -40,6 +40,14 @@ function entryFromSearch(item: SearchItem): ItineraryEntry {
     mode: item.mode,
     category: item.category,
     journeys: item.journeys?.map((journey) => ({ ...journey })),
+    operators: item.operators?.map((operator) => ({ ...operator })),
+    officialWebsite: item.officialWebsite,
+    officialPhone: item.officialPhone,
+    officialEmail: item.officialEmail,
+    lostFoundUrl: item.lostFoundUrl,
+    contactSourceUrl: item.contactSourceUrl,
+    officialWebsiteSourceUrl: item.officialWebsiteSourceUrl,
+    contactUpdatedAt: item.contactUpdatedAt,
   };
 }
 
@@ -60,6 +68,31 @@ function mergeJourneys(
   return merged;
 }
 
+function enrichSavedItinerary(
+  itinerary: ItineraryEntry[],
+  index: SourceIndex
+): ItineraryEntry[] {
+  const sources = new Map(index.items.map((item) => [item.refId, item]));
+  return itinerary.map((entry) => {
+    const source = sources.get(entry.refId);
+    if (!source) return entry;
+    return {
+      ...entry,
+      operators: entry.operators?.length
+        ? entry.operators
+        : source.operators?.map((operator) => ({ ...operator })),
+      officialWebsite: entry.officialWebsite ?? source.officialWebsite,
+      officialPhone: entry.officialPhone ?? source.officialPhone,
+      officialEmail: entry.officialEmail ?? source.officialEmail,
+      lostFoundUrl: entry.lostFoundUrl ?? source.lostFoundUrl,
+      contactSourceUrl: entry.contactSourceUrl ?? source.contactSourceUrl,
+      officialWebsiteSourceUrl:
+        entry.officialWebsiteSourceUrl ?? source.officialWebsiteSourceUrl,
+      contactUpdatedAt: entry.contactUpdatedAt ?? source.contactUpdatedAt,
+    };
+  });
+}
+
 export default function LostFound() {
   const [lostCase, setLostCase] = useState<LostCase>(emptyCase);
   const [step, setStep] = useState(0);
@@ -74,7 +107,13 @@ export default function LostFound() {
     setSourceError(null);
     fetchSources()
       .then((nextIndex) => {
-        if (active) setIndex(nextIndex);
+        if (active) {
+          setIndex(nextIndex);
+          setLostCase((current) => ({
+            ...current,
+            itinerary: enrichSavedItinerary(current.itinerary, nextIndex),
+          }));
+        }
       })
       .catch((error: unknown) => {
         if (!active) return;
@@ -133,12 +172,21 @@ export default function LostFound() {
       if (existingIndex < 0) {
         return { ...current, itinerary: [...current.itinerary, entryFromSearch(item)] };
       }
-      if (!item.journeys?.length) return current;
+      if (!item.journeys?.length && !item.operators?.length) return current;
       const itinerary = [...current.itinerary];
       const existing = itinerary[existingIndex];
+      const operators = [...(existing.operators ?? [])];
+      const operatorIds = new Set(operators.map((operator) => operator.id));
+      for (const operator of item.operators ?? []) {
+        if (!operatorIds.has(operator.id)) {
+          operatorIds.add(operator.id);
+          operators.push({ ...operator });
+        }
+      }
       itinerary[existingIndex] = {
         ...existing,
         journeys: mergeJourneys(existing.journeys, item.journeys),
+        operators: operators.length ? operators : undefined,
       };
       return { ...current, itinerary };
     });
@@ -174,7 +222,7 @@ export default function LostFound() {
               Berlin <span className="text-orange-600">Lost &amp; Found</span>
             </h1>
             <p className="text-xs text-stone-500 dark:text-stone-400">
-              Retrace your day, reach the right lost-property offices, file reports in a tap
+              Retrace your day, reach the right operators and venues, file reports in a tap
             </p>
           </div>
           <button

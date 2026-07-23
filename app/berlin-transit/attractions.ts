@@ -18,6 +18,16 @@ export interface Attraction {
   point: [number, number]; // [lat, lng]
   wikidata?: string;
   wikipedia?: string;
+  /** Contact candidates imported from OSM. They are shown as unverified until curated. */
+  website?: string;
+  phone?: string;
+  email?: string;
+  operator?: string;
+  operatorWebsite?: string;
+  lostFoundUrl?: string;
+  contactSourceUrl?: string;
+  websiteSourceUrl?: string;
+  contactUpdatedAt?: string;
 }
 
 export interface AttractionSet {

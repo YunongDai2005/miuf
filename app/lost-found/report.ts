@@ -208,6 +208,6 @@ export function calendarReminderHref(
   ].join("\r\n");
   return {
     href: `data:text/calendar;charset=utf-8,${encodeURIComponent(ics)}`,
-    filename: `follow-up-${resolved.party.id}-${date}.ics`,
+    filename: `follow-up-${resolved.party.id.replace(/[^a-z0-9_-]+/gi, "-")}-${date}.ics`,
   };
 }

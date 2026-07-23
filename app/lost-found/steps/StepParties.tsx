@@ -18,7 +18,7 @@ export default function StepParties({ resolved }: { resolved: ResolvedParty[] })
       <p className="text-sm text-stone-500 dark:text-stone-400">
         Based on your day, there are{" "}
         <span className="font-semibold text-stone-800 dark:text-stone-100">{resolved.length}</span>{" "}
-        lost-property offices to contact along the way. The next step drafts a report for each.
+        responsible contacts along the way. The next step drafts a report for each.
       </p>
 
       <ol className="space-y-3">

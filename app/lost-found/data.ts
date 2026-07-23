@@ -3,6 +3,7 @@ import type {
   TransitLine,
   TransitMode,
   TransitNetwork,
+  TransitOperator,
 } from "../berlin-transit/transit";
 import {
   CATEGORY_META,
@@ -23,6 +24,14 @@ export interface SearchItem {
   color?: string;
   point?: LL; // [lat, lng] — set for venues, used for photo-based matching
   journeys?: ItineraryJourney[];
+  operators?: TransitOperator[];
+  officialWebsite?: string;
+  officialPhone?: string;
+  officialEmail?: string;
+  lostFoundUrl?: string;
+  contactSourceUrl?: string;
+  officialWebsiteSourceUrl?: string;
+  contactUpdatedAt?: string;
   keywords: string;
 }
 
@@ -35,13 +44,14 @@ export interface SourceIndex {
 type TransitLineSummary = Pick<
   TransitLine,
   "id" | "mode" | "ref" | "name" | "color" | "textColor"
->;
+> & { operatorIds?: string[] };
 
 interface TransitLineIndex {
   source: string;
   sourceUrl: string;
   sourceUpdatedAt: string;
   license: string;
+  operators?: Record<string, string | TransitOperator>;
   lines: TransitLineSummary[];
 }
 
@@ -74,7 +84,7 @@ export async function fetchSources(): Promise<SourceIndex> {
     fetchJson<TransitLineIndex>("/berlin-lines.json", "Berlin line index"),
     fetchJson<AttractionSet>("/berlin-attractions.json", "Berlin attractions"),
   ]);
-  return buildIndex(lineIndex.lines, attractions);
+  return buildIndex(lineIndex.lines, attractions, lineIndex.operators);
 }
 
 let inferenceNetworkPromise: Promise<TransitNetwork> | null = null;
@@ -103,7 +113,8 @@ export function fetchInferenceNetwork(): Promise<TransitNetwork> {
 
 export function buildIndex(
   lines: TransitLineSummary[] | TransitNetwork,
-  attractions: AttractionSet
+  attractions: AttractionSet,
+  operatorDirectory: Record<string, string | TransitOperator> = {}
 ): SourceIndex {
   const sourceLines = Array.isArray(lines) ? lines : lines.lines;
   const lineItems: SearchItem[] = sourceLines.map((line) => ({
@@ -113,7 +124,27 @@ export function buildIndex(
     sublabel: line.name,
     mode: line.mode,
     color: line.color,
-    keywords: `${line.ref} ${line.name}`.toLowerCase(),
+    operators:
+      "operators" in line && Array.isArray(line.operators)
+        ? line.operators
+        : "operatorIds" in line
+          ? (line.operatorIds ?? []).map((id) => ({
+              ...(typeof operatorDirectory[id] === "object"
+                ? operatorDirectory[id]
+                : { id, name: operatorDirectory[id] ?? id }),
+              id,
+            } as TransitOperator))
+          : undefined,
+    keywords: `${line.ref} ${line.name} ${
+      "operatorIds" in line
+        ? (line.operatorIds ?? [])
+            .map((id) => {
+              const operator = operatorDirectory[id];
+              return typeof operator === "object" ? operator.name : operator ?? id;
+            })
+            .join(" ")
+        : ""
+    }`.toLowerCase(),
   }));
 
   const venueItems: SearchItem[] = attractions.attractions.map((a: Attraction) => ({
@@ -123,6 +154,13 @@ export function buildIndex(
     sublabel: CATEGORY_META[a.category].label,
     category: a.category,
     point: a.point,
+    officialWebsite: a.website ?? a.operatorWebsite,
+    officialPhone: a.phone,
+    officialEmail: a.email,
+    lostFoundUrl: a.lostFoundUrl,
+    contactSourceUrl: a.contactSourceUrl,
+    officialWebsiteSourceUrl: a.websiteSourceUrl,
+    contactUpdatedAt: a.contactUpdatedAt,
     keywords: `${a.name} ${a.nameEn ?? ""}`.toLowerCase(),
   }));
 
@@ -137,9 +175,15 @@ export function buildIndex(
     const match = venueItems
       .filter((v) => v.label.toLowerCase().includes(key))
       .sort((a, b) => {
+        const aContact = a.officialWebsite ? 0 : 1;
+        const bContact = b.officialWebsite ? 0 : 1;
         const ax = a.label.toLowerCase() === key ? 0 : 1;
         const bx = b.label.toLowerCase() === key ? 0 : 1;
-        return ax - bx || a.label.length - b.label.length;
+        return (
+          aContact - bContact ||
+          ax - bx ||
+          a.label.length - b.label.length
+        );
       })[0];
     if (match && !quickVenues.includes(match)) quickVenues.push(match);
   }

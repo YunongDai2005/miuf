@@ -1,4 +1,7 @@
-import type { TransitMode } from "../berlin-transit/transit";
+import type {
+  TransitMode,
+  TransitOperator,
+} from "../berlin-transit/transit";
 import type { AttractionCategory } from "../berlin-transit/attractions";
 import { berlinDateKey } from "./time";
 
@@ -48,6 +51,16 @@ export interface ItineraryEntry {
   category?: AttractionCategory; // set for venues
   /** Board/alight/time details retained from live or offline route inference. */
   journeys?: ItineraryJourney[];
+  /** Actual operator(s), when VBB or the official GTFS feed identifies them. */
+  operators?: TransitOperator[];
+  /** Venue contact candidates resolved offline; the itinerary never leaves the device. */
+  officialWebsite?: string;
+  officialPhone?: string;
+  officialEmail?: string;
+  lostFoundUrl?: string;
+  contactSourceUrl?: string;
+  officialWebsiteSourceUrl?: string;
+  contactUpdatedAt?: string;
 }
 
 export type ReportState = "todo" | "sent" | "replied";

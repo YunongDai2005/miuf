@@ -6,7 +6,12 @@ import {
   resample,
   type LL,
 } from "./geo";
-import type { TransitLine, TransitMode, TransitStop } from "./transit";
+import type {
+  TransitLine,
+  TransitMode,
+  TransitOperator,
+  TransitStop,
+} from "./transit";
 
 export type ModeFilter = Record<TransitMode, boolean>;
 
@@ -16,6 +21,7 @@ export interface LiveJourneyLeg {
   lineRef: string | null;
   lineId: string | null;
   mode: TransitMode | null;
+  operator: TransitOperator | null;
   direction: string | null;
   originName: string;
   destinationName: string;
@@ -71,6 +77,10 @@ interface VbbLine {
   id?: string;
   name?: string;
   product?: string;
+  operator?: {
+    id?: string;
+    name?: string;
+  };
 }
 
 interface VbbLeg {
@@ -403,6 +413,7 @@ function lineStyle(ref: string | null, mode: TransitMode | null, lines: TransitL
     lineId: match?.id ?? (ref && mode ? `${mode}:${ref}` : null),
     color: match?.color ?? (mode ? MODE_COLORS[mode] : "#78716C"),
     textColor: match?.textColor ?? "#FFFFFF",
+    operators: match?.operators ?? [],
   };
 }
 
@@ -412,6 +423,16 @@ function parseLeg(leg: VbbLeg, index: number, lines: TransitLine[]): LiveJourney
   if (!walking && !mode) return null;
   const lineRef = walking ? null : leg.line?.name ?? null;
   const style = lineStyle(lineRef, mode, lines);
+  const liveOperator = leg.line?.operator;
+  const operator =
+    !walking && liveOperator?.name
+      ? {
+          id: liveOperator.id || liveOperator.name,
+          name: liveOperator.name,
+        }
+      : !walking && style.operators.length === 1
+        ? style.operators[0]
+        : null;
   const departure = leg.departure ?? leg.plannedDeparture ?? "";
   const arrival = leg.arrival ?? leg.plannedArrival ?? "";
   const actual = leg.departure ? Date.parse(leg.departure) : NaN;
@@ -425,6 +446,7 @@ function parseLeg(leg: VbbLeg, index: number, lines: TransitLine[]): LiveJourney
     lineRef,
     lineId: style.lineId,
     mode,
+    operator,
     direction: walking ? null : leg.direction ?? null,
     originName: placeName(leg.origin, "Photo route start"),
     destinationName: placeName(leg.destination, "Photo route end"),
