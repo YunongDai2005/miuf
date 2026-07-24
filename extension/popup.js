@@ -2,14 +2,18 @@ const packageInput = document.querySelector("#package");
 const status = document.querySelector("#status");
 const fillButton = document.querySelector("#fill");
 const submitButton = document.querySelector("#submit");
+const copyResultButton = document.querySelector("#copy-result");
 let activePayload = null;
 let activeTabId = null;
+let latestOutcome = null;
 
 fillButton.addEventListener("click", async () => {
   status.textContent = "";
   activePayload = null;
   activeTabId = null;
   submitButton.hidden = true;
+  copyResultButton.hidden = true;
+  latestOutcome = null;
   let payload;
   try {
     payload = JSON.parse(packageInput.value);
@@ -48,6 +52,8 @@ submitButton.addEventListener("click", async () => {
       type: "BERLIN_LOST_FOUND_SUBMIT",
       payload: activePayload,
     });
+    latestOutcome = result?.outcome || null;
+    copyResultButton.hidden = !latestOutcome;
     status.textContent = result?.ok
       ? result.receipt
         ? `Submitted. Receipt: ${result.receipt}`
@@ -66,5 +72,20 @@ submitButton.addEventListener("click", async () => {
     submitButton.hidden = true;
     activePayload = null;
     activeTabId = null;
+  }
+});
+
+copyResultButton.addEventListener("click", async () => {
+  if (!latestOutcome) return;
+  try {
+    await navigator.clipboard.writeText(JSON.stringify(latestOutcome));
+    copyResultButton.textContent = "Result copied";
+    status.textContent =
+      latestOutcome.status === "uncertain"
+        ? "Paste this result into the app. It will record an uncertain attempt, not a confirmed submission."
+        : "Paste this result into the matching report card in the app.";
+  } catch {
+    status.textContent =
+      "Copying was blocked. Keep the official page open and save its case number manually.";
   }
 });

@@ -94,6 +94,16 @@ export interface SubmissionRecord {
   receipt?: string;
 }
 
+/** Result copied back from the optional form helper after its final check. */
+export interface SubmissionOutcomePackage {
+  version: 1;
+  channelId: string;
+  fingerprint: string;
+  status: Exclude<SubmissionStatus, "opened">;
+  updatedAt: string;
+  receipt?: string;
+}
+
 export interface LostCase {
   version: 1;
   item: LostItem;

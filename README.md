@@ -123,9 +123,11 @@ npm run data:lost-found:publish
 
 The private `/review` route presents the same queue with venue/operator scope,
 official evidence, field-by-field checkboxes, accept/reject controls and a
-downloadable `reviews.json`. It does not mutate the repository or publish a
-channel. Assisted filling decisions are bound to the exact reviewed form hash;
-any later field change requires a new review.
+downloadable `reviews.json` backup. Signed-in decisions are appended to a D1
+audit log and immediately feed the live reviewed registry; a separate current
+state table keeps registry reads bounded. A changed destination, scope,
+evidence snapshot or assisted-fill form hash returns the candidate to pending
+review instead of silently inheriting an old decision.
 
 The app loads `public/berlin-lost-found-channels.json`. Reviewed forms expose a
 field-by-field guide and an expiring autofill package. The optional browser
@@ -134,4 +136,7 @@ action and never fills consent or attachments. Submission is disabled by
 default. It appears only for an explicitly published, exact-hash adapter and
 still requires a second click, an in-page confirmation, complete required
 fields and a reviewed success state. Channels lose assisted filling after
-their 90-day human review deadline until they are reviewed again.
+their 90-day human review deadline until they are reviewed again. After a
+confirmed or uncertain adapter attempt, the helper can copy a result package
+back to the report card. The app imports it only when the channel and exact
+report fingerprint match, then stores the result and any receipt locally.

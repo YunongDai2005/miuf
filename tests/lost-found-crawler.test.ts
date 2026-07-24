@@ -3,6 +3,7 @@ import { mkdtemp, readFile, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import test from "node:test";
+import vm from "node:vm";
 import { buildFormGuide } from "../app/lost-found/formGuide";
 import { buildAutofillPackage } from "../app/lost-found/autofill";
 import type { ResolvedParty } from "../app/lost-found/parties";
@@ -12,7 +13,12 @@ import {
   isPublishedChannelRegistry,
 } from "../lib/lost-found-channel-schema";
 import {
+  candidateReviewVersion,
+  createReviewDecision,
+} from "../lib/channel-review";
+import {
   nextSubmissionRecord,
+  submissionRecordFromOutcome,
   submissionFingerprint,
 } from "../app/lost-found/submission";
 import { extractFormsFromHtml } from "../scripts/lost-found-crawler/form-extractor.mjs";
@@ -707,6 +713,93 @@ test("fingerprints exact reports and records local receipt evidence", () => {
   });
   assert.equal(record.receipt, "CASE-123");
   assert.equal(record.updatedAt, "2026-07-23T12:00:00.000Z");
+  const imported = submissionRecordFromOutcome(
+    {
+      version: 1,
+      channelId: "channel_test",
+      fingerprint: first,
+      status: "receipt_confirmed",
+      updatedAt: "2026-07-23T12:01:00Z",
+      receipt: " CASE-456 ",
+    },
+    {
+      partyId: resolved.party.id,
+      channelId: "channel_test",
+      fingerprint: first,
+    }
+  );
+  assert.equal(imported.receipt, "CASE-456");
+  assert.equal(imported.status, "receipt_confirmed");
+  assert.throws(
+    () =>
+      submissionRecordFromOutcome(
+        {
+          version: 1,
+          channelId: "channel_test",
+          fingerprint: "another-report",
+          status: "uncertain",
+          updatedAt: "2026-07-23T12:01:00Z",
+        },
+        {
+          partyId: resolved.party.id,
+          channelId: "channel_test",
+          fingerprint: first,
+        }
+      ),
+    /different report/
+  );
+});
+
+test("browser helper rejects a package without a bounded expiry", async () => {
+  const source = await readFile(
+    new URL("../extension/content.js", import.meta.url),
+    "utf8"
+  );
+  let listener:
+    | ((
+        message: unknown,
+        sender: unknown,
+        respond: (value: unknown) => void
+      ) => boolean)
+    | undefined;
+  vm.runInNewContext(source, {
+    URL,
+    location: {
+      origin: "https://museum.example",
+      pathname: "/lost",
+    },
+    chrome: {
+      runtime: {
+        onMessage: {
+          addListener(callback: typeof listener) {
+            listener = callback;
+          },
+        },
+      },
+    },
+  });
+  assert.ok(listener);
+  const response = await new Promise<Record<string, unknown>>((resolve) => {
+    listener!(
+      {
+        type: "BERLIN_LOST_FOUND_FILL",
+        payload: {
+          version: 1,
+          channelId: "channel_test",
+          pageUrl: "https://museum.example/lost",
+          fingerprint: "0123456789abcdef",
+          createdAt: "2026-07-23T12:00:00Z",
+          submitAllowed: false,
+          fields: [],
+          manualRequiredFields: [],
+        },
+      },
+      null,
+      (value) => resolve(value as Record<string, unknown>)
+    );
+  });
+  assert.equal(response.ok, false);
+  assert.match(String(response.error), /validity dates/);
 });
 
 test("publishes only reviewed candidates and refuses an untested submit adapter", async () => {
@@ -759,6 +852,27 @@ test("publishes only reviewed candidates and refuses an untested submit adapter"
     reviewStatus: "candidate" as const,
     discoveredAt: "2026-07-23T10:00:00Z",
   };
+  const serverDecision = createReviewDecision({
+    candidate,
+    decision: "accept",
+    reviewerName: "Signed-in reviewer",
+    submissionMode: "assisted_fill",
+    reviewedAt: "2026-07-23T10:30:00Z",
+  });
+  assert.equal(
+    serverDecision.reviewedCandidateVersion,
+    candidateReviewVersion(candidate)
+  );
+  assert.equal(serverDecision.reviewedContentHash, "form-hash");
+  assert.throws(
+    () =>
+      createReviewDecision({
+        candidate: { ...candidate, kind: "manual_review", form: undefined },
+        decision: "accept",
+        reviewerName: "Signed-in reviewer",
+      }),
+    /Evidence-only/
+  );
   await writeFile(
     candidatePath,
     JSON.stringify({
@@ -769,6 +883,30 @@ test("publishes only reviewed candidates and refuses an untested submit adapter"
     })
   );
   await writeFile(adapterPath, JSON.stringify({ version: 1, adapters: [] }));
+  await writeFile(
+    reviewPath,
+    JSON.stringify({
+      version: 1,
+      decisions: [
+        {
+          candidateId: candidate.id,
+          decision: "accept",
+          reviewedAt: "2026-07-23T11:00:00Z",
+          reviewedBy: "Test reviewer",
+          reviewedCandidateVersion: "stale-destination-version",
+        },
+      ],
+    })
+  );
+  await assert.rejects(
+    publishReviewedChannels({
+      candidatePath,
+      reviewPath,
+      adapterPath,
+      outputPath,
+    }),
+    /changed after its destination review/
+  );
   await writeFile(
     candidatePath,
     JSON.stringify({
@@ -794,6 +932,11 @@ test("publishes only reviewed candidates and refuses an untested submit adapter"
           decision: "accept",
           reviewedAt: "2026-07-23T11:00:00Z",
           reviewedBy: "Test reviewer",
+          reviewedCandidateVersion: candidateReviewVersion({
+            ...candidate,
+            kind: "manual_review",
+            form: undefined,
+          }),
           kindOverride: "dedicated_lost_found_form",
         },
       ],
@@ -827,6 +970,7 @@ test("publishes only reviewed candidates and refuses an untested submit adapter"
           decision: "accept",
           reviewedAt: "2026-07-23T11:00:00Z",
           reviewedBy: "Test reviewer",
+          reviewedCandidateVersion: candidateReviewVersion(candidate),
           submissionMode: "adapter",
           adapterId: "missing-adapter",
           reviewedContentHash: "form-hash",
@@ -853,6 +997,7 @@ test("publishes only reviewed candidates and refuses an untested submit adapter"
           decision: "accept",
           reviewedAt: "2026-07-23T11:00:00Z",
           reviewedBy: "Test reviewer",
+          reviewedCandidateVersion: candidateReviewVersion(candidate),
           submissionMode: "assisted_fill",
           reviewedContentHash: "stale-form-hash",
         },
@@ -878,6 +1023,7 @@ test("publishes only reviewed candidates and refuses an untested submit adapter"
           decision: "accept",
           reviewedAt: "2026-07-23T11:00:00Z",
           reviewedBy: "Test reviewer",
+          reviewedCandidateVersion: candidateReviewVersion(candidate),
           submissionMode: "assisted_fill",
           reviewedContentHash: "form-hash",
         },

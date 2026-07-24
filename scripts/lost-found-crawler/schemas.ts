@@ -131,6 +131,8 @@ export interface ReviewDecision {
   decision: "accept" | "reject";
   reviewedAt: string;
   reviewedBy: string;
+  /** Exact destination, scope and evidence snapshot that was reviewed. */
+  reviewedCandidateVersion: string;
   notes?: string;
   kindOverride?: ChannelKind;
   venueIdsOverride?: string[];

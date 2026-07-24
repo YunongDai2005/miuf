@@ -15,6 +15,9 @@ Safety rules:
   action;
 - with such an adapter, submission still requires a second click and an
   in-page confirmation, checks the filled values again, clicks once, and only
-  records success when the official page shows the reviewed success state.
+  records success when the official page shows the reviewed success state;
+- after a confirmed or uncertain attempt, it can copy a result package back to
+  the matching report card. The app checks the exact report fingerprint before
+  recording the result or receipt.
 
 Load the `extension/` directory as an unpacked extension during development.

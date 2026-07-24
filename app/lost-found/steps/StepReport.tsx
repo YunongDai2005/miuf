@@ -17,6 +17,7 @@ import { hasContact } from "../storage";
 import { buildFormGuide } from "../formGuide";
 import {
   nextSubmissionRecord,
+  submissionRecordFromOutcome,
   submissionFingerprint,
 } from "../submission";
 import { buildAutofillPackage } from "../autofill";
@@ -89,6 +90,8 @@ function PartyCard({
   const [copied, setCopied] = useState<"de" | "en" | null>(null);
   const [copiedField, setCopiedField] = useState<string | null>(null);
   const [copiedPackage, setCopiedPackage] = useState(false);
+  const [helperResult, setHelperResult] = useState("");
+  const [helperResultError, setHelperResultError] = useState("");
   const reminder = calendarReminderHref(lostCase, resolved);
   const formGuide = buildFormGuide(lostCase, resolved);
   const fingerprint = submissionFingerprint(lostCase, resolved);
@@ -143,6 +146,31 @@ function PartyCard({
       setTimeout(() => setCopiedPackage(false), 1600);
     } catch {
       /* Field-by-field values remain available when clipboard access is blocked. */
+    }
+  };
+  const importHelperResult = () => {
+    try {
+      const record = submissionRecordFromOutcome(JSON.parse(helperResult), {
+        partyId: party.id,
+        channelId: party.channelId ?? party.id,
+        fingerprint,
+      });
+      onSubmission(record);
+      if (
+        record.status === "user_confirmed" ||
+        record.status === "receipt_confirmed"
+      ) {
+        onSetState("sent");
+      }
+      if (record.receipt) setReceipt(record.receipt);
+      setHelperResult("");
+      setHelperResultError("");
+    } catch (error) {
+      setHelperResultError(
+        error instanceof Error
+          ? error.message
+          : "The helper result could not be imported."
+      );
     }
   };
 
@@ -448,6 +476,8 @@ function PartyCard({
               ? "opened"
               : previousSubmission.status === "receipt_confirmed"
                 ? "saved with a receipt"
+                : previousSubmission.status === "uncertain"
+                  ? "attempted with an uncertain result"
                 : "marked as sent"}{" "}
             on {new Date(previousSubmission.updatedAt).toLocaleString()}. Check its status before
             sending it again.
@@ -476,6 +506,43 @@ function PartyCard({
                 Save receipt
               </button>
             </div>
+            {autofillPackage && (
+              <div className="border-t border-stone-100 px-3 py-3 dark:border-stone-800">
+                <p className="text-[11px] leading-5 text-stone-500 dark:text-stone-400">
+                  If the browser helper submitted this report, paste its copied
+                  result here. The report fingerprint must match before it is
+                  added to this case.
+                </p>
+                <textarea
+                  value={helperResult}
+                  onChange={(event) => {
+                    setHelperResult(event.target.value);
+                    setHelperResultError("");
+                  }}
+                  placeholder="{ helper result }"
+                  aria-label="Browser helper result"
+                  className="mt-2 h-20 w-full resize-y rounded-lg border border-stone-200 bg-white p-2 font-mono text-[10px] text-stone-700 outline-none focus:border-orange-400 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200"
+                />
+                <div className="mt-2 flex flex-wrap items-center gap-2">
+                  <button
+                    type="button"
+                    disabled={!helperResult.trim()}
+                    onClick={importHelperResult}
+                    className="rounded-lg border border-stone-300 px-3 py-1.5 text-xs font-semibold disabled:opacity-40 dark:border-stone-700"
+                  >
+                    Import helper result
+                  </button>
+                  {helperResultError && (
+                    <span
+                      className="text-[11px] text-rose-700 dark:text-rose-300"
+                      role="alert"
+                    >
+                      {helperResultError}
+                    </span>
+                  )}
+                </div>
+              </div>
+            )}
           </details>
         )}
 

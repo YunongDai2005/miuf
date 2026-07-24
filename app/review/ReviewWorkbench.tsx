@@ -68,7 +68,6 @@ export default function ReviewWorkbench({
   venueNames,
   operatorNames,
 }: Props) {
-  const [reviewerName, setReviewerName] = useState(initialReviewerName);
   const [filter, setFilter] = useState<ViewFilter>("pending");
   const candidateIds = useMemo(
     () => new Set(candidates.map((candidate) => candidate.id)),
@@ -84,6 +83,13 @@ export default function ReviewWorkbench({
     {}
   );
   const [draftLoaded, setDraftLoaded] = useState(false);
+  const [syncStatus, setSyncStatus] = useState<
+    "loading" | "saved" | "unavailable"
+  >("loading");
+  const [syncError, setSyncError] = useState("");
+  const [savingCandidateId, setSavingCandidateId] = useState<string | null>(
+    null
+  );
 
   useEffect(() => {
     const restore = window.setTimeout(() => {
@@ -92,18 +98,10 @@ export default function ReviewWorkbench({
         if (saved) {
           const parsed = JSON.parse(saved) as {
             generatedAt?: string;
-            decisions?: ReviewDecision[];
             notes?: Record<string, string>;
             checkedFields?: Record<string, string[]>;
           };
           if (parsed.generatedAt === generatedAt) {
-            if (Array.isArray(parsed.decisions)) {
-              setDecisions(
-                parsed.decisions.filter((decision) =>
-                  candidateIds.has(decision.candidateId)
-                )
-              );
-            }
             if (parsed.notes) setNotes(parsed.notes);
             if (parsed.checkedFields) setCheckedFields(parsed.checkedFields);
           }
@@ -121,9 +119,54 @@ export default function ReviewWorkbench({
     if (!draftLoaded) return;
     localStorage.setItem(
       STORAGE_KEY,
-      JSON.stringify({ generatedAt, decisions, notes, checkedFields })
+      JSON.stringify({ generatedAt, notes, checkedFields })
     );
-  }, [checkedFields, decisions, draftLoaded, generatedAt, notes]);
+  }, [checkedFields, draftLoaded, generatedAt, notes]);
+
+  useEffect(() => {
+    let cancelled = false;
+    void fetch("/api/channel-reviews", {
+      credentials: "same-origin",
+      headers: { Accept: "application/json" },
+    })
+      .then(async (response) => {
+        const payload = (await response.json()) as {
+          decisions?: ReviewDecision[];
+          error?: string;
+        };
+        if (!response.ok || !Array.isArray(payload.decisions)) {
+          throw new Error(payload.error || "Saved reviews could not be loaded.");
+        }
+        if (cancelled) return;
+        const current = payload.decisions.filter((decision) =>
+          candidateIds.has(decision.candidateId)
+        );
+        setDecisions(current);
+        setNotes((existing) => {
+          const next = { ...existing };
+          for (const decision of current) {
+            if (next[decision.candidateId] === undefined && decision.notes) {
+              next[decision.candidateId] = decision.notes;
+            }
+          }
+          return next;
+        });
+        setSyncStatus("saved");
+        setSyncError("");
+      })
+      .catch((error) => {
+        if (cancelled) return;
+        setSyncStatus("unavailable");
+        setSyncError(
+          error instanceof Error
+            ? error.message
+            : "Saved reviews could not be loaded."
+        );
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [candidateIds]);
 
   const decisionsByCandidate = useMemo(
     () => decisionMap(decisions),
@@ -142,40 +185,50 @@ export default function ReviewWorkbench({
     (decision) => decision.decision === "reject"
   ).length;
 
-  const record = (
+  const writeReview = async (
     candidate: ChannelCandidate,
-    decision: ReviewDecision["decision"],
+    decision: ReviewDecision["decision"] | "clear",
     submissionMode?: ReviewDecision["submissionMode"]
   ) => {
-    const reviewer = reviewerName.trim();
-    if (!reviewer) return;
-    const next: ReviewDecision = {
-      candidateId: candidate.id,
-      decision,
-      reviewedAt: new Date().toISOString(),
-      reviewedBy: reviewer,
-      notes: notes[candidate.id]?.trim() || undefined,
-      kindOverride:
-        decision === "accept" && candidate.kind !== "manual_review"
-          ? candidate.kind
-          : undefined,
-      submissionMode: decision === "accept" ? submissionMode : undefined,
-      reviewedContentHash:
-        decision === "accept" &&
-        (submissionMode === "assisted_fill" || submissionMode === "adapter")
-          ? candidate.form?.contentHash
-          : undefined,
-    };
-    setDecisions((current) => [
-      ...current.filter((entry) => entry.candidateId !== candidate.id),
-      next,
-    ]);
-  };
-
-  const clearDecision = (candidateId: string) => {
-    setDecisions((current) =>
-      current.filter((entry) => entry.candidateId !== candidateId)
-    );
+    setSavingCandidateId(candidate.id);
+    setSyncError("");
+    try {
+      const response = await fetch("/api/channel-reviews", {
+        method: "POST",
+        credentials: "same-origin",
+        headers: {
+          "Content-Type": "application/json",
+          Accept: "application/json",
+        },
+        body: JSON.stringify({
+          candidateId: candidate.id,
+          decision,
+          notes: notes[candidate.id]?.trim() || undefined,
+          submissionMode: decision === "accept" ? submissionMode : undefined,
+        }),
+      });
+      const payload = (await response.json()) as {
+        decision?: ReviewDecision | null;
+        error?: string;
+      };
+      if (!response.ok) {
+        throw new Error(payload.error || "The review could not be saved.");
+      }
+      setDecisions((current) => {
+        const others = current.filter(
+          (entry) => entry.candidateId !== candidate.id
+        );
+        return payload.decision ? [...others, payload.decision] : others;
+      });
+      setSyncStatus("saved");
+    } catch (error) {
+      setSyncStatus("unavailable");
+      setSyncError(
+        error instanceof Error ? error.message : "The review could not be saved."
+      );
+    } finally {
+      setSavingCandidateId(null);
+    }
   };
 
   return (
@@ -195,8 +248,8 @@ export default function ReviewWorkbench({
             <h1 className="mt-1 text-3xl font-bold">Official channel review</h1>
             <p className="mt-2 max-w-3xl text-sm leading-6 text-stone-600 dark:text-stone-300">
               Check who owns the destination, whether it really accepts lost-property
-              enquiries, and every extracted field. Decisions stay in this browser
-              until you download them; nothing here sends a form or publishes a channel.
+              enquiries, and every extracted field. Saved decisions become available
+              to the traveller app immediately; nothing here sends a form.
             </p>
           </div>
           <button
@@ -218,14 +271,26 @@ export default function ReviewWorkbench({
         </div>
 
         <section className="mt-6 grid gap-3 rounded-2xl border border-stone-200 bg-white p-4 md:grid-cols-[minmax(220px,1fr)_auto] dark:border-stone-800 dark:bg-stone-900">
-          <label className="text-sm font-medium">
-            Reviewer name
-            <input
-              value={reviewerName}
-              onChange={(event) => setReviewerName(event.target.value)}
-              className="mt-1 block w-full rounded-xl border border-stone-300 bg-white px-3 py-2 text-sm dark:border-stone-700 dark:bg-stone-950"
-            />
-          </label>
+          <div className="text-sm">
+            <p className="font-medium">Reviewer</p>
+            <p className="mt-1 text-stone-600 dark:text-stone-300">
+              {initialReviewerName}
+            </p>
+            <p
+              className={`mt-1 text-xs ${
+                syncStatus === "unavailable"
+                  ? "text-rose-700 dark:text-rose-300"
+                  : "text-stone-400"
+              }`}
+              role={syncStatus === "unavailable" ? "alert" : undefined}
+            >
+              {syncStatus === "loading"
+                ? "Loading saved reviews…"
+                : syncStatus === "saved"
+                  ? "Server audit log is connected."
+                  : syncError}
+            </p>
+          </div>
           <div className="flex flex-wrap items-end gap-2 text-xs">
             <span className="rounded-full bg-emerald-100 px-3 py-1.5 font-semibold text-emerald-800 dark:bg-emerald-500/15 dark:text-emerald-200">
               {accepted} accepted
@@ -408,26 +473,14 @@ export default function ReviewWorkbench({
                   Review note
                   <textarea
                     value={notes[candidate.id] ?? decision?.notes ?? ""}
-                    onChange={(event) =>
-                      {
-                        const value = event.target.value;
-                        setNotes((current) => ({
-                          ...current,
-                          [candidate.id]: value,
-                        }));
-                        setDecisions((current) =>
-                          current.map((entry) =>
-                            entry.candidateId === candidate.id
-                              ? {
-                                  ...entry,
-                                  notes: value.trim() || undefined,
-                                }
-                              : entry
-                          )
-                        );
-                      }
-                    }
-                    placeholder="Why is this correct, unsuitable, or limited?"
+                    onChange={(event) => {
+                      const value = event.target.value;
+                      setNotes((current) => ({
+                        ...current,
+                        [candidate.id]: value,
+                      }));
+                    }}
+                    placeholder="Saved with the next decision you click."
                     className="mt-1 min-h-20 w-full rounded-xl border border-stone-300 bg-white px-3 py-2 font-normal dark:border-stone-700 dark:bg-stone-950"
                   />
                 </label>
@@ -436,8 +489,13 @@ export default function ReviewWorkbench({
                   {candidate.kind !== "manual_review" && (
                     <button
                       type="button"
-                      disabled={!reviewerName.trim()}
-                      onClick={() => record(candidate, "accept", "open_only")}
+                      disabled={
+                        syncStatus === "loading" ||
+                        savingCandidateId === candidate.id
+                      }
+                      onClick={() =>
+                        void writeReview(candidate, "accept", "open_only")
+                      }
                       className="rounded-xl bg-emerald-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
                     >
                       Accept destination only
@@ -446,9 +504,17 @@ export default function ReviewWorkbench({
                   {candidate.form && candidate.kind !== "manual_review" && (
                     <button
                       type="button"
-                      disabled={!reviewerName.trim() || !allFieldsChecked}
+                      disabled={
+                        syncStatus === "loading" ||
+                        savingCandidateId === candidate.id ||
+                        !allFieldsChecked
+                      }
                       onClick={() =>
-                        record(candidate, "accept", "assisted_fill")
+                        void writeReview(
+                          candidate,
+                          "accept",
+                          "assisted_fill"
+                        )
                       }
                       className="rounded-xl bg-sky-700 px-3 py-2 text-xs font-semibold text-white disabled:cursor-not-allowed disabled:opacity-35"
                     >
@@ -457,8 +523,11 @@ export default function ReviewWorkbench({
                   )}
                   <button
                     type="button"
-                    disabled={!reviewerName.trim()}
-                    onClick={() => record(candidate, "reject")}
+                    disabled={
+                      syncStatus === "loading" ||
+                      savingCandidateId === candidate.id
+                    }
+                    onClick={() => void writeReview(candidate, "reject")}
                     className="rounded-xl bg-rose-700 px-3 py-2 text-xs font-semibold text-white disabled:opacity-40"
                   >
                     Reject
@@ -466,7 +535,11 @@ export default function ReviewWorkbench({
                   {decision && (
                     <button
                       type="button"
-                      onClick={() => clearDecision(candidate.id)}
+                      disabled={
+                        syncStatus === "loading" ||
+                        savingCandidateId === candidate.id
+                      }
+                      onClick={() => void writeReview(candidate, "clear")}
                       className="rounded-xl border border-stone-300 px-3 py-2 text-xs font-semibold dark:border-stone-700"
                     >
                       Clear decision

@@ -122,16 +122,18 @@ async function fetchJson<T>(url: string, label: string): Promise<T> {
 }
 
 async function fetchChannelRegistry(): Promise<PublishedChannelRegistry | undefined> {
-  try {
-    const value = await fetchJson<unknown>(
-      "/berlin-lost-found-channels.json",
-      "Lost-property channel registry"
-    );
-    return isPublishedChannelRegistry(value) ? value : undefined;
-  } catch {
-    // The core itinerary remains usable while a registry deployment is unavailable.
-    return undefined;
+  for (const [url, label] of [
+    ["/api/lost-found-channels", "Live reviewed channel registry"],
+    ["/berlin-lost-found-channels.json", "Bundled channel registry"],
+  ] as const) {
+    try {
+      const value = await fetchJson<unknown>(url, label);
+      if (isPublishedChannelRegistry(value)) return value;
+    } catch {
+      // Try the bundled snapshot before leaving the core itinerary without a registry.
+    }
   }
+  return undefined;
 }
 
 /** Load the 2.9 MB geometry only after the traveller explicitly asks for route inference. */

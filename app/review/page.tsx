@@ -10,6 +10,8 @@ import type {
 } from "../../scripts/lost-found-crawler/schemas";
 import ReviewWorkbench from "./ReviewWorkbench";
 
+export const dynamic = "force-dynamic";
+
 export const metadata: Metadata = {
   title: "Channel review | Berlin Lost & Found",
   description: "Private review workspace for official lost-property channels.",

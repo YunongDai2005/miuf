@@ -1,5 +1,6 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
+import { candidateReviewVersion } from "../../lib/channel-review";
 import type { ChannelKind } from "../../lib/lost-found-channel-schema";
 import type {
   CandidateFile,
@@ -69,6 +70,7 @@ export async function recordReviewDecision(options: {
     decision: options.decision,
     reviewedAt: options.reviewedAt ?? new Date().toISOString(),
     reviewedBy: options.reviewedBy.trim(),
+    reviewedCandidateVersion: candidateReviewVersion(candidate),
     notes: options.notes?.trim() || undefined,
     kindOverride: options.kindOverride as ChannelKind | undefined,
     venueIdsOverride: options.venueIdsOverride,

@@ -43,13 +43,17 @@
     if (
       payload?.version !== 1 ||
       typeof payload.submitAllowed !== "boolean" ||
-      !Array.isArray(payload.fields)
+      typeof payload.channelId !== "string" ||
+      payload.channelId.length > 200 ||
+      !/^[a-f0-9]{16}$/.test(payload.fingerprint || "") ||
+      !Array.isArray(payload.fields) ||
+      payload.fields.length > 100
     ) {
       throw new Error("This package is not supported.");
     }
     if (
-      payload.submitAllowed &&
-      !Array.isArray(payload.manualRequiredFields)
+      !Array.isArray(payload.manualRequiredFields) ||
+      payload.manualRequiredFields.length > 100
     ) {
       throw new Error(
         "This submission package predates required-field safety checks. Copy a fresh package."
@@ -67,7 +71,18 @@
         `This package belongs to ${expectedPath}, not the current page.`
       );
     }
-    if (Date.parse(payload.expiresAt) < Date.now()) {
+    const createdAt = Date.parse(payload.createdAt);
+    const expiresAt = Date.parse(payload.expiresAt);
+    if (
+      !Number.isFinite(createdAt) ||
+      !Number.isFinite(expiresAt) ||
+      createdAt > Date.now() + 5 * 60 * 1000 ||
+      expiresAt <= createdAt ||
+      expiresAt - createdAt > 2 * 60 * 60 * 1000 + 60 * 1000
+    ) {
+      throw new Error("This package has invalid validity dates.");
+    }
+    if (expiresAt < Date.now()) {
       throw new Error("This package has expired. Copy a fresh one from the app.");
     }
     if (!payload.submitAllowed) {
@@ -203,8 +218,9 @@
     }
     void (async () => {
       let submissionAttempted = false;
+      let payload;
       try {
-        const payload = message.payload;
+        payload = message.payload;
         if (message.type === "BERLIN_LOST_FOUND_FILL") {
           const result = fillPackage(payload);
           sendResponse({ ok: true, ...result });
@@ -256,11 +272,35 @@
             receipt: result.receipt,
           },
         });
-        sendResponse({ ok: true, receipt: result.receipt });
+        const updatedAt = new Date().toISOString();
+        const outcome = {
+          version: 1,
+          channelId: payload.channelId,
+          fingerprint: payload.fingerprint,
+          status: result.receipt
+            ? "receipt_confirmed"
+            : "user_confirmed",
+          updatedAt,
+          receipt: result.receipt,
+        };
+        sendResponse({ ok: true, receipt: result.receipt, outcome });
       } catch (error) {
+        const outcome =
+          submissionAttempted &&
+          typeof payload?.channelId === "string" &&
+          typeof payload?.fingerprint === "string"
+            ? {
+                version: 1,
+                channelId: payload.channelId,
+                fingerprint: payload.fingerprint,
+                status: "uncertain",
+                updatedAt: new Date().toISOString(),
+              }
+            : undefined;
         sendResponse({
           ok: false,
           attempted: submissionAttempted,
+          outcome,
           error: error instanceof Error ? error.message : String(error),
         });
       }
