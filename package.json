@@ -51,6 +51,7 @@
     "drizzle-kit": "0.31.10",
     "eslint": "9.39.4",
     "eslint-config-next": "^16.2.11",
+    "pdfjs-dist": "5.4.624",
     "react-server-dom-webpack": "19.2.6",
     "robots-parser": "^3.0.1",
     "tailwindcss": "4.2.1",

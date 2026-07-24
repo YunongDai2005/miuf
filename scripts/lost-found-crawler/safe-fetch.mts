@@ -90,12 +90,12 @@ async function resolvePublicHttpUrl(
 async function readBoundedBody(
   response: Awaited<ReturnType<typeof undiciFetch>>,
   maxBytes: number
-): Promise<string> {
+): Promise<Uint8Array> {
   const declaredLength = Number(response.headers.get("content-length"));
   if (Number.isFinite(declaredLength) && declaredLength > maxBytes) {
     throw new Error(`Response exceeds ${maxBytes} bytes`);
   }
-  if (!response.body) return "";
+  if (!response.body) return new Uint8Array();
   const reader = response.body.getReader();
   const chunks: Uint8Array[] = [];
   let received = 0;
@@ -115,24 +115,24 @@ async function readBoundedBody(
     output.set(chunk, offset);
     offset += chunk.byteLength;
   }
-  return new TextDecoder().decode(output);
+  return output;
 }
 
-export interface SafeFetchResult {
+export interface SafeFetchBytesResult {
   url: string;
   status: number;
   headers: { get(name: string): string | null };
-  body: string;
+  body: Uint8Array;
 }
 
-export async function safeFetchText(
+async function fetchPublicBytes(
   rawUrl: string,
   options: {
     maxBytes?: number;
     timeoutMs?: number;
     accept?: string;
   } = {}
-): Promise<SafeFetchResult> {
+): Promise<SafeFetchBytesResult> {
   let current = await assertPublicHttpUrl(rawUrl);
   for (let redirect = 0; redirect <= MAX_REDIRECTS; redirect += 1) {
     const resolved = await resolvePublicHttpUrl(current.toString());
@@ -177,4 +177,35 @@ export async function safeFetchText(
     }
   }
   throw new Error(`Too many redirects from ${rawUrl}`);
+}
+
+export async function safeFetchBytes(
+  rawUrl: string,
+  options: {
+    maxBytes?: number;
+    timeoutMs?: number;
+    accept?: string;
+  } = {}
+): Promise<SafeFetchBytesResult> {
+  return fetchPublicBytes(rawUrl, options);
+}
+
+export interface SafeFetchResult
+  extends Omit<SafeFetchBytesResult, "body"> {
+  body: string;
+}
+
+export async function safeFetchText(
+  rawUrl: string,
+  options: {
+    maxBytes?: number;
+    timeoutMs?: number;
+    accept?: string;
+  } = {}
+): Promise<SafeFetchResult> {
+  const response = await fetchPublicBytes(rawUrl, options);
+  return {
+    ...response,
+    body: new TextDecoder().decode(response.body),
+  };
 }

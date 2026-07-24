@@ -149,6 +149,26 @@
       "reviewedBy": "Codex official-page audit",
       "reviewedCandidateVersion": "{\"id\":\"channel_197e5f6c6d7ad3f6\",\"operatorId\":\"operator_9f343b200f922ce7\",\"venueIds\":[\"node/13951345000\",\"way/166709624\",\"way/172234733\"],\"kind\":\"manual_review\",\"pageUrl\":\"https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/\",\"contactValue\":null,\"formContentHash\":null,\"evidenceHashes\":[\"5c5f453f77ea76bc4bf73632110861d411192820f1bac284e50c15e76c3c5212\"]}",
       "notes": "Evidence-only page lead; the exact reception phone and the separately reviewed general contact form cover the usable actions."
+    },
+    {
+      "candidateId": "channel_5cbf0c11dd6b198e",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T10:30:23.723Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_5cbf0c11dd6b198e\",\"operatorId\":\"operator_0fa1189548278b11\",\"venueIds\":[\"relation/2309788\",\"relation/2309795\",\"relation/8102166\"],\"kind\":\"email\",\"pageUrl\":\"https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf\",\"contactValue\":\"info@planetarium.berlin\",\"formContentHash\":null,\"evidenceHashes\":[\"46c77197be5d3c791b41eeafe099e581618fefb1fa49d7c8eb6f2316459797d9\"]}",
+      "notes": "Official Stiftung Planetarium Berlin visitor rules apply to its establishments, state that ticket-office staff accept lost property, and publish this foundation email in the same document. Use it as the primary written fallback and name the exact facility and visit time; it is not a dedicated lost-property mailbox.",
+      "kindOverride": "email",
+      "submissionMode": "open_only"
+    },
+    {
+      "candidateId": "channel_97abd58068e3a404",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T10:30:24.613Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_97abd58068e3a404\",\"operatorId\":\"operator_0fa1189548278b11\",\"venueIds\":[\"relation/2309788\",\"relation/2309795\",\"relation/8102166\"],\"kind\":\"phone\",\"pageUrl\":\"https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf\",\"contactValue\":\"+49 30 421845-0\",\"formContentHash\":null,\"evidenceHashes\":[\"46c77197be5d3c791b41eeafe099e581618fefb1fa49d7c8eb6f2316459797d9\"]}",
+      "notes": "Official Stiftung Planetarium Berlin visitor rules apply to its establishments, state that ticket-office staff accept lost property, and publish this central number in the same document. Keep it as a backup to the written channel, not a second report destination or a dedicated lost-property hotline.",
+      "kindOverride": "phone",
+      "submissionMode": "open_only"
     }
   ]
 }

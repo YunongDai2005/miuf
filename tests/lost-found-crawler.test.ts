@@ -29,6 +29,7 @@ import {
   candidateUrlIdentity,
   extractOfficialVenueContactValues,
   extractPublicContactValues,
+  extractPublicContactValuesFromText,
   formCandidateId,
   isRelevantDiscoveredForm,
   shouldSkipDiscoveryUrl,
@@ -345,6 +346,48 @@ test("verification checks that a reviewed public contact still has a lost-proper
   );
 });
 
+test("extracts reviewed contacts from an official lost-property policy PDF text", () => {
+  const text = `
+    Stiftung Planetarium Berlin
+    Tel +49 30 421845-0
+    info@planetarium.berlin
+    Rules for Visitors
+    Cloakroom, personal belongings and animals.
+    The cashier will be happy to accept lost property.
+  `;
+  const contacts = extractPublicContactValuesFromText(text);
+  assert.ok(
+    contacts.some(
+      (contact) =>
+        contact.kind === "email" &&
+        contact.value === "info@planetarium.berlin" &&
+        /lost property/i.test(contact.excerpt)
+    )
+  );
+  assert.ok(
+    contacts.some(
+      (contact) =>
+        contact.kind === "phone" &&
+        contact.value === "+49 30 421845-0" &&
+        /lost property/i.test(contact.excerpt)
+    )
+  );
+  assert.equal(
+    publicContactStillPublished({
+      text,
+      kind: "email",
+      contactValue: "INFO@PLANETARIUM.BERLIN",
+    }),
+    true
+  );
+  assert.equal(
+    extractPublicContactValuesFromText(
+      "Visitor information: info@planetarium.berlin"
+    ).length,
+    0
+  );
+});
+
 test("runtime registry validation rejects malformed adapter channels and review deadlines expire", () => {
   const channel = {
     id: "channel",
@@ -381,7 +424,7 @@ test("runtime registry validation rejects malformed adapter channels and review 
   );
 });
 
-test("bundled reviewed registry covers 39 venues without publishing bot traps", async () => {
+test("bundled reviewed registry covers 42 venues without publishing bot traps", async () => {
   const registry = JSON.parse(
     await readFile(
       new URL("../public/berlin-lost-found-channels.json", import.meta.url),
@@ -389,11 +432,11 @@ test("bundled reviewed registry covers 39 venues without publishing bot traps", 
     )
   );
   assert.equal(isPublishedChannelRegistry(registry), true);
-  assert.equal(registry.channels.length, 10);
+  assert.equal(registry.channels.length, 12);
   assert.equal(
     new Set(registry.channels.flatMap((channel: { venueIds: string[] }) => channel.venueIds))
       .size,
-    39
+    42
   );
   assert.ok(
     registry.channels.some(
@@ -628,6 +671,12 @@ test("excludes booking and feedback forms from the general-contact fallback", ()
   );
   assert.equal(
     shouldSkipDiscoveryUrl("https://museum.example/service/fundbuero"),
+    false
+  );
+  assert.equal(
+    shouldSkipDiscoveryUrl(
+      "https://museum.example/downloads/rules-for-visitors.pdf"
+    ),
     false
   );
 });

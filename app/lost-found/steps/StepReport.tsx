@@ -39,6 +39,14 @@ const STATE_META: Record<ReportState, { label: string; className: string }> = {
 };
 const STATES: ReportState[] = ["todo", "sent", "replied"];
 
+function telephoneHref(phone: string): string {
+  const withoutInternationalTrunk = phone.replace(
+    /^(\s*(?:\+|00)\s*\d{1,3})\s*\(\s*0\s*\)/,
+    "$1"
+  );
+  return `tel:${withoutInternationalTrunk.replace(/[^\d+]/g, "")}`;
+}
+
 function ContactRow({
   label,
   source,
@@ -291,6 +299,15 @@ function PartyCard({
             >
               ✉️ Add your contact before emailing
             </button>
+          )}
+          {party.channelKind === "phone" && party.phone && (
+            <a
+              href={telephoneHref(party.phone)}
+              onClick={() => recordSubmission("opened")}
+              className="inline-flex items-center gap-1.5 rounded-xl bg-orange-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-orange-500"
+            >
+              ☎ Call reviewed number
+            </a>
           )}
           {formHref && (
             <a

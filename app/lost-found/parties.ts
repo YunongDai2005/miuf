@@ -46,6 +46,8 @@ export interface Party {
   id: string;
   /** Registry channel id; unlike the UI party id, this must match a reviewed adapter exactly. */
   channelId?: string;
+  /** The reviewed primary channel controls which contact action is shown. */
+  channelKind?: PublishedLostFoundChannel["kind"];
   name: string;
   operatorName: string;
   scope: string;
@@ -421,6 +423,8 @@ function venueParty(entry: ItineraryEntry): Party | null {
     channel?.kind === "email" ? channel.contactValue : undefined;
   const channelPhone =
     channel?.kind === "phone" ? channel.contactValue : undefined;
+  const partyEmail = channel ? channelEmail : entry.officialEmail;
+  const partyPhone = channel ? channelPhone : entry.officialPhone;
   const manualFormSteps = [
     channel?.fields.some((field) => field.semanticKey === "privacyConsent")
       ? "consent"
@@ -432,9 +436,19 @@ function venueParty(entry: ItineraryEntry): Party | null {
         " and "
       )} yourself, then submit the form.`
     : "Submit the form yourself.";
+  const formLabel = channelHasForm
+    ? channel?.submissionMode === "assisted_fill"
+      ? "Open verified form with filling guide"
+      : "Open verified lost-property page"
+    : channel
+      ? "Open reviewed official source"
+      : entry.lostFoundUrl
+        ? "Open the venue’s lost-property page"
+        : "Open the public official-site candidate";
   return {
     id: channel ? `channel:${channel.id}` : `venue:${entry.refId}`,
     channelId: channel?.id,
+    channelKind: channel?.kind,
     name: channel
       ? `${entry.label} lost-property service`
       : `${entry.label} contact candidate`,
@@ -446,15 +460,9 @@ function venueParty(entry: ItineraryEntry): Party | null {
         ? channel.pageUrl
         : undefined
       : entry.lostFoundUrl,
-    formLabel: channelHasForm
-      ? channel.submissionMode === "assisted_fill"
-        ? "Open verified form with filling guide"
-        : "Open verified lost-property page"
-      : !channel && entry.lostFoundUrl
-      ? "Open the venue’s lost-property page"
-      : "Open the public official-site candidate",
-    email: channelEmail ?? entry.officialEmail,
-    phone: channelPhone ?? entry.officialPhone,
+    formLabel,
+    email: partyEmail,
+    phone: partyPhone,
     nextStep: channel
       ? channel.kind === "email"
         ? "Send one report to the reviewed official email address. Keep the sent message or any case number as your receipt."
@@ -465,23 +473,25 @@ function venueParty(entry: ItineraryEntry): Party | null {
       ? "Use the venue’s lost-property page first and include the visit time and a precise item description."
       : "Open the official website and contact reception or visitor service. This contact was found from public venue data and should be checked before sending personal details.",
     followUpAfterDays: 2,
-    alternativeChannels: alternativeChannels.map((alternative) => ({
-      id: alternative.id,
-      label: channelLabel(alternative),
-      url: channelHref(alternative),
-      kind: alternative.kind,
-      submissionMode: alternative.submissionMode,
-      verifiedAt: alternative.verifiedAt,
-      reviewCurrent: isChannelReviewCurrent(alternative),
-    })),
+    alternativeChannels: alternativeChannels
+      .filter((alternative) => isChannelReviewCurrent(alternative))
+      .map((alternative) => ({
+        id: alternative.id,
+        label: channelLabel(alternative),
+        url: channelHref(alternative),
+        kind: alternative.kind,
+        submissionMode: alternative.submissionMode,
+        verifiedAt: alternative.verifiedAt,
+        reviewCurrent: true,
+      })),
     verified: Boolean(channel) && channelReviewCurrent,
     lastVerifiedAt: channel?.verifiedAt ?? entry.contactUpdatedAt ?? VERIFIED_AT,
     fieldSources: {
       scope: source,
       website: channel ? source : websiteSource,
       formUrl: channel || entry.lostFoundUrl ? source : undefined,
-      email: channelEmail || entry.officialEmail ? source : undefined,
-      phone: channelPhone || entry.officialPhone ? source : undefined,
+      email: partyEmail ? source : undefined,
+      phone: partyPhone ? source : undefined,
       nextStep: source,
     },
     note:

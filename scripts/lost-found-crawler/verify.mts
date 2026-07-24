@@ -10,9 +10,13 @@ import {
   pageEvidenceFromHtml,
   pageEvidenceHash,
 } from "./page-evidence.mjs";
-import { extractPublicContactValues } from "./discovery.mjs";
+import {
+  extractPublicContactValues,
+  extractPublicContactValuesFromText,
+} from "./discovery.mjs";
+import { extractPdfText } from "./pdf-text.mjs";
 import { selectRefreshedForm } from "./refresh.mjs";
-import { safeFetchText } from "./safe-fetch.mjs";
+import { safeFetchBytes } from "./safe-fetch.mjs";
 
 export interface VerificationReport {
   generatedAt: string;
@@ -35,6 +39,7 @@ export interface VerificationReport {
       | "static_form"
       | "rendered_form"
       | "public_contact"
+      | "pdf_contact"
       | "page_evidence";
     consecutiveFailures?: number;
     error?: string;
@@ -73,7 +78,8 @@ export function isUnexpectedVerificationRedirect(
 }
 
 export function publicContactStillPublished(input: {
-  html: string;
+  html?: string;
+  text?: string;
   kind: "email" | "phone";
   contactValue: string;
 }): boolean {
@@ -86,7 +92,11 @@ export function publicContactStillPublished(input: {
             "$1"
           )
           .replace(/\D/g, "");
-  return extractPublicContactValues(input.html).some(
+  const contacts =
+    input.text !== undefined
+      ? extractPublicContactValuesFromText(input.text)
+      : extractPublicContactValues(input.html ?? "");
+  return contacts.some(
     (contact) =>
       contact.kind === input.kind &&
       normalizedContact(contact.value) === normalizedContact(input.contactValue)
@@ -97,7 +107,13 @@ async function fetchForVerification(url: string) {
   let lastError: unknown;
   for (let attempt = 0; attempt < 3; attempt += 1) {
     try {
-      const response = await safeFetchText(url);
+      const response = await safeFetchBytes(url, {
+        maxBytes: /\.pdf(?:$|[?#])/i.test(new URL(url).pathname)
+          ? 8_000_000
+          : undefined,
+        accept: "text/html,application/xhtml+xml,application/pdf,text/plain;q=0.8",
+        timeoutMs: 30_000,
+      });
       if (
         attempt < 2 &&
         (response.status === 429 || response.status >= 500)
@@ -198,9 +214,23 @@ export async function verifyPublishedChannels(options: {
         channel.kind === "general_contact_form";
       let method: VerificationReport["results"][number]["method"];
       let currentHash: string | undefined;
+      const contentType =
+        response.headers.get("content-type")?.toLowerCase() ?? "";
+      const isPdf =
+        contentType.includes("pdf") ||
+        (/\.pdf(?:$|[?#])/i.test(new URL(response.url).pathname) &&
+          response.body.length >= 5 &&
+          new TextDecoder("ascii")
+            .decode(response.body.slice(0, 5))
+            .startsWith("%PDF-"));
+      const html = isPdf ? "" : new TextDecoder().decode(response.body);
+      const pdf = isPdf ? await extractPdfText(response.body) : undefined;
       if (expectsForm) {
+        if (isPdf) {
+          throw new Error("A reviewed form channel now resolves to a PDF");
+        }
         let forms = extractFormsFromHtml({
-          html: response.body,
+          html,
           pageUrl: response.url,
         });
         let matchingForm = selectRefreshedForm(channel, forms);
@@ -223,16 +253,28 @@ export async function verifyPublishedChannels(options: {
         channel.contactValue
       ) {
         const stillPublished = publicContactStillPublished({
-          html: response.body,
+          html: isPdf ? undefined : html,
+          text: pdf?.bodyText,
           kind: channel.kind,
           contactValue: channel.contactValue,
         });
         currentHash = stillPublished
           ? channel.contentHash
-          : pageEvidenceHash(pageEvidenceFromHtml(response.body));
-        method = "public_contact";
+          : isPdf && pdf
+            ? pageEvidenceHash({
+                title: pdf.title,
+                bodyText: pdf.bodyText,
+              })
+            : pageEvidenceHash(pageEvidenceFromHtml(html));
+        method = isPdf ? "pdf_contact" : "public_contact";
       } else {
-        currentHash = pageEvidenceHash(pageEvidenceFromHtml(response.body));
+        currentHash =
+          isPdf && pdf
+            ? pageEvidenceHash({
+                title: pdf.title,
+                bodyText: pdf.bodyText,
+              })
+            : pageEvidenceHash(pageEvidenceFromHtml(html));
         method = "page_evidence";
       }
       const contentUnchanged = currentHash === channel.contentHash;

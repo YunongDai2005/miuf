@@ -10,7 +10,8 @@ import {
   pageEvidenceFromHtml,
   pageEvidenceHash,
 } from "./page-evidence.mjs";
-import { safeFetchText } from "./safe-fetch.mjs";
+import { extractPdfText } from "./pdf-text.mjs";
+import { safeFetchBytes, safeFetchText } from "./safe-fetch.mjs";
 import { scoreCandidate } from "./scoring.mjs";
 import type {
   CandidateFile,
@@ -30,10 +31,12 @@ const CONTACT_PATTERN =
   /kontakt|contact|besucherservice|visitor service|gästeservice|service|hilfe|faq/i;
 const CONTACT_PAGE_PATTERN =
   /kontakt|contact|besucherservice|visitor service|gästeservice/i;
+const PDF_POLICY_PATTERN =
+  /besucherordnung|visitor[-_ ]?(?:information|rules)|rules[-_ ]?for[-_ ]?visitors|hausordnung|house[-_ ]?rules/i;
 const IRRELEVANT_GENERAL_CONTACT_PATTERN =
   /buchung|booking|group|gruppe|feedback|survey|umfrage|ticket|presse|press/i;
 const SKIP_PATTERN =
-  /\/(news|presse(?:mitteilungen)?|press|karriere|jobs|shop|tickets?|events?|kalender|calendar|datenschutz|privacy|impressum|legal|sitemap)(?:\/|$)|\.(?:jpe?g|png|gif|webp|svg|pdf|zip|mp[34]|ics)$/i;
+  /\/(news|presse(?:mitteilungen)?|press|karriere|jobs|shop|tickets?|events?|kalender|calendar|datenschutz|privacy|impressum|legal|sitemap)(?:\/|$)|\.(?:jpe?g|png|gif|webp|svg|zip|mp[34]|ics)$/i;
 
 type QueueEntry = {
   url: string;
@@ -197,6 +200,7 @@ export function shouldSkipDiscoveryUrl(rawUrl: string): boolean {
 function linkPriority(url: string, label: string): number {
   const text = `${url} ${label}`;
   if (LOST_PATTERN.test(text)) return 100;
+  if (/\.pdf(?:$|[?#])/i.test(url) && PDF_POLICY_PATTERN.test(text)) return 60;
   if (CONTACT_PATTERN.test(text)) return 30;
   return 0;
 }
@@ -460,6 +464,99 @@ export function extractPublicContactValues(
     PAGE_LOST_PATTERN.test(`${title} ${bodyText.slice(0, 100_000)}`),
     PAGE_LOST_PATTERN.test(title)
   );
+}
+
+function excerptAroundText(
+  text: string,
+  index: number,
+  matchLength: number,
+  before = 220,
+  after = 320
+): string {
+  return compactText(
+    text.slice(
+      Math.max(0, index - before),
+      Math.min(text.length, index + matchLength + after)
+    )
+  );
+}
+
+/**
+ * PDFs have no anchors or semantic DOM, so only publish contacts when the
+ * extracted document itself explicitly mentions lost property. The evidence
+ * excerpt combines that purpose statement with the nearby public contact.
+ */
+export function extractPublicContactValuesFromText(
+  rawText: string
+): DiscoveredPublicContact[] {
+  const text = compactText(rawText);
+  const lostIndex = text.search(PAGE_LOST_PATTERN);
+  if (lostIndex < 0) return [];
+  const lostMatch = text.slice(lostIndex).match(PAGE_LOST_PATTERN)?.[0] ?? "";
+  const purposeExcerpt = excerptAroundText(
+    text,
+    lostIndex,
+    lostMatch.length,
+    100,
+    300
+  ).slice(0, 420);
+  const contacts: DiscoveredPublicContact[] = [];
+
+  for (const match of text.matchAll(
+    /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi
+  )) {
+    const index = match.index ?? 0;
+    contacts.push({
+      kind: "email",
+      value: match[0],
+      selector: "PDF text",
+      excerpt: compactText(
+        `${purposeExcerpt} Contact: ${excerptAroundText(
+          text,
+          index,
+          match[0].length,
+          160,
+          160
+        )}`
+      ).slice(0, 700),
+    });
+  }
+  for (const match of text.matchAll(
+    /(?:telefon|tel\.?|phone|hotline)\s*:?\s*((?:\+|00)?\d[\d\s()./–-]{4,}\d)/gi
+  )) {
+    const value = match[1].replace(/[./–-]+$/g, "").trim();
+    if (value.replace(/\D/g, "").length < 6 || value.length > 40) continue;
+    const index = match.index ?? 0;
+    contacts.push({
+      kind: "phone",
+      value,
+      selector: "PDF text",
+      excerpt: compactText(
+        `${purposeExcerpt} Contact: ${excerptAroundText(
+          text,
+          index,
+          match[0].length,
+          160,
+          160
+        )}`
+      ).slice(0, 700),
+    });
+  }
+
+  return contacts
+    .sort(
+      (left, right) =>
+        left.kind.localeCompare(right.kind) ||
+        left.value.localeCompare(right.value)
+    )
+    .filter(
+      (contact, index, all) =>
+        all.findIndex(
+          (candidate) =>
+            candidate.kind === contact.kind &&
+            candidate.value.toLowerCase() === contact.value.toLowerCase()
+        ) === index
+    );
 }
 
 /**
@@ -747,6 +844,79 @@ export async function discoverChannels(options: {
 
       try {
         await sleep(options.delayMs ?? 900);
+        if (/\.pdf(?:$|[?#])/i.test(entryUrl.pathname)) {
+          const response = await safeFetchBytes(entry.url, {
+            maxBytes: 8_000_000,
+            accept: "application/pdf",
+            timeoutMs: 30_000,
+          });
+          pagesRead += 1;
+          if (response.status < 200 || response.status >= 400) continue;
+          const contentType =
+            response.headers.get("content-type")?.toLowerCase() ?? "";
+          const hasPdfSignature =
+            response.body.length >= 5 &&
+            new TextDecoder("ascii")
+              .decode(response.body.slice(0, 5))
+              .startsWith("%PDF-");
+          if (!contentType.includes("pdf") && !hasPdfSignature) continue;
+
+          const finalUrl = canonicalUrl(response.url);
+          const pdf = await extractPdfText(response.body);
+          if (
+            !PAGE_LOST_PATTERN.test(
+              `${finalUrl} ${pdf.title} ${pdf.bodyText.slice(0, 200_000)}`
+            )
+          ) {
+            continue;
+          }
+          const pageEvidence = {
+            title: pdf.title,
+            bodyText: pdf.bodyText,
+          };
+          for (const contact of extractPublicContactValuesFromText(
+            pdf.bodyText
+          )) {
+            const contactKey = `${ownerScopeKey}|${contact.kind}|${contact.value.toLowerCase()}`;
+            if (candidateKeys.has(contactKey)) continue;
+            candidateKeys.add(contactKey);
+            const observedAt = new Date().toISOString();
+            candidates.push({
+              id: stableId("channel", contactKey),
+              operatorId:
+                group.operatorIds.size === 1
+                  ? [...group.operatorIds][0]
+                  : undefined,
+              venueIds: [...group.venueIds].sort(),
+              kind: contact.kind,
+              pageUrl: finalUrl,
+              contactValue: contact.value,
+              confidence: contact.kind === "email" ? 70 : 65,
+              reasons: [
+                "linked from the official seed site",
+                "official PDF explicitly mentions lost property",
+                `official PDF publishes ${
+                  contact.kind === "email" ? "an email" : "a phone"
+                } contact`,
+              ],
+              discoveryPath: entry.path,
+              evidence: [
+                {
+                  sourceUrl: finalUrl,
+                  selector: contact.selector,
+                  excerpt: contact.excerpt,
+                  contentHash: pageEvidenceHash(pageEvidence),
+                  observedAt,
+                },
+              ],
+              fetchStatus: "ok",
+              reviewStatus: "candidate",
+              discoveredAt: observedAt,
+            });
+          }
+          continue;
+        }
+
         const response = await safeFetchText(entry.url);
         pagesRead += 1;
         if (response.status < 200 || response.status >= 400) continue;
@@ -948,14 +1118,17 @@ export async function discoverChannels(options: {
           } catch {
             return;
           }
-          if (
-            !["http:", "https:"].includes(target.protocol) ||
-            shouldSkipDiscoveryUrl(target.toString())
-          ) {
+          if (!["http:", "https:"].includes(target.protocol)) {
             return;
           }
           const url = canonicalUrl(target.toString());
           const priority = linkPriority(url, label);
+          if (
+            shouldSkipDiscoveryUrl(url) ||
+            (/\.pdf(?:$|[?#])/i.test(target.pathname) && priority <= 0)
+          ) {
+            return;
+          }
           const sameSite = sameSiteHost(seedOrigin, target);
           if (!sameSite && (priority < 100 || externalLeaves >= 8)) return;
           if (!sameSite) externalLeaves += 1;

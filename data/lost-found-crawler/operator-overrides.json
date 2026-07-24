@@ -37,11 +37,15 @@
     {
       "name": "Stiftung Planetarium Berlin",
       "website": "https://www.planetarium.berlin/",
+      "discoverySeedUrls": [
+        "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf"
+      ],
       "matchWebsiteHosts": [
         "planetarium.berlin"
       ],
       "evidenceUrls": [
-        "https://www.planetarium.berlin/impressum"
+        "https://www.planetarium.berlin/impressum",
+        "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf"
       ],
       "auditedAt": "2026-07-24T00:00:00.000Z"
     },

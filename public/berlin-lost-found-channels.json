@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-24T10:14:59.740Z",
+  "generatedAt": "2026-07-24T10:31:21.273Z",
   "channels": [
     {
       "id": "channel_0d86dd21f49f38d2",
@@ -120,6 +120,39 @@
         }
       ],
       "contentHash": "5e2ef918c7049796633a075d147428b14658a40dd849befbea363810e9e16293"
+    },
+    {
+      "id": "channel_5cbf0c11dd6b198e",
+      "operatorId": "operator_0fa1189548278b11",
+      "venueIds": [
+        "relation/2309788",
+        "relation/2309795",
+        "relation/8102166"
+      ],
+      "kind": "email",
+      "scope": "operator",
+      "pageUrl": "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf",
+      "contactValue": "info@planetarium.berlin",
+      "language": [
+        "und"
+      ],
+      "fields": [],
+      "captcha": false,
+      "loginRequired": false,
+      "submissionMode": "open_only",
+      "verifiedAt": "2026-07-24T10:30:23.723Z",
+      "reviewDueAt": "2026-10-22T10:30:23.723Z",
+      "verifiedBy": "Codex official-page audit",
+      "evidence": [
+        {
+          "sourceUrl": "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf",
+          "selector": "PDF text",
+          "excerpt": "Mitnahme von Tieren ist grundsätzlich nicht erwünscht; ausgenommen sind Behindertenbegleithunde. • Fundsachen nimmt das Kassenpersonal gern entgegen. Fotografieren und Filmen • Das Fotografieren und Filmen ohne Stativ ist zu privaten Zwecken erlaubt, außer im Planetariumssaal. Aufnahmen zu kommerziellen Zwecken sind nur nach vorheriger schriftlicher Genehmigung gestattet und beleg- und kostenpflichtig. • Contact: Stiftung Planetarium Berlin Prenzlauer Allee 80 10405 Berlin Tel +49 30 421845-0 Fax +49 30 421845-99 info@planetarium.berlin www.planetarium.berlin Besucherordnung Herzlich willkommen! Für Ihren Aufenthalt in einer Einrichtung der Stiftung Planetarium Berlin bitten wir Sie um die B",
+          "contentHash": "46c77197be5d3c791b41eeafe099e581618fefb1fa49d7c8eb6f2316459797d9",
+          "observedAt": "2026-07-24T10:30:55.350Z"
+        }
+      ],
+      "contentHash": "46c77197be5d3c791b41eeafe099e581618fefb1fa49d7c8eb6f2316459797d9"
     },
     {
       "id": "channel_867c1ba831252871",
@@ -375,6 +408,39 @@
         }
       ],
       "contentHash": "955a4433ac53b6ab94210c2a2e5898ba726be6cc4f5fd62c233ead378ea6e080"
+    },
+    {
+      "id": "channel_97abd58068e3a404",
+      "operatorId": "operator_0fa1189548278b11",
+      "venueIds": [
+        "relation/2309788",
+        "relation/2309795",
+        "relation/8102166"
+      ],
+      "kind": "phone",
+      "scope": "operator",
+      "pageUrl": "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf",
+      "contactValue": "+49 30 421845-0",
+      "language": [
+        "und"
+      ],
+      "fields": [],
+      "captcha": false,
+      "loginRequired": false,
+      "submissionMode": "open_only",
+      "verifiedAt": "2026-07-24T10:30:24.613Z",
+      "reviewDueAt": "2026-10-22T10:30:24.613Z",
+      "verifiedBy": "Codex official-page audit",
+      "evidence": [
+        {
+          "sourceUrl": "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf",
+          "selector": "PDF text",
+          "excerpt": "Mitnahme von Tieren ist grundsätzlich nicht erwünscht; ausgenommen sind Behindertenbegleithunde. • Fundsachen nimmt das Kassenpersonal gern entgegen. Fotografieren und Filmen • Das Fotografieren und Filmen ohne Stativ ist zu privaten Zwecken erlaubt, außer im Planetariumssaal. Aufnahmen zu kommerziellen Zwecken sind nur nach vorheriger schriftlicher Genehmigung gestattet und beleg- und kostenpflichtig. • Contact: Stiftung Planetarium Berlin Prenzlauer Allee 80 10405 Berlin Tel +49 30 421845-0 Fax +49 30 421845-99 info@planetarium.berlin www.planetarium.berlin Besucherordnung Herzlich willkommen! Für Ihren Aufenthalt in einer Einrichtung der Stiftung",
+          "contentHash": "46c77197be5d3c791b41eeafe099e581618fefb1fa49d7c8eb6f2316459797d9",
+          "observedAt": "2026-07-24T10:30:55.350Z"
+        }
+      ],
+      "contentHash": "46c77197be5d3c791b41eeafe099e581618fefb1fa49d7c8eb6f2316459797d9"
     },
     {
       "id": "channel_aa15cef5b87786a9",

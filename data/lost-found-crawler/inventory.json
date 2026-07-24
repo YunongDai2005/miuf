@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-24T09:57:06.974Z",
+  "generatedAt": "2026-07-24T10:29:31.820Z",
   "sourceFile": "public/berlin-attractions.json",
   "operators": [
     {
@@ -190,7 +190,9 @@
       "id": "operator_0fa1189548278b11",
       "name": "Stiftung Planetarium Berlin",
       "website": "https://www.planetarium.berlin/",
-      "discoverySeedUrls": [],
+      "discoverySeedUrls": [
+        "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf"
+      ],
       "venueIds": [
         "relation/2309788",
         "relation/2309795",
@@ -202,7 +204,8 @@
         "https://www.openstreetmap.org/relation/2309788",
         "https://www.openstreetmap.org/relation/2309795",
         "https://www.openstreetmap.org/relation/8102166",
-        "https://www.planetarium.berlin/impressum"
+        "https://www.planetarium.berlin/impressum",
+        "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf"
       ]
     },
     {
@@ -19567,6 +19570,7 @@
       "confidence": 0.98,
       "evidenceUrls": [
         "https://www.planetarium.berlin/impressum",
+        "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf",
         "https://www.openstreetmap.org/relation/2309788"
       ]
     },
@@ -28438,6 +28442,7 @@
       "confidence": 0.98,
       "evidenceUrls": [
         "https://www.planetarium.berlin/impressum",
+        "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf",
         "https://www.openstreetmap.org/relation/2309795"
       ]
     },
@@ -41772,6 +41777,7 @@
       "confidence": 0.98,
       "evidenceUrls": [
         "https://www.planetarium.berlin/impressum",
+        "https://www.planetarium.berlin/sites/default/files/2022-07/2022-06-15_Besucherordnung-SPB.pdf",
         "https://www.openstreetmap.org/relation/8102166"
       ]
     },

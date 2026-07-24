@@ -184,6 +184,24 @@ test("keeps one reviewed venue channel primary and exposes other reviewed channe
           evidence: [],
           contentHash: "fallback",
         },
+        {
+          id: "museum-old-phone",
+          venueIds: ["node/123"],
+          kind: "phone",
+          scope: "venue",
+          pageUrl: "https://museum.example/old-contact",
+          contactValue: "+49 30 123456",
+          language: ["en"],
+          fields: [],
+          captcha: false,
+          loginRequired: false,
+          submissionMode: "open_only",
+          verifiedAt: "2020-01-01",
+          reviewDueAt: "2020-04-01",
+          verifiedBy: "Reviewer",
+          evidence: [],
+          contentHash: "expired",
+        },
       ],
     },
   ]);
@@ -205,6 +223,7 @@ test("uses the reviewed contact value for an email-only venue channel", () => {
       refId: "node/456",
       label: "Example Gallery",
       category: "museum",
+      officialPhone: "+49 30 000000",
       lostFoundChannels: [
         {
           id: "gallery-email",
@@ -227,8 +246,48 @@ test("uses the reviewed contact value for an email-only venue channel", () => {
     },
   ]);
   assert.equal(resolved.party.email, "lost@gallery.example");
+  assert.equal(resolved.party.phone, undefined);
+  assert.equal(resolved.party.fieldSources.phone, undefined);
   assert.equal(resolved.party.formUrl, undefined);
+  assert.equal(resolved.party.formLabel, "Open reviewed official source");
   assert.equal(resolved.party.channelId, "gallery-email");
+  assert.equal(resolved.party.channelKind, "email");
+});
+
+test("keeps an unreviewed venue email out of a reviewed phone channel", () => {
+  const [resolved] = resolveParties([
+    {
+      uid: "memorial",
+      kind: "venue",
+      refId: "node/789",
+      label: "Example Memorial",
+      category: "memorial",
+      officialEmail: "general@example.invalid",
+      lostFoundChannels: [
+        {
+          id: "memorial-phone",
+          venueIds: ["node/789"],
+          kind: "phone",
+          scope: "venue",
+          pageUrl: "https://memorial.example/lost-property",
+          contactValue: "+49 (0) 30 200 766 0",
+          language: ["de"],
+          fields: [],
+          captcha: false,
+          loginRequired: false,
+          submissionMode: "open_only",
+          verifiedAt: "2026-07-24",
+          verifiedBy: "Reviewer",
+          evidence: [],
+          contentHash: "phone-page",
+        },
+      ],
+    },
+  ]);
+  assert.equal(resolved.party.phone, "+49 (0) 30 200 766 0");
+  assert.equal(resolved.party.email, undefined);
+  assert.equal(resolved.party.fieldSources.email, undefined);
+  assert.equal(resolved.party.channelKind, "phone");
 });
 
 test("venue guidance mentions only the manual checks present on the form", () => {
@@ -328,6 +387,38 @@ test("prefers the exact memorial reception phone and keeps the general form as b
     separateMemorial?.lostFoundChannels?.map((channel) => channel.kind),
     ["general_contact_form"]
   );
+});
+
+test("uses the planetarium policy email first and keeps its central phone as backup", async () => {
+  const attractions = JSON.parse(
+    await readFile(
+      new URL("../public/berlin-attractions.json", import.meta.url),
+      "utf8"
+    )
+  ) as Parameters<typeof buildIndex>[1];
+  const registry = JSON.parse(
+    await readFile(
+      new URL("../public/berlin-lost-found-channels.json", import.meta.url),
+      "utf8"
+    )
+  ) as NonNullable<Parameters<typeof buildIndex>[3]>;
+  const index = buildIndex([], attractions, {}, registry);
+  for (const venueId of [
+    "relation/2309788",
+    "relation/2309795",
+    "relation/8102166",
+  ]) {
+    const venue = index.items.find((item) => item.refId === venueId);
+    assert.deepEqual(
+      venue?.lostFoundChannels?.map((channel) => channel.kind),
+      ["email", "phone"]
+    );
+    assert.equal(
+      venue?.lostFoundChannels?.[0].contactValue,
+      "info@planetarium.berlin"
+    );
+    assert.match(venue?.lostFoundChannels?.[0].pageUrl ?? "", /\.pdf$/);
+  }
 });
 
 test("retains journey details and includes category plus description in both reports", () => {
