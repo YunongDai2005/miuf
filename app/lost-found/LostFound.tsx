@@ -10,7 +10,8 @@ import {
   type ItineraryEntry,
   type LostCase,
   type LostItem,
-  type ReportState,
+    type ReportState,
+    type SubmissionRecord,
 } from "./types";
 import { GhostButton, PrimaryButton, cx } from "./ui";
 import StepItem from "./steps/StepItem";
@@ -48,6 +49,7 @@ function entryFromSearch(item: SearchItem): ItineraryEntry {
     contactSourceUrl: item.contactSourceUrl,
     officialWebsiteSourceUrl: item.officialWebsiteSourceUrl,
     contactUpdatedAt: item.contactUpdatedAt,
+    lostFoundChannels: item.lostFoundChannels,
   };
 }
 
@@ -89,6 +91,7 @@ function enrichSavedItinerary(
       officialWebsiteSourceUrl:
         entry.officialWebsiteSourceUrl ?? source.officialWebsiteSourceUrl,
       contactUpdatedAt: entry.contactUpdatedAt ?? source.contactUpdatedAt,
+      lostFoundChannels: source.lostFoundChannels,
     };
   });
 }
@@ -158,8 +161,17 @@ export default function LostFound() {
   }, [lostCase.contact]);
 
   const resolved = useMemo(
-    () => resolveParties(lostCase.itinerary, lostCase.item.category),
-    [lostCase.item.category, lostCase.itinerary]
+    () =>
+      resolveParties(
+        lostCase.itinerary,
+        lostCase.item.category,
+        Boolean(lostCase.item.includeCentralOffice)
+      ),
+    [
+      lostCase.item.category,
+      lostCase.item.includeCentralOffice,
+      lostCase.itinerary,
+    ]
   );
 
   const updateItem = (patch: Partial<LostItem>) =>
@@ -194,6 +206,25 @@ export default function LostFound() {
     setLostCase((c) => ({ ...c, itinerary: c.itinerary.filter((e) => e.uid !== uid) }));
   const setReportState = (partyId: string, state: ReportState) =>
     setLostCase((c) => ({ ...c, reported: { ...c.reported, [partyId]: state } }));
+  const setSubmission = (record: SubmissionRecord) =>
+    setLostCase((current) => {
+      const previous = current.submissions[record.partyId] ?? [];
+      const history = [
+        record,
+        ...previous.filter(
+          (candidate) => candidate.fingerprint !== record.fingerprint
+        ),
+      ]
+        .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+        .slice(0, 20);
+      return {
+        ...current,
+        submissions: {
+          ...current.submissions,
+          [record.partyId]: history,
+        },
+      };
+    });
 
   const reset = () => {
     if (typeof window !== "undefined" && !window.confirm("Clear the current item and itinerary? Your contact details are kept.")) return;
@@ -306,6 +337,7 @@ export default function LostFound() {
               resolved={resolved}
               onSetState={setReportState}
               onContact={updateContact}
+              onSubmission={setSubmission}
             />
           )}
         </section>

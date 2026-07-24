@@ -87,3 +87,43 @@ npm run data:discover-venues
 ```
 
 The discovery output is a review queue in `data/venue-responsibility-candidates.json`; a candidate is not treated as verified automatically.
+
+## Reviewed lost-property channel pipeline
+
+The newer channel pipeline keeps discovered pages separate from public data:
+
+```bash
+npm run data:lost-found:inventory
+npm run data:lost-found:discover -- --domain=smb.museum --limit=20
+npm run data:lost-found:review-export
+```
+
+`inventory` conservatively groups duplicate OSM objects and marks minor features
+that still need a parent venue. `discover` honours robots rules, follows a
+bounded same-site queue, blocks private-network destinations, and extracts
+static form fields. Dynamic or iframe forms can be inspected without submitting:
+
+```bash
+npm run data:lost-found:browser-install
+npm run data:lost-found:extract -- --url=https://example.org/fundbuero --browser
+```
+
+Record a human decision, then publish only accepted candidates:
+
+```bash
+npm run data:lost-found:review -- \
+  --candidate=channel_... \
+  --decision=accept \
+  --reviewer="Reviewer name" \
+  --kind=dedicated_lost_found_form
+npm run data:lost-found:publish
+```
+
+The app loads `public/berlin-lost-found-channels.json`. Reviewed forms expose a
+field-by-field guide and an expiring autofill package. The optional browser
+helper in `extension/` fills those reviewed fields after an explicit user
+action and never fills consent or attachments. Submission is disabled by
+default. It appears only for an explicitly published, exact-hash adapter and
+still requires a second click, an in-page confirmation, complete required
+fields and a reviewed success state. Channels lose assisted filling after
+their 90-day human review deadline until they are reviewed again.

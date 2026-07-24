@@ -74,6 +74,27 @@ export default function StepItem({
         <span className="text-xs font-medium text-stone-400">{todayLabel(item.lostDate)}</span>
       </div>
 
+      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-stone-200 bg-white p-3.5 dark:border-stone-700 dark:bg-stone-900">
+        <input
+          type="checkbox"
+          checked={Boolean(item.includeCentralOffice)}
+          onChange={(event) =>
+            onItem({ includeCentralOffice: event.target.checked })
+          }
+          className="mt-0.5 h-4 w-4 rounded border-stone-300 text-orange-600 focus:ring-orange-500"
+        />
+        <span>
+          <span className="block text-sm font-medium text-stone-700 dark:text-stone-200">
+            It may have been lost on a street, in a taxi, or somewhere not listed
+          </span>
+          <span className="mt-0.5 block text-xs leading-relaxed text-stone-400">
+            Also include Berlin’s central lost-property office. Leave this off when
+            the possible locations are only the operators and venues in your route,
+            so you do not file an unnecessary duplicate.
+          </span>
+        </span>
+      </label>
+
       {/* Everything else is optional and out of the way */}
       <details className="group">
         <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-sm font-medium text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200">
@@ -92,6 +113,41 @@ export default function StepItem({
               type="time"
               value={item.timeTo ?? ""}
               onChange={(e) => onItem({ timeTo: e.target.value })}
+            />
+          </Field>
+          <Field label="Brand">
+            <TextInput
+              value={item.brand ?? ""}
+              onChange={(e) => onItem({ brand: e.target.value })}
+              placeholder="e.g. Fjällräven"
+            />
+          </Field>
+          <Field label="Colour">
+            <TextInput
+              value={item.color ?? ""}
+              onChange={(e) => onItem({ color: e.target.value })}
+              placeholder="e.g. black"
+            />
+          </Field>
+          <Field label="Identifying features">
+            <TextInput
+              value={item.identifyingFeatures ?? ""}
+              onChange={(e) => onItem({ identifyingFeatures: e.target.value })}
+              placeholder="e.g. panda charm on the zip"
+            />
+          </Field>
+          <Field label="Approximate value">
+            <TextInput
+              value={item.estimatedValue ?? ""}
+              onChange={(e) => onItem({ estimatedValue: e.target.value })}
+              placeholder="e.g. €80"
+            />
+          </Field>
+          <Field label="City or postcode where it was lost">
+            <TextInput
+              value={item.lossCity ?? ""}
+              onChange={(e) => onItem({ lossCity: e.target.value })}
+              placeholder="e.g. Berlin 10117"
             />
           </Field>
         </div>

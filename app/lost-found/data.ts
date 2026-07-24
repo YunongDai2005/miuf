@@ -12,6 +12,12 @@ import {
   type AttractionSet,
 } from "../berlin-transit/attractions";
 import type { ItineraryJourney } from "./types";
+import {
+  isChannelReviewCurrent,
+  isPublishedChannelRegistry,
+  type PublishedChannelRegistry,
+  type PublishedLostFoundChannel,
+} from "../../lib/lost-found-channel-schema";
 
 /** One thing the traveller can add to their retrace: a transit line or a venue. */
 export interface SearchItem {
@@ -32,6 +38,7 @@ export interface SearchItem {
   contactSourceUrl?: string;
   officialWebsiteSourceUrl?: string;
   contactUpdatedAt?: string;
+  lostFoundChannels?: PublishedLostFoundChannel[];
   keywords: string;
 }
 
@@ -69,6 +76,17 @@ const POPULAR_VENUES = [
   "potsdamer platz",
   "siegessäule",
 ];
+const CENTRAL_BERLIN: LL = [52.52, 13.405];
+
+function centralDistanceSquared(point?: LL): number {
+  if (!point) return Number.POSITIVE_INFINITY;
+  const latitudeScale = 111;
+  const longitudeScale = 68;
+  return (
+    ((point[0] - CENTRAL_BERLIN[0]) * latitudeScale) ** 2 +
+    ((point[1] - CENTRAL_BERLIN[1]) * longitudeScale) ** 2
+  );
+}
 
 const MODE_RANK: Record<TransitMode, number> = {
   subway: 0,
@@ -80,11 +98,17 @@ const MODE_RANK: Record<TransitMode, number> = {
 };
 
 export async function fetchSources(): Promise<SourceIndex> {
-  const [lineIndex, attractions] = await Promise.all([
+  const [lineIndex, attractions, channelRegistry] = await Promise.all([
     fetchJson<TransitLineIndex>("/berlin-lines.json", "Berlin line index"),
     fetchJson<AttractionSet>("/berlin-attractions.json", "Berlin attractions"),
+    fetchChannelRegistry(),
   ]);
-  return buildIndex(lineIndex.lines, attractions, lineIndex.operators);
+  return buildIndex(
+    lineIndex.lines,
+    attractions,
+    lineIndex.operators,
+    channelRegistry
+  );
 }
 
 let inferenceNetworkPromise: Promise<TransitNetwork> | null = null;
@@ -95,6 +119,19 @@ async function fetchJson<T>(url: string, label: string): Promise<T> {
     throw new Error(`${label} could not be loaded (HTTP ${response.status}).`);
   }
   return (await response.json()) as T;
+}
+
+async function fetchChannelRegistry(): Promise<PublishedChannelRegistry | undefined> {
+  try {
+    const value = await fetchJson<unknown>(
+      "/berlin-lost-found-channels.json",
+      "Lost-property channel registry"
+    );
+    return isPublishedChannelRegistry(value) ? value : undefined;
+  } catch {
+    // The core itinerary remains usable while a registry deployment is unavailable.
+    return undefined;
+  }
 }
 
 /** Load the 2.9 MB geometry only after the traveller explicitly asks for route inference. */
@@ -114,7 +151,8 @@ export function fetchInferenceNetwork(): Promise<TransitNetwork> {
 export function buildIndex(
   lines: TransitLineSummary[] | TransitNetwork,
   attractions: AttractionSet,
-  operatorDirectory: Record<string, string | TransitOperator> = {}
+  operatorDirectory: Record<string, string | TransitOperator> = {},
+  channelRegistry?: PublishedChannelRegistry
 ): SourceIndex {
   const sourceLines = Array.isArray(lines) ? lines : lines.lines;
   const lineItems: SearchItem[] = sourceLines.map((line) => ({
@@ -147,22 +185,52 @@ export function buildIndex(
     }`.toLowerCase(),
   }));
 
-  const venueItems: SearchItem[] = attractions.attractions.map((a: Attraction) => ({
-    kind: "venue",
-    refId: a.id,
-    label: a.name,
-    sublabel: CATEGORY_META[a.category].label,
-    category: a.category,
-    point: a.point,
-    officialWebsite: a.website ?? a.operatorWebsite,
-    officialPhone: a.phone,
-    officialEmail: a.email,
-    lostFoundUrl: a.lostFoundUrl,
-    contactSourceUrl: a.contactSourceUrl,
-    officialWebsiteSourceUrl: a.websiteSourceUrl,
-    contactUpdatedAt: a.contactUpdatedAt,
-    keywords: `${a.name} ${a.nameEn ?? ""}`.toLowerCase(),
-  }));
+  const channelsByVenue = new Map<string, PublishedLostFoundChannel[]>();
+  for (const channel of channelRegistry?.channels ?? []) {
+    for (const venueId of channel.venueIds) {
+      const existing = channelsByVenue.get(venueId) ?? [];
+      existing.push(channel);
+      channelsByVenue.set(venueId, existing);
+    }
+  }
+  const channelRank: Record<PublishedLostFoundChannel["kind"], number> = {
+    dedicated_lost_found_form: 0,
+    operator_lost_found_form: 1,
+    general_contact_form: 2,
+    email: 3,
+    phone: 4,
+    central_office_fallback: 5,
+  };
+  for (const channels of channelsByVenue.values()) {
+    channels.sort(
+      (left, right) =>
+        Number(isChannelReviewCurrent(right)) -
+          Number(isChannelReviewCurrent(left)) ||
+        channelRank[left.kind] - channelRank[right.kind] ||
+        right.verifiedAt.localeCompare(left.verifiedAt)
+    );
+  }
+  const venueItems: SearchItem[] = attractions.attractions.map((a: Attraction) => {
+    const lostFoundChannels = channelsByVenue.get(a.id) ?? [];
+    const primaryChannel = lostFoundChannels[0];
+    return {
+      kind: "venue",
+      refId: a.id,
+      label: a.name,
+      sublabel: CATEGORY_META[a.category].label,
+      category: a.category,
+      point: a.point,
+      officialWebsite: a.website ?? a.operatorWebsite,
+      officialPhone: a.phone,
+      officialEmail: a.email,
+      lostFoundUrl: primaryChannel?.pageUrl ?? a.lostFoundUrl,
+      contactSourceUrl: a.contactSourceUrl,
+      officialWebsiteSourceUrl: a.websiteSourceUrl,
+      contactUpdatedAt: primaryChannel?.verifiedAt ?? a.contactUpdatedAt,
+      lostFoundChannels,
+      keywords: `${a.name} ${a.nameEn ?? ""}`.toLowerCase(),
+    };
+  });
 
   const quickLines = lineItems
     .filter((item) => item.mode === "subway" || item.mode === "light_rail")
@@ -182,7 +250,8 @@ export function buildIndex(
         return (
           aContact - bContact ||
           ax - bx ||
-          a.label.length - b.label.length
+          a.label.length - b.label.length ||
+          centralDistanceSquared(a.point) - centralDistanceSquared(b.point)
         );
       })[0];
     if (match && !quickVenues.includes(match)) quickVenues.push(match);

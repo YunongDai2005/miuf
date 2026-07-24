@@ -41,3 +41,8 @@ next-env.d.ts
 /.wrangler/
 /outputs/
 /work/
+
+# generated lost-property crawl reports (review decisions and published data stay tracked)
+/data/lost-found-crawler/review-report.html
+/data/lost-found-crawler/verification-report.json
+/data/lost-found-crawler/verification-state.json

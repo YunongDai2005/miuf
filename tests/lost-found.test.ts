@@ -6,6 +6,7 @@ import {
   partyIdForOperator,
   resolveParties,
 } from "../app/lost-found/parties";
+import { buildIndex } from "../app/lost-found/data";
 import {
   buildReportDrafts,
   calendarReminderHref,
@@ -53,7 +54,7 @@ test("uses the actual VBB operator instead of guessing regional trains belong to
   ]);
   assert.ok(resolved.some((entry) => entry.party.id === "odeg"));
   assert.ok(!resolved.some((entry) => entry.party.id === "db"));
-  assert.ok(resolved.some((entry) => entry.party.id === "zentral"));
+  assert.ok(!resolved.some((entry) => entry.party.id === "zentral"));
 });
 
 test("keeps an exact GTFS operator homepage when its lost-property form is not curated yet", () => {
@@ -98,7 +99,141 @@ test("creates a separate venue contact when offline public data has an official 
   assert.ok(venue);
   assert.equal(venue.party.website, "https://museum.example/");
   assert.equal(venue.party.verified, false);
-  assert.ok(resolved.some((entry) => entry.party.id === "zentral"));
+  assert.ok(!resolved.some((entry) => entry.party.id === "zentral"));
+});
+
+test("adds Berlin central lost property only when the traveller selects the public or unsure-location route", () => {
+  const itinerary: ItineraryEntry[] = [
+    {
+      uid: "museum",
+      kind: "venue",
+      refId: "node/123",
+      label: "Example Museum",
+      category: "museum",
+      officialWebsite: "https://museum.example/",
+    },
+  ];
+  assert.ok(
+    !resolveParties(itinerary).some((entry) => entry.party.id === "zentral")
+  );
+  const withCentral = resolveParties(itinerary, null, true);
+  const central = withCentral.find((entry) => entry.party.id === "zentral");
+  assert.ok(central);
+  assert.match(central.reasons[0], /street|taxi/i);
+});
+
+test("keeps one reviewed venue channel primary and exposes other reviewed channels as backups", () => {
+  const resolved = resolveParties([
+    {
+      uid: "museum",
+      kind: "venue",
+      refId: "node/123",
+      label: "Example Museum",
+      category: "museum",
+      lostFoundChannels: [
+        {
+          id: "museum-lost-form",
+          venueIds: ["node/123"],
+          kind: "dedicated_lost_found_form",
+          scope: "venue",
+          pageUrl: "https://museum.example/lost",
+          language: ["en"],
+          fields: [],
+          captcha: false,
+          loginRequired: false,
+          submissionMode: "open_only",
+          verifiedAt: "2026-07-24",
+          verifiedBy: "Reviewer",
+          evidence: [],
+          contentHash: "primary",
+        },
+        {
+          id: "museum-contact",
+          venueIds: ["node/123"],
+          kind: "general_contact_form",
+          scope: "venue",
+          pageUrl: "https://museum.example/contact",
+          language: ["en"],
+          fields: [],
+          captcha: false,
+          loginRequired: false,
+          submissionMode: "open_only",
+          verifiedAt: "2026-07-24",
+          verifiedBy: "Reviewer",
+          evidence: [],
+          contentHash: "fallback",
+        },
+      ],
+    },
+  ]);
+  assert.equal(resolved.length, 1);
+  assert.equal(resolved[0].party.id, "channel:museum-lost-form");
+  assert.equal(resolved[0].party.channelId, "museum-lost-form");
+  assert.equal(resolved[0].party.formUrl, "https://museum.example/lost");
+  assert.deepEqual(
+    resolved[0].party.alternativeChannels?.map((channel) => channel.id),
+    ["museum-contact"]
+  );
+});
+
+test("uses the reviewed contact value for an email-only venue channel", () => {
+  const [resolved] = resolveParties([
+    {
+      uid: "gallery",
+      kind: "venue",
+      refId: "node/456",
+      label: "Example Gallery",
+      category: "museum",
+      lostFoundChannels: [
+        {
+          id: "gallery-email",
+          venueIds: ["node/456"],
+          kind: "email",
+          scope: "venue",
+          pageUrl: "https://gallery.example/lost-property",
+          contactValue: "lost@gallery.example",
+          language: ["en"],
+          fields: [],
+          captcha: false,
+          loginRequired: false,
+          submissionMode: "open_only",
+          verifiedAt: "2026-07-24",
+          verifiedBy: "Reviewer",
+          evidence: [],
+          contentHash: "email-page",
+        },
+      ],
+    },
+  ]);
+  assert.equal(resolved.party.email, "lost@gallery.example");
+  assert.equal(resolved.party.formUrl, undefined);
+  assert.equal(resolved.party.channelId, "gallery-email");
+});
+
+test("quick-add chooses Berlin's central Siegessäule rather than a distant same-name monument", () => {
+  const index = buildIndex([], {
+    source: "test",
+    sourceUrl: "https://example.test",
+    license: "test",
+    attractions: [
+      {
+        id: "outside",
+        name: "Siegessäule",
+        category: "memorial",
+        point: [52.40319, 13.09347],
+      },
+      {
+        id: "tiergarten",
+        name: "Siegessäule",
+        category: "memorial",
+        point: [52.51451, 13.35011],
+      },
+    ],
+  });
+  assert.equal(
+    index.quickVenues.find((venue) => venue.label === "Siegessäule")?.refId,
+    "tiergarten"
+  );
 });
 
 test("retains journey details and includes category plus description in both reports", () => {
@@ -158,6 +293,14 @@ test("migrates a valid old line entry that is missing its mode", () => {
         label: "bad",
       },
     ],
+    submissions: {
+      bvg: {
+        partyId: "bvg",
+        fingerprint: "old-fingerprint",
+        status: "user_confirmed",
+        updatedAt: "2026-07-23T10:00:00Z",
+      },
+    },
   });
   Object.defineProperty(globalThis, "window", {
     configurable: true,
@@ -167,6 +310,11 @@ test("migrates a valid old line entry that is missing its mode", () => {
     const loaded = loadCase();
     assert.equal(loaded.itinerary.length, 1);
     assert.equal(loaded.itinerary[0].mode, "subway");
+    assert.equal(loaded.submissions.bvg.length, 1);
+    assert.equal(
+      loaded.submissions.bvg[0].fingerprint,
+      "old-fingerprint"
+    );
   } finally {
     Object.defineProperty(globalThis, "window", {
       configurable: true,

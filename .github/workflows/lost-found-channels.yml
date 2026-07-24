@@ -1,0 +1,119 @@
+name: Lost-property channels
+
+on:
+  workflow_dispatch:
+    inputs:
+      domain:
+        description: Optional hostname filter
+        required: false
+        type: string
+  schedule:
+    - cron: "41 5 * * 2"
+    - cron: "23 3 1 * *"
+
+jobs:
+  verify-published:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '41 5 * * 2'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - run: npm ci
+      - uses: actions/cache/restore@v4
+        with:
+          path: data/lost-found-crawler/verification-state.json
+          key: lost-found-verification-state-${{ github.run_id }}
+          restore-keys: |
+            lost-found-verification-state-
+      - run: npm run data:lost-found:browser-install
+      - run: npm run data:lost-found:verify -- --browser
+      - if: always()
+        uses: actions/cache/save@v4
+        with:
+          path: data/lost-found-crawler/verification-state.json
+          key: lost-found-verification-state-${{ github.run_id }}
+      - if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: lost-found-verification
+          path: data/lost-found-crawler/verification-report.json
+          retention-days: 30
+
+  discover:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '23 3 1 * *'
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [0, 1, 2, 3]
+    runs-on: ubuntu-latest
+    timeout-minutes: 90
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - run: npm ci
+      - run: npm run data:lost-found:inventory
+      - name: Discover channel candidates
+        env:
+          DOMAIN_FILTER: ${{ inputs.domain }}
+        run: |
+          args=(
+            "--shard-index=${{ matrix.shard }}"
+            "--shard-count=4"
+            "--max-pages=30"
+            "--depth=3"
+            "--delay=900"
+          )
+          if [[ -n "$DOMAIN_FILTER" ]]; then
+            args+=("--domain=$DOMAIN_FILTER")
+          fi
+          npm run data:lost-found:discover -- "${args[@]}"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lost-found-candidates-${{ matrix.shard }}
+          path: |
+            data/lost-found-crawler/inventory.json
+            data/lost-found-crawler/channels.candidates.json
+          retention-days: 30
+
+  merge-discovery:
+    if: github.event_name == 'workflow_dispatch' || github.event.schedule == '23 3 1 * *'
+    needs: discover
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22.13.0
+          cache: npm
+      - run: npm ci
+      - run: npm run data:lost-found:inventory
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: lost-found-candidates-*
+          path: artifacts
+      - name: Merge candidates and export review report
+        run: |
+          inputs=(
+            "artifacts/lost-found-candidates-0/channels.candidates.json"
+            "artifacts/lost-found-candidates-1/channels.candidates.json"
+            "artifacts/lost-found-candidates-2/channels.candidates.json"
+            "artifacts/lost-found-candidates-3/channels.candidates.json"
+          )
+          joined=$(IFS=,; echo "${inputs[*]}")
+          npm run data:lost-found:merge -- "--inputs=$joined"
+          npm run data:lost-found:review-export
+      - uses: actions/upload-artifact@v4
+        with:
+          name: lost-found-review
+          path: |
+            data/lost-found-crawler/channels.candidates.json
+            data/lost-found-crawler/review-report.html
+          retention-days: 30

@@ -1,0 +1,436 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-24T00:12:45.163Z",
+  "candidates": [
+    {
+      "id": "channel_c8e9a5da8e10b345",
+      "venueIds": [
+        "way/142801571"
+      ],
+      "kind": "email",
+      "pageUrl": "https://www.schoeneiche.de/fundbuero",
+      "contactValue": "ordnungsamt@schoeneiche.de",
+      "confidence": 70,
+      "reasons": [
+        "linked from the official seed site",
+        "page explicitly mentions lost property",
+        "page publishes an official email contact"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.schoeneiche.de",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.schoeneiche.de/fundbuero",
+          "label": "sitemap candidate"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.schoeneiche.de/fundbuero",
+          "selector": "a[href^=\"mailto:\"]",
+          "excerpt": "Wer vermisst seine Katze, seinen Hund, seine Schildkröte oder sonstige Haustiere? Ansprechpartnerin Frau Frank Ruhender Verkehr - HundehalterverordnungTelefon: 030 - 643304 107E-Mail: ordnungsamt@schoeneiche.de Wer ein Tier findet, informiert bitte nach Möglichkeit zuerst das Ordnungsamt der Gemeinde (siehe oben) oder die Polizei. Diese vermitteln dann weiter an das zuständige und vertraglich gebundene Tierheim Wesendahl e. V.. Fundtiere können auch direkt im Tierheim Wesendahl abgegeben werden.",
+          "contentHash": "ca896c5fcf0196c743f9df05ac1fe672e66fc497be2293588864719c8e5f2d9c",
+          "observedAt": "2026-07-24T00:12:20.565Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:12:20.565Z"
+    },
+    {
+      "id": "channel_3f03077e81d3c0d3",
+      "venueIds": [
+        "way/142801571"
+      ],
+      "kind": "manual_review",
+      "pageUrl": "https://www.schoeneiche.de/fundbuero",
+      "confidence": 55,
+      "reasons": [
+        "linked from the official seed site",
+        "page explicitly mentions lost property"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.schoeneiche.de",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.schoeneiche.de/fundbuero",
+          "label": "sitemap candidate"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.schoeneiche.de/fundbuero",
+          "excerpt": "Wer vermisst seine Katze, seinen Hund, seine Schildkröte oder sonstige Haustiere? Ansprechpartnerin Frau Frank Ruhender Verkehr - HundehalterverordnungTelefon: 030 - 643304 107E-Mail: ordnungsamt@schoeneiche.de Wer ein Tier findet, informiert bitte nach Möglichkeit zuerst das Ordnungsamt der Gemeinde (siehe oben) oder die Polizei. Diese vermitteln dann weiter an das zuständige und vertraglich gebundene Tierheim Wesendahl e. V.. Fundtiere können auch direkt im Tierheim Wesendahl abgegeben werden.",
+          "contentHash": "ca896c5fcf0196c743f9df05ac1fe672e66fc497be2293588864719c8e5f2d9c",
+          "observedAt": "2026-07-24T00:12:20.564Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "needs_review",
+      "discoveredAt": "2026-07-24T00:12:20.564Z"
+    },
+    {
+      "id": "channel_a5cb607e1f540984",
+      "venueIds": [
+        "way/142801571"
+      ],
+      "kind": "manual_review",
+      "pageUrl": "https://www.schoeneiche.de/rathaus/verwaltung/haupt-und-ordnungsangelegenheiten",
+      "confidence": 55,
+      "reasons": [
+        "linked from the official seed site",
+        "page explicitly mentions lost property"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.schoeneiche.de/rathaus/verwaltung/haupt-und-ordnungsangelegenheiten",
+          "label": "Haupt- und Ordnungsangelegenheiten"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.schoeneiche.de/rathaus/verwaltung/haupt-und-ordnungsangelegenheiten",
+          "excerpt": "Auszug der Aufgabengebiete: Organisation der Verwaltung, Wahlen, Schiedsstelle, Versicherungen, Einkauf, Ehrungen, Repräsentationen, Stadtmarketing, Kultur, Tourismus, Partnerschaften, Gefahrenabwehr, Straßenreinigung, Winterdienst, Tierschutz, ruhender Verkehr, Abfallbeseitigung, Obdachlosigkeit, Fundsachen, ordnungsbehördliche Bestattungen, Gewerbe An-, Um- und Abmeldungen, Anzeigen nach brandenburgischem Gaststättengesetz, Festsetzung von Märkten und Erlaubniserteilungen nach der Gewerbeordnu",
+          "contentHash": "1bfd0ce2aa76f2ffe6479d0f632deceb1b0c658f57391e314c5896614745418b",
+          "observedAt": "2026-07-24T00:12:26.132Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "needs_review",
+      "discoveredAt": "2026-07-24T00:12:26.132Z"
+    },
+    {
+      "id": "channel_b597e7101c1377d8",
+      "venueIds": [
+        "way/556435241"
+      ],
+      "kind": "general_contact_form",
+      "pageUrl": "https://tv-turm.de/en/contact-us/",
+      "form": {
+        "pageUrl": "https://tv-turm.de/en/contact-us/",
+        "formAction": "https://tv-turm.de/en/contact-us/",
+        "formMethod": "POST",
+        "title": "Contact Us - Berliner Fernsehturm",
+        "contextText": "Name Surname Email Telephone Message I accept the Terms Send enquiry post_id form_id referer_title queried_id Name Surname Email Telephone Message Type your message... I accept the Terms",
+        "language": [
+          "en"
+        ],
+        "fields": [
+          {
+            "rawName": "post_id",
+            "label": "post_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"post_id\"]"
+          },
+          {
+            "rawName": "form_id",
+            "label": "form_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"form_id\"]"
+          },
+          {
+            "rawName": "referer_title",
+            "label": "referer_title",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"referer_title\"]"
+          },
+          {
+            "rawName": "queried_id",
+            "label": "queried_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"queried_id\"]"
+          },
+          {
+            "rawName": "form_fields[name]",
+            "rawId": "form-field-name",
+            "label": "Name",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "firstName",
+            "semanticConfidence": 0.85,
+            "evidenceSelector": "#form-field-name"
+          },
+          {
+            "rawName": "form_fields[field_33fbbf9]",
+            "rawId": "form-field-field_33fbbf9",
+            "label": "Surname",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "lastName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#form-field-field_33fbbf9"
+          },
+          {
+            "rawName": "form_fields[email]",
+            "rawId": "form-field-email",
+            "label": "Email",
+            "control": "email",
+            "required": true,
+            "step": 1,
+            "semanticKey": "email",
+            "semanticConfidence": 0.99,
+            "evidenceSelector": "#form-field-email"
+          },
+          {
+            "rawName": "form_fields[field_17e8b19]",
+            "rawId": "form-field-field_17e8b19",
+            "label": "Telephone",
+            "control": "tel",
+            "required": true,
+            "constraints": {
+              "pattern": "[0-9()#&+*-=.]+"
+            },
+            "step": 1,
+            "semanticKey": "phone",
+            "semanticConfidence": 0.99,
+            "evidenceSelector": "#form-field-field_17e8b19"
+          },
+          {
+            "rawName": "form_fields[message]",
+            "rawId": "form-field-message",
+            "label": "Message",
+            "placeholder": "Type your message...",
+            "control": "textarea",
+            "required": false,
+            "step": 1,
+            "semanticKey": "messageBody",
+            "semanticConfidence": 0.9,
+            "evidenceSelector": "#form-field-message"
+          },
+          {
+            "rawName": "form_fields[field_32181c1]",
+            "rawId": "form-field-field_32181c1",
+            "label": "I accept the Terms",
+            "control": "checkbox",
+            "required": true,
+            "step": 1,
+            "semanticKey": "privacyConsent",
+            "semanticConfidence": 0.96,
+            "evidenceSelector": "#form-field-field_32181c1"
+          }
+        ],
+        "captcha": true,
+        "loginRequired": false,
+        "contentHash": "c7fa3121d6a8247f12d0a94f98ab71374e2dc6cce3ebb83344dea558afcf1f0f"
+      },
+      "confidence": 30,
+      "reasons": [
+        "linked from the official seed site",
+        "page contains a form",
+        "CAPTCHA requires user interaction"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://tv-turm.de/",
+          "label": "official website"
+        },
+        {
+          "url": "https://tv-turm.de/kontakt/",
+          "label": "Kontakt"
+        },
+        {
+          "url": "https://tv-turm.de/en/contact-us/",
+          "label": "/en/contact-us/"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://tv-turm.de/en/contact-us/",
+          "excerpt": "CONTACT US I have a question regarding: FAQ buttons All FAQs On-site visit Purchase of voucher Restaurant Sphere Tim Raue Tickets Your visit on site Can I also purchase the giftcard at the cash desk onsite? No, the giftcard can only be purchased online here. How long is the giftcard valid? Our giftcards are valid for 3 years – so you have full flexibility for your time together. Can I print out the giftcard immediately? Yes, you will receive a PDF by e-mail immediately after your purchase. Perfe",
+          "contentHash": "58105b355234b2521d29c47680163bf97d049c9b3e63b3ae59fefd1c6cc37b35",
+          "observedAt": "2026-07-24T00:12:23.259Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:12:23.259Z"
+    },
+    {
+      "id": "channel_117cd0b618d33a6b",
+      "venueIds": [
+        "way/556435241"
+      ],
+      "kind": "general_contact_form",
+      "pageUrl": "https://tv-turm.de/kontakt/",
+      "form": {
+        "pageUrl": "https://tv-turm.de/kontakt/",
+        "formAction": "https://tv-turm.de/kontakt/",
+        "formMethod": "POST",
+        "title": "Kontakt - Berliner Fernsehturm",
+        "contextText": "Vorname Nachname E-mail Telefon Ihre Nachricht Ich akzeptiere die AGB Anfrage absenden post_id form_id referer_title queried_id Vorname Nachname E-mail Telefon Ihre Nachricht Schreiben Sie hier Ihre Nachricht... Ich akzeptiere die AGB",
+        "language": [
+          "de"
+        ],
+        "fields": [
+          {
+            "rawName": "post_id",
+            "label": "post_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"post_id\"]"
+          },
+          {
+            "rawName": "form_id",
+            "label": "form_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"form_id\"]"
+          },
+          {
+            "rawName": "referer_title",
+            "label": "referer_title",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"referer_title\"]"
+          },
+          {
+            "rawName": "queried_id",
+            "label": "queried_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"queried_id\"]"
+          },
+          {
+            "rawName": "form_fields[name]",
+            "rawId": "form-field-name",
+            "label": "Vorname",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "firstName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#form-field-name"
+          },
+          {
+            "rawName": "form_fields[field_33fbbf9]",
+            "rawId": "form-field-field_33fbbf9",
+            "label": "Nachname",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "lastName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#form-field-field_33fbbf9"
+          },
+          {
+            "rawName": "form_fields[email]",
+            "rawId": "form-field-email",
+            "label": "E-mail",
+            "control": "email",
+            "required": true,
+            "step": 1,
+            "semanticKey": "email",
+            "semanticConfidence": 0.99,
+            "evidenceSelector": "#form-field-email"
+          },
+          {
+            "rawName": "form_fields[field_17e8b19]",
+            "rawId": "form-field-field_17e8b19",
+            "label": "Telefon",
+            "control": "tel",
+            "required": true,
+            "constraints": {
+              "pattern": "[0-9()#&+*-=.]+"
+            },
+            "step": 1,
+            "semanticKey": "phone",
+            "semanticConfidence": 0.99,
+            "evidenceSelector": "#form-field-field_17e8b19"
+          },
+          {
+            "rawName": "form_fields[message]",
+            "rawId": "form-field-message",
+            "label": "Ihre Nachricht",
+            "placeholder": "Schreiben Sie hier Ihre Nachricht...",
+            "control": "textarea",
+            "required": false,
+            "step": 1,
+            "semanticKey": "messageBody",
+            "semanticConfidence": 0.9,
+            "evidenceSelector": "#form-field-message"
+          },
+          {
+            "rawName": "form_fields[field_32181c1]",
+            "rawId": "form-field-field_32181c1",
+            "label": "Ich akzeptiere die AGB",
+            "control": "checkbox",
+            "required": true,
+            "step": 1,
+            "semanticKey": "privacyConsent",
+            "semanticConfidence": 0.96,
+            "evidenceSelector": "#form-field-field_32181c1"
+          }
+        ],
+        "captcha": true,
+        "loginRequired": false,
+        "contentHash": "200c268cfd07179e41f8a5faf651dd31d5cc44c3ab63b9c7651e25b037d7515a"
+      },
+      "confidence": 30,
+      "reasons": [
+        "linked from the official seed site",
+        "page contains a form",
+        "CAPTCHA requires user interaction"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://tv-turm.de/",
+          "label": "official website"
+        },
+        {
+          "url": "https://tv-turm.de/kontakt/",
+          "label": "Kontakt"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://tv-turm.de/kontakt/",
+          "excerpt": "Kontakt Ich habe eine Frage zu: FAQ buttons Alle FAQs Aufzug Besuch vor Ort Ermäßigungen und Rabatte Gutscheinkauf Restaurant Sphere Tim Raue Tickets Kann ich den Gutschein auch vor Ort an der Kasse kaufen? Nein, der Gutschein kann nur hier online erworben werden. Wie lange ist der Gutschein gültig? Unsere Gutscheine haben eine Gültigkeit von 3 Jahren – so habt ihr volle Flexibilität für eure gemeinsame Zeit. Kann ich den Gutschein sofort ausdrucken? Ja! Unmittelbar nach dem Kauf erhältst du ein",
+          "contentHash": "2538f84d1d43884ce23faee1ba6a78845b911510d5ecd0a537c25a5a603b6f60",
+          "observedAt": "2026-07-24T00:12:22.254Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:12:22.254Z"
+    }
+  ],
+  "failures": []
+}

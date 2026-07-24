@@ -1,0 +1,329 @@
+import * as cheerio from "cheerio";
+import type { AnyNode } from "domhandler";
+import type {
+  ChannelField,
+  FormControl,
+} from "../../lib/lost-found-channel-schema";
+import { stableHash } from "./hash.mjs";
+import { inferSemanticField } from "./semantics.mjs";
+import type { FormSnapshot } from "./schemas";
+
+function compactText(value: string | undefined): string {
+  return (value ?? "").replace(/\s+/g, " ").trim();
+}
+
+function controlFor(
+  elementName: string,
+  type: string | undefined
+): FormControl {
+  if (elementName === "textarea") return "textarea";
+  if (elementName === "select") return "select";
+  const normalized = type?.toLowerCase() || "text";
+  if (
+    normalized === "date" ||
+    normalized === "time" ||
+    normalized === "number" ||
+    normalized === "email" ||
+    normalized === "tel" ||
+    normalized === "radio" ||
+    normalized === "checkbox" ||
+    normalized === "file" ||
+    normalized === "hidden"
+  ) {
+    return normalized;
+  }
+  return "text";
+}
+
+function selectorFor(
+  $: cheerio.CheerioAPI,
+  element: AnyNode,
+  index: number
+): string {
+  const node = $(element);
+  const id = node.attr("id");
+  if (id) {
+    const escapedId = id.replace(/([^a-zA-Z0-9_-])/g, "\\$1");
+    return `#${escapedId}`;
+  }
+  const name = node.attr("name");
+  if (name) {
+    const escaped = name.replaceAll("\\", "\\\\").replaceAll('"', '\\"');
+    return `${element.type === "tag" ? element.name : "input"}[name="${escaped}"]`;
+  }
+  return `${element.type === "tag" ? element.name : "input"}:nth-of-type(${index + 1})`;
+}
+
+function labelFor(
+  $: cheerio.CheerioAPI,
+  element: AnyNode,
+  selector: string
+): string {
+  const node = $(element);
+  const id = node.attr("id");
+  const explicit = id
+    ? compactText(
+        $("label")
+          .filter((_, label) => $(label).attr("for") === id)
+          .first()
+          .text()
+      )
+    : "";
+  const wrapped = compactText(node.closest("label").first().text());
+  return (
+    explicit ||
+    wrapped ||
+    compactText(node.attr("aria-label")) ||
+    compactText(node.attr("placeholder")) ||
+    compactText(node.attr("name")) ||
+    selector
+  );
+}
+
+function helpTextFor($: cheerio.CheerioAPI, element: AnyNode): string | undefined {
+  const node = $(element);
+  const describedBy = compactText(node.attr("aria-describedby"));
+  const described = describedBy
+    .split(" ")
+    .filter(Boolean)
+    .map((id) => compactText($(`#${id}`).text()))
+    .filter(Boolean)
+    .join(" ");
+  const nearby = compactText(
+    node
+      .closest(".form-group, .field, fieldset, li, p, div")
+      .find(".help, .hint, .description, small")
+      .first()
+      .text()
+  );
+  return described || nearby || undefined;
+}
+
+function numberAttribute(
+  node: cheerio.Cheerio<AnyNode>,
+  name: string
+): number | undefined {
+  const value = node.attr(name);
+  if (!value) return undefined;
+  const parsed = Number(value);
+  return Number.isFinite(parsed) ? parsed : undefined;
+}
+
+function extractFields(
+  $: cheerio.CheerioAPI,
+  form: cheerio.Cheerio<AnyNode>,
+  looseOnly = false
+): ChannelField[] {
+  const fields: ChannelField[] = [];
+  form.find("input, select, textarea").each((index, element) => {
+    const node = $(element);
+    if (looseOnly && node.closest("form").length > 0) return;
+    if (node.is(":disabled")) return;
+    const inputType = node.attr("type")?.toLowerCase();
+    if (
+      element.name === "input" &&
+      (inputType === "submit" ||
+        inputType === "button" ||
+        inputType === "reset" ||
+        inputType === "image")
+    ) {
+      return;
+    }
+    if (node.attr("name") === "Tenant Identifier") return;
+    const control = controlFor(element.name, node.attr("type"));
+    const selector = selectorFor($, element, index);
+    const label = labelFor($, element, selector);
+    const helpText = helpTextFor($, element);
+    const placeholder = compactText(node.attr("placeholder")) || undefined;
+    const rawName = compactText(node.attr("name")) || undefined;
+    const rawId = compactText(node.attr("id")) || undefined;
+    const semantic = inferSemanticField({
+      control,
+      label,
+      helpText,
+      placeholder,
+      rawName,
+    });
+    const options =
+      control === "select"
+        ? node
+            .find("option")
+            .map((_, option) => ({
+              value: $(option).attr("value") ?? "",
+              label: compactText($(option).text()),
+            }))
+            .get()
+            .filter((option) => option.label)
+        : undefined;
+    const acceptedFiles =
+      control === "file"
+        ? compactText(node.attr("accept"))
+            .split(",")
+            .map((value) => value.trim())
+            .filter(Boolean)
+        : undefined;
+    const constraints = {
+      pattern: compactText(node.attr("pattern")) || undefined,
+      min: compactText(node.attr("min")) || undefined,
+      max: compactText(node.attr("max")) || undefined,
+      minLength: numberAttribute(node, "minlength"),
+      maxLength: numberAttribute(node, "maxlength"),
+      acceptedFiles: acceptedFiles?.length ? acceptedFiles : undefined,
+    };
+    const hasConstraints = Object.values(constraints).some(
+      (value) => value !== undefined
+    );
+    fields.push({
+      rawName,
+      rawId,
+      label,
+      helpText,
+      placeholder,
+      control,
+      required:
+        node.is("[required]") ||
+        node.attr("aria-required")?.toLowerCase() === "true" ||
+        /\*\s*$/.test(label),
+      options: options?.length ? options : undefined,
+      constraints: hasConstraints ? constraints : undefined,
+      step: 1,
+      semanticKey: semantic.key,
+      semanticConfidence: semantic.confidence,
+      evidenceSelector: selector,
+    });
+  });
+  if (fields.some((field) => field.semanticKey === "lastName")) {
+    for (const field of fields) {
+      if (
+        field.semanticKey === "fullName" &&
+        /^(name|your name|ihr name)$/i.test(field.label.trim())
+      ) {
+        field.semanticKey = "firstName";
+        field.semanticConfidence = 0.85;
+      }
+    }
+  }
+  return fields;
+}
+
+function safeAction(pageUrl: string, action: string | undefined): string | undefined {
+  if (!action) return pageUrl;
+  try {
+    const url = new URL(action, pageUrl);
+    if (!["http:", "https:"].includes(url.protocol)) return undefined;
+    for (const key of [...url.searchParams.keys()]) {
+      if (/^(cHash|csrf|token|nonce|state|timestamp|_ts)$/i.test(key)) {
+        url.searchParams.delete(key);
+      }
+    }
+    return url.toString();
+  } catch {
+    return undefined;
+  }
+}
+
+export function extractFormsFromHtml(input: {
+  html: string;
+  pageUrl: string;
+}): FormSnapshot[] {
+  const $ = cheerio.load(input.html);
+  const title = compactText($("title").first().text() || $("h1").first().text());
+  const documentLanguage = compactText($("html").attr("lang")).split("-")[0];
+  const pageText = compactText($("body").text()).toLowerCase();
+  const captcha =
+    /captcha|recaptcha|hcaptcha|turnstile|ich bin kein roboter|not a robot/i.test(
+      pageText
+    ) ||
+    $("[class*='captcha'], [id*='captcha'], iframe[src*='recaptcha'], iframe[src*='hcaptcha']")
+      .length > 0;
+  const loginRequired =
+    /\b(anmelden|einloggen|login required|sign in)\b/i.test(pageText) &&
+    $("input[type='password']").length > 0;
+  const output: FormSnapshot[] = [];
+  const appendForm = (
+    form: cheerio.Cheerio<AnyNode>,
+    synthetic = false
+  ): void => {
+    const fields = extractFields($, form, synthetic);
+    if (!fields.length) return;
+    if (synthetic) {
+      const lostSpecificFields = new Set(
+        fields
+          .map((field) => field.semanticKey)
+          .filter((key) =>
+            [
+              "lossDate",
+              "lossTime",
+              "lossLocation",
+              "itemCategory",
+              "itemDescription",
+            ].includes(key)
+          )
+      );
+      if (lostSpecificFields.size < 2) return;
+    }
+    const contextText = compactText(
+      [
+        form.text(),
+        form.prevAll("h1, h2, h3, legend").first().text(),
+        ...fields.map((field) =>
+          [field.label, field.helpText, field.placeholder].filter(Boolean).join(" ")
+        ),
+      ].join(" ")
+    );
+    const formMethod: "GET" | "POST" =
+      synthetic || form.attr("method")?.toUpperCase() === "POST" ? "POST" : "GET";
+    const formAction = safeAction(
+      input.pageUrl,
+      synthetic ? undefined : form.attr("action")
+    );
+    const language = [documentLanguage || "und"];
+    const canonical = {
+      pageUrl: input.pageUrl,
+      formAction,
+      formMethod,
+      title,
+      contextText,
+      language,
+      fields,
+      captcha,
+      loginRequired,
+    };
+    const stableShape = {
+      pageUrl: input.pageUrl,
+      formAction,
+      formMethod,
+      language,
+      fields: fields.map((field) => ({
+        rawName: field.rawName,
+        label: field.label,
+        control: field.control,
+        required: field.required,
+        options: field.options,
+        constraints: field.constraints,
+        semanticKey: field.semanticKey,
+      })),
+      captcha,
+      loginRequired,
+    };
+    output.push({
+      ...canonical,
+      contentHash: stableHash(stableShape),
+    });
+  };
+  $("form").each((_, element) => {
+    appendForm($(element));
+  });
+  const looseControls = $("input, select, textarea").filter(
+    (_, element) => $(element).closest("form").length === 0
+  );
+  if (looseControls.length >= 2) {
+    const first = looseControls.first();
+    const root =
+      first.closest("[role='form'], .form, [class*='form-']").first().length > 0
+        ? first.closest("[role='form'], .form, [class*='form-']").first()
+        : $("main, [role='main'], body").first();
+    appendForm(root, true);
+  }
+  return output;
+}

@@ -7,6 +7,7 @@ import {
   type ItineraryJourney,
   type LostCase,
   type ReportState,
+  type SubmissionRecord,
 } from "./types";
 
 const STORAGE_KEY = "berlin-lostfound-case-v1";
@@ -29,6 +30,7 @@ export function loadCase(): LostCase {
       contact: { ...base.contact, ...parsed.contact },
       itinerary: sanitizeItinerary(parsed.itinerary),
       reported: sanitizeReported(parsed.reported),
+      submissions: sanitizeSubmissions(parsed.submissions),
     };
   } catch {
     return emptyCase();
@@ -143,6 +145,62 @@ function sanitizeReported(value: unknown): Record<string, ReportState> {
   return output;
 }
 
+function sanitizedSubmission(
+  partyId: string,
+  candidate: unknown
+): SubmissionRecord | undefined {
+  if (!candidate || typeof candidate !== "object") return undefined;
+  const record = candidate as Record<string, unknown>;
+  const status = record.status;
+  if (
+    typeof record.partyId !== "string" ||
+    record.partyId !== partyId ||
+    typeof record.fingerprint !== "string" ||
+    typeof record.updatedAt !== "string" ||
+    (status !== "opened" &&
+      status !== "user_confirmed" &&
+      status !== "receipt_confirmed" &&
+      status !== "uncertain")
+  ) {
+    return undefined;
+  }
+  return {
+    partyId,
+    fingerprint: record.fingerprint.slice(0, 128),
+    status,
+    updatedAt: record.updatedAt,
+    receipt:
+      typeof record.receipt === "string" && record.receipt.trim()
+        ? record.receipt.trim().slice(0, 500)
+        : undefined,
+  };
+}
+
+function sanitizeSubmissions(
+  value: unknown
+): Record<string, SubmissionRecord[]> {
+  if (!value || typeof value !== "object") return {};
+  const output: Record<string, SubmissionRecord[]> = {};
+  for (const [partyId, candidate] of Object.entries(value)) {
+    // Migrate the original single-record shape as well as the history shape.
+    const candidates = Array.isArray(candidate) ? candidate : [candidate];
+    const history = candidates
+      .map((entry) => sanitizedSubmission(partyId, entry))
+      .filter((entry): entry is SubmissionRecord => Boolean(entry))
+      .filter(
+        (entry, index, all) =>
+          all.findIndex(
+            (candidateEntry) =>
+              candidateEntry.fingerprint === entry.fingerprint
+          ) === index
+      )
+      .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt))
+      .slice(0, 20);
+    if (history.length) output[partyId] = history;
+  }
+  return output;
+}
+
 export function saveCase(lostCase: LostCase): void {
   if (typeof window === "undefined") return;
   try {
@@ -164,7 +222,12 @@ export function clearCase(): void {
   }
 }
 
-const emptyContact = (): Contact => ({ name: "", email: "", phone: "" });
+const emptyContact = (): Contact => ({
+  name: "",
+  email: "",
+  phone: "",
+  postalAddress: "",
+});
 
 /** Load the remembered contact so returning travellers never retype it. */
 export function loadContact(): Contact {

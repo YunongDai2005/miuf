@@ -3,6 +3,7 @@ import type {
   TransitOperator,
 } from "../berlin-transit/transit";
 import type { AttractionCategory } from "../berlin-transit/attractions";
+import type { PublishedLostFoundChannel } from "../../lib/lost-found-channel-schema";
 import { berlinDateKey } from "./time";
 
 /** What kind of thing the traveller lost. Drives the report wording and icon. */
@@ -23,12 +24,24 @@ export interface LostItem {
   lostDate: string; // yyyy-mm-dd
   timeFrom?: string; // HH:mm
   timeTo?: string; // HH:mm
+  brand?: string;
+  color?: string;
+  identifyingFeatures?: string;
+  estimatedValue?: string;
+  lossCity?: string;
+  /**
+   * The Berlin central office is appropriate for streets, taxis and genuinely
+   * uncertain locations, but not as a blanket duplicate of every operator or
+   * venue report.
+   */
+  includeCentralOffice?: boolean;
 }
 
 export interface Contact {
   name: string;
   email: string;
   phone?: string;
+  postalAddress?: string;
 }
 
 export type ItineraryKind = "line" | "venue";
@@ -61,9 +74,25 @@ export interface ItineraryEntry {
   contactSourceUrl?: string;
   officialWebsiteSourceUrl?: string;
   contactUpdatedAt?: string;
+  /** Refreshed from the reviewed public registry; stale copies are discarded on load. */
+  lostFoundChannels?: PublishedLostFoundChannel[];
 }
 
 export type ReportState = "todo" | "sent" | "replied";
+
+export type SubmissionStatus =
+  | "opened"
+  | "user_confirmed"
+  | "receipt_confirmed"
+  | "uncertain";
+
+export interface SubmissionRecord {
+  partyId: string;
+  fingerprint: string;
+  status: SubmissionStatus;
+  updatedAt: string;
+  receipt?: string;
+}
 
 export interface LostCase {
   version: 1;
@@ -72,6 +101,8 @@ export interface LostCase {
   itinerary: ItineraryEntry[];
   /** partyId -> progress the traveller has logged. */
   reported: Record<string, ReportState>;
+  /** Local evidence history by party; exact fingerprints prevent old duplicates too. */
+  submissions: Record<string, SubmissionRecord[]>;
   updatedAt: string;
 }
 
@@ -84,10 +115,17 @@ export function emptyCase(): LostCase {
       lostDate: berlinDateKey(),
       timeFrom: "",
       timeTo: "",
+      brand: "",
+      color: "",
+      identifyingFeatures: "",
+      estimatedValue: "",
+      lossCity: "",
+      includeCentralOffice: false,
     },
-    contact: { name: "", email: "", phone: "" },
+    contact: { name: "", email: "", phone: "", postalAddress: "" },
     itinerary: [],
     reported: {},
+    submissions: {},
     updatedAt: new Date().toISOString(),
   };
 }

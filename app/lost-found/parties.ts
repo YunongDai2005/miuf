@@ -8,6 +8,11 @@ import type {
   ItineraryJourney,
 } from "./types";
 import { berlinTimeLabel } from "./time";
+import type {
+  ChannelField,
+  PublishedLostFoundChannel,
+} from "../../lib/lost-found-channel-schema";
+import { isChannelReviewCurrent } from "../../lib/lost-found-channel-schema";
 
 export type PartySourceField =
   | "scope"
@@ -26,9 +31,21 @@ export interface PartyLink {
   url: string;
 }
 
+export interface PartyAlternativeChannel {
+  id: string;
+  label: string;
+  url: string;
+  kind: PublishedLostFoundChannel["kind"];
+  submissionMode: PublishedLostFoundChannel["submissionMode"];
+  verifiedAt: string;
+  reviewCurrent: boolean;
+}
+
 /** A lost-property office or official next-step service. */
 export interface Party {
   id: string;
+  /** Registry channel id; unlike the UI party id, this must match a reviewed adapter exactly. */
+  channelId?: string;
   name: string;
   operatorName: string;
   scope: string;
@@ -43,6 +60,11 @@ export interface Party {
   nextStep?: string;
   followUpAfterDays?: number;
   relatedLinks?: PartyLink[];
+  /**
+   * Other reviewed ways to reach the same venue. They are backups, not extra
+   * reports to send in parallel.
+   */
+  alternativeChannels?: PartyAlternativeChannel[];
   /** Guidance entries (police/embassy) do not receive a generic lost-property draft. */
   guidanceOnly?: boolean;
   verified: boolean;
@@ -50,6 +72,12 @@ export interface Party {
   /** Official evidence for every public contact/operational field above. */
   fieldSources: Partial<Record<PartySourceField, string>>;
   note?: string;
+  formFields?: ChannelField[];
+  submissionMode?: PublishedLostFoundChannel["submissionMode"];
+  captcha?: boolean;
+  loginRequired?: boolean;
+  adapterId?: string;
+  formContentHash?: string;
 }
 
 const VERIFIED_AT = "2026-07-23";
@@ -269,7 +297,7 @@ export const PARTIES: Record<string, Party> = {
     formLabel: "Open Berlin lost-property guidance",
     retention: "Handling and storage periods differ by venue.",
     nextStep:
-      "Contact each venue directly using its official website or reception desk, then also register with Berlin’s central lost-property office if the location is uncertain.",
+      "Contact each venue directly using its official website or reception desk. Add Berlin’s central lost-property office separately only for streets, taxis or a genuinely uncertain location.",
     followUpAfterDays: 2,
     verified: true,
     lastVerifiedAt: VERIFIED_AT,
@@ -347,37 +375,112 @@ export interface ResolvedParty {
   entries: ItineraryEntry[];
 }
 
+function channelLabel(channel: PublishedLostFoundChannel): string {
+  switch (channel.kind) {
+    case "dedicated_lost_found_form":
+      return "Dedicated lost-property form";
+    case "operator_lost_found_form":
+      return "Operator lost-property form";
+    case "general_contact_form":
+      return "General contact form";
+    case "email":
+      return "Official email";
+    case "phone":
+      return "Official phone contact";
+    case "central_office_fallback":
+      return "Central-office fallback";
+  }
+}
+
+function channelHref(channel: PublishedLostFoundChannel): string {
+  if (channel.kind === "email" && channel.contactValue) {
+    return `mailto:${channel.contactValue}`;
+  }
+  if (channel.kind === "phone" && channel.contactValue) {
+    return `tel:${channel.contactValue.replace(/\s+/g, "")}`;
+  }
+  return channel.pageUrl;
+}
+
 function venueParty(entry: ItineraryEntry): Party | null {
-  const website = entry.officialWebsite;
+  const [channel, ...alternativeChannels] = entry.lostFoundChannels ?? [];
+  const channelReviewCurrent = channel
+    ? isChannelReviewCurrent(channel)
+    : false;
+  const website = channel?.pageUrl ?? entry.officialWebsite;
   if (!website) return null;
-  const source = entry.contactSourceUrl ?? website;
+  const source = channel?.evidence[0]?.sourceUrl ?? entry.contactSourceUrl ?? website;
   const websiteSource = entry.officialWebsiteSourceUrl ?? source;
+  const channelHasForm =
+    channel?.kind === "dedicated_lost_found_form" ||
+    channel?.kind === "operator_lost_found_form" ||
+    channel?.kind === "general_contact_form";
+  const channelEmail =
+    channel?.kind === "email" ? channel.contactValue : undefined;
+  const channelPhone =
+    channel?.kind === "phone" ? channel.contactValue : undefined;
   return {
-    id: `venue:${entry.refId}`,
-    name: `${entry.label} contact candidate`,
+    id: channel ? `channel:${channel.id}` : `venue:${entry.refId}`,
+    channelId: channel?.id,
+    name: channel
+      ? `${entry.label} lost-property service`
+      : `${entry.label} contact candidate`,
     operatorName: entry.label,
     scope: `Items possibly lost at ${entry.label}`,
     website,
-    formUrl: entry.lostFoundUrl,
-    formLabel: entry.lostFoundUrl
+    formUrl: channel
+      ? channelHasForm
+        ? channel.pageUrl
+        : undefined
+      : entry.lostFoundUrl,
+    formLabel: channelHasForm
+      ? channel.submissionMode === "assisted_fill"
+        ? "Open verified form with filling guide"
+        : "Open verified lost-property page"
+      : !channel && entry.lostFoundUrl
       ? "Open the venue’s lost-property page"
       : "Open the public official-site candidate",
-    email: entry.officialEmail,
-    phone: entry.officialPhone,
-    nextStep: entry.lostFoundUrl
+    email: channelEmail ?? entry.officialEmail,
+    phone: channelPhone ?? entry.officialPhone,
+    nextStep: channel
+      ? channel.kind === "email"
+        ? "Send one report to the reviewed official email address. Keep the sent message or any case number as your receipt."
+        : channel.kind === "phone"
+          ? "Call the reviewed official number and note any case number. Use a written backup only if the office asks you to."
+          : "Review the suggested field values below, then open the verified official page. Complete consent, CAPTCHA and the final submission yourself."
+      : entry.lostFoundUrl
       ? "Use the venue’s lost-property page first and include the visit time and a precise item description."
       : "Open the official website and contact reception or visitor service. This contact was found from public venue data and should be checked before sending personal details.",
     followUpAfterDays: 2,
-    verified: false,
-    lastVerifiedAt: entry.contactUpdatedAt ?? VERIFIED_AT,
+    alternativeChannels: alternativeChannels.map((alternative) => ({
+      id: alternative.id,
+      label: channelLabel(alternative),
+      url: channelHref(alternative),
+      kind: alternative.kind,
+      submissionMode: alternative.submissionMode,
+      verifiedAt: alternative.verifiedAt,
+      reviewCurrent: isChannelReviewCurrent(alternative),
+    })),
+    verified: Boolean(channel) && channelReviewCurrent,
+    lastVerifiedAt: channel?.verifiedAt ?? entry.contactUpdatedAt ?? VERIFIED_AT,
     fieldSources: {
       scope: source,
-      website: websiteSource,
-      formUrl: entry.lostFoundUrl ? websiteSource : undefined,
-      email: entry.officialEmail ? source : undefined,
-      phone: entry.officialPhone ? source : undefined,
+      website: channel ? source : websiteSource,
+      formUrl: channel || entry.lostFoundUrl ? source : undefined,
+      email: channelEmail || entry.officialEmail ? source : undefined,
+      phone: channelPhone || entry.officialPhone ? source : undefined,
       nextStep: source,
     },
+    note:
+      channel && !channelReviewCurrent
+        ? "This channel is past its human re-review date. Check the official page before sharing personal details; assisted filling and submission are disabled."
+        : undefined,
+    formFields: channelReviewCurrent ? channel?.fields : undefined,
+    submissionMode: channelReviewCurrent ? channel?.submissionMode : "open_only",
+    captcha: channel?.captcha,
+    loginRequired: channel?.loginRequired,
+    adapterId: channelReviewCurrent ? channel?.adapterId : undefined,
+    formContentHash: channelReviewCurrent ? channel?.contentHash : undefined,
   };
 }
 
@@ -422,7 +525,8 @@ function journeyReason(label: string, journey: ItineraryJourney): string {
 /** Resolve a deduplicated, ordered contact plan for this item and itinerary. */
 export function resolveParties(
   itinerary: ItineraryEntry[],
-  category: ItemCategory | null = null
+  category: ItemCategory | null = null,
+  includeCentralOffice = false
 ): ResolvedParty[] {
   const order: string[] = [];
   const map = new Map<string, ResolvedParty>();
@@ -433,6 +537,15 @@ export function resolveParties(
       resolved = { party, reasons: [], lines: [], venues: [], entries: [] };
       map.set(party.id, resolved);
       order.push(party.id);
+    } else if (party.alternativeChannels?.length) {
+      const alternatives = [
+        ...(resolved.party.alternativeChannels ?? []),
+        ...party.alternativeChannels,
+      ];
+      resolved.party.alternativeChannels = alternatives.filter(
+        (candidate, index) =>
+          alternatives.findIndex((entry) => entry.id === candidate.id) === index
+      );
     }
     return resolved;
   };
@@ -443,11 +556,8 @@ export function resolveParties(
     documents.reasons.push("Your item includes a passport, ID card or other identity document");
   }
 
-  let usedTransit = false;
-  let usedVenue = false;
   for (const entry of itinerary) {
     if (entry.kind === "line" && entry.mode) {
-      usedTransit = true;
       const partyTargets = new Map<string, Party>();
       for (const operator of entry.operators ?? []) {
         const partyId = partyIdForOperator(operator);
@@ -486,7 +596,6 @@ export function resolveParties(
         }
       }
     } else if (entry.kind === "venue") {
-      usedVenue = true;
       const directParty = venueParty(entry);
       const resolved = directParty ? ensureParty(directParty) : ensure("venues");
       resolved.entries.push(entry);
@@ -495,10 +604,10 @@ export function resolveParties(
     }
   }
 
-  if ((usedTransit || usedVenue) && !map.has("zentral")) {
+  if (includeCentralOffice && !map.has("zentral")) {
     const central = ensure("zentral");
     central.reasons.push(
-      "A separate city-wide report is useful when the exact loss location is uncertain"
+      "You indicated the item may have been lost on a street, in a taxi or outside the listed operators and venues"
     );
   }
 

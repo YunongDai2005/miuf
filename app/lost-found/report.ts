@@ -97,6 +97,22 @@ export function buildReportDrafts(lostCase: LostCase, resolved: ResolvedParty): 
   const name = contact.name.trim();
   const email = contact.email.trim();
   const phone = contact.phone?.trim();
+  const itemDetailsDe = [
+    item.brand?.trim() ? `Marke: ${item.brand.trim()}` : null,
+    item.color?.trim() ? `Farbe: ${item.color.trim()}` : null,
+    item.identifyingFeatures?.trim()
+      ? `Besondere Merkmale: ${item.identifyingFeatures.trim()}`
+      : null,
+    item.estimatedValue?.trim() ? `Ungefährer Wert: ${item.estimatedValue.trim()}` : null,
+  ].filter((value): value is string => Boolean(value));
+  const itemDetailsEn = [
+    item.brand?.trim() ? `Brand: ${item.brand.trim()}` : null,
+    item.color?.trim() ? `Colour: ${item.color.trim()}` : null,
+    item.identifyingFeatures?.trim()
+      ? `Identifying features: ${item.identifyingFeatures.trim()}`
+      : null,
+    item.estimatedValue?.trim() ? `Approximate value: ${item.estimatedValue.trim()}` : null,
+  ].filter((value): value is string => Boolean(value));
 
   const de = [
     "Sehr geehrte Damen und Herren,",
@@ -104,6 +120,7 @@ export function buildReportDrafts(lostCase: LostCase, resolved: ResolvedParty): 
     "ich möchte einen verlorenen Gegenstand melden und bitte um Ihre Hilfe.",
     "",
     `Gegenstand: ${nounDe}`,
+    ...itemDetailsDe,
     `Verlustdatum: ${item.lostDate}${range ? ` (${range} Uhr)` : ""}`,
     `Vermuteter Ort: ${ctx.de}`,
     "",
@@ -113,6 +130,9 @@ export function buildReportDrafts(lostCase: LostCase, resolved: ResolvedParty): 
     name ? `Name: ${name}` : null,
     email ? `E-Mail: ${email}` : null,
     phone ? `Telefon: ${phone}` : null,
+    contact.postalAddress?.trim()
+      ? `Anschrift: ${contact.postalAddress.trim()}`
+      : null,
     "",
     "Vielen Dank für Ihre Unterstützung.",
     "Mit freundlichen Grüßen,",
@@ -127,6 +147,7 @@ export function buildReportDrafts(lostCase: LostCase, resolved: ResolvedParty): 
     "I would like to report a lost item and kindly ask for your help.",
     "",
     `Item: ${nounEn}`,
+    ...itemDetailsEn,
     `Date lost: ${item.lostDate}${range ? ` (${range})` : ""}`,
     `Likely location: ${ctx.en}`,
     "",
@@ -136,6 +157,9 @@ export function buildReportDrafts(lostCase: LostCase, resolved: ResolvedParty): 
     name ? `Name: ${name}` : null,
     email ? `Email: ${email}` : null,
     phone ? `Phone: ${phone}` : null,
+    contact.postalAddress?.trim()
+      ? `Postal address: ${contact.postalAddress.trim()}`
+      : null,
     "",
     "Thank you very much for your help.",
     "Kind regards,",

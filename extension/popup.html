@@ -1,0 +1,24 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width,initial-scale=1">
+    <title>Lost & Found Form Helper</title>
+    <style>
+      body{font:13px/1.45 system-ui;width:340px;margin:0;padding:16px;color:#292524}
+      h1{font-size:15px;margin:0 0 6px}p{color:#78716c;margin:0 0 10px}
+      textarea{box-sizing:border-box;width:100%;height:130px;resize:vertical;border:1px solid #d6d3d1;border-radius:10px;padding:9px;font:11px/1.4 ui-monospace,monospace}
+      button{width:100%;margin-top:10px;border:0;border-radius:10px;padding:9px;background:#ea580c;color:white;font-weight:700;cursor:pointer}
+      #status{margin-top:9px;font-size:12px;color:#57534e}
+    </style>
+  </head>
+  <body>
+    <h1>Fill the official form</h1>
+    <p>Paste the package copied by Berlin Lost &amp; Found. Review every field before submitting.</p>
+    <textarea id="package" aria-label="Autofill package" placeholder="{ … }"></textarea>
+    <button id="fill" type="button">Fill this page</button>
+    <button id="submit" type="button" hidden>Review page, then confirm submission</button>
+    <div id="status" role="status"></div>
+    <script src="popup.js"></script>
+  </body>
+</html>

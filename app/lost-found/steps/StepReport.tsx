@@ -7,8 +7,19 @@ import {
   calendarReminderHref,
   mailtoLink,
 } from "../report";
-import type { Contact, LostCase, ReportState } from "../types";
+import type {
+  Contact,
+  LostCase,
+  ReportState,
+  SubmissionRecord,
+} from "../types";
 import { hasContact } from "../storage";
+import { buildFormGuide } from "../formGuide";
+import {
+  nextSubmissionRecord,
+  submissionFingerprint,
+} from "../submission";
+import { buildAutofillPackage } from "../autofill";
 import { Field, TextInput, VerifiedBadge, VerifyBadge, cx } from "../ui";
 
 const STATE_META: Record<ReportState, { label: string; className: string }> = {
@@ -62,19 +73,36 @@ function PartyCard({
   lostCase,
   resolved,
   state,
+  contactReady,
   onSetState,
+  onSubmission,
 }: {
   lostCase: LostCase;
   resolved: ResolvedParty;
   state: ReportState;
+  contactReady: boolean;
   onSetState: (s: ReportState) => void;
+  onSubmission: (record: SubmissionRecord) => void;
 }) {
   const { party } = resolved;
   const drafts = buildReportDrafts(lostCase, resolved);
   const [copied, setCopied] = useState<"de" | "en" | null>(null);
+  const [copiedField, setCopiedField] = useState<string | null>(null);
+  const [copiedPackage, setCopiedPackage] = useState(false);
   const reminder = calendarReminderHref(lostCase, resolved);
+  const formGuide = buildFormGuide(lostCase, resolved);
+  const fingerprint = submissionFingerprint(lostCase, resolved);
+  const previousSubmission = lostCase.submissions[party.id]?.find(
+    (submission) => submission.fingerprint === fingerprint
+  );
+  const sameReport = Boolean(previousSubmission);
+  const [receipt, setReceipt] = useState(
+    sameReport ? previousSubmission?.receipt ?? "" : ""
+  );
+  const autofillPackage = buildAutofillPackage(lostCase, resolved);
 
   const copy = async (lang: "de" | "en") => {
+    if (!contactReady) return;
     try {
       await navigator.clipboard.writeText(lang === "de" ? drafts.de : drafts.en);
       setCopied(lang);
@@ -85,6 +113,38 @@ function PartyCard({
   };
 
   const formHref = party.formUrl || party.website || undefined;
+  const copyField = async (key: string, value: string) => {
+    try {
+      await navigator.clipboard.writeText(value);
+      setCopiedField(key);
+      setTimeout(() => setCopiedField(null), 1600);
+    } catch {
+      /* The value remains visible and selectable if clipboard access is blocked. */
+    }
+  };
+  const recordSubmission = (
+    status: SubmissionRecord["status"],
+    nextReceipt?: string
+  ) => {
+    onSubmission(
+      nextSubmissionRecord({
+        partyId: party.id,
+        fingerprint,
+        status,
+        receipt: nextReceipt,
+      })
+    );
+  };
+  const copyAutofillPackage = async () => {
+    if (!autofillPackage) return;
+    try {
+      await navigator.clipboard.writeText(JSON.stringify(autofillPackage));
+      setCopiedPackage(true);
+      setTimeout(() => setCopiedPackage(false), 1600);
+    } catch {
+      /* Field-by-field values remain available when clipboard access is blocked. */
+    }
+  };
 
   return (
     <li className="report-card overflow-hidden rounded-2xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
@@ -173,23 +233,44 @@ function PartyCard({
       <div className="space-y-3 p-4">
         {/* Actions */}
         <div className="no-print flex flex-wrap gap-2">
-          {party.email && (
+          {party.email && contactReady && (
             <a
               href={mailtoLink(party.email, drafts.subject, drafts.de)}
+              onClick={() => recordSubmission("opened")}
               className="inline-flex items-center gap-1.5 rounded-xl bg-orange-600 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-orange-500"
             >
               ✉️ Send by email
             </a>
           )}
+          {party.email && !contactReady && (
+            <button
+              type="button"
+              disabled
+              title="Add an email address or phone number above first"
+              className="inline-flex items-center gap-1.5 rounded-xl bg-orange-600 px-3.5 py-2 text-xs font-semibold text-white opacity-40"
+            >
+              ✉️ Add your contact before emailing
+            </button>
+          )}
           {formHref && (
             <a
               href={formHref}
+              onClick={() => recordSubmission("opened")}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
             >
               ↗ {party.formLabel ?? "Open official form"}
             </a>
+          )}
+          {autofillPackage && (
+            <button
+              type="button"
+              onClick={copyAutofillPackage}
+              className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 px-3.5 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-50 dark:border-sky-500/30 dark:text-sky-300 dark:hover:bg-sky-500/10"
+            >
+              {copiedPackage ? "✓ Package copied" : "Copy safe autofill package"}
+            </button>
           )}
           {party.relatedLinks?.map((link) => (
             <a
@@ -206,15 +287,17 @@ function PartyCard({
             <>
               <button
                 type="button"
+                disabled={!contactReady}
                 onClick={() => copy("de")}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
               >
                 {copied === "de" ? "✓ Copied" : "Copy German"}
               </button>
               <button
                 type="button"
+                disabled={!contactReady}
                 onClick={() => copy("en")}
-                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 disabled:cursor-not-allowed disabled:opacity-40 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
               >
                 {copied === "en" ? "✓ Copied" : "Copy English"}
               </button>
@@ -230,6 +313,34 @@ function PartyCard({
             </a>
           )}
         </div>
+
+        {Boolean(party.alternativeChannels?.length) && (
+          <details className="no-print rounded-xl border border-sky-200 bg-sky-50/60 dark:border-sky-500/30 dark:bg-sky-500/5">
+            <summary className="cursor-pointer list-none px-3.5 py-2.5 text-xs font-semibold text-sky-800 dark:text-sky-200">
+              Verified backup channels ({party.alternativeChannels?.length})
+            </summary>
+            <div className="space-y-2 px-3.5 pb-3.5">
+              <p className="text-[11px] leading-relaxed text-sky-800 dark:text-sky-200">
+                Use a backup only if the primary route above is unavailable or
+                tells you to follow up elsewhere. Sending the same report through
+                every channel can create duplicate cases.
+              </p>
+              <div className="flex flex-wrap gap-2">
+                {party.alternativeChannels?.map((channel) => (
+                  <a
+                    key={channel.id}
+                    href={channel.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="rounded-lg border border-sky-200 bg-white px-2.5 py-1.5 text-[11px] font-semibold text-sky-700 hover:bg-sky-50 dark:border-sky-500/30 dark:bg-stone-900 dark:text-sky-300"
+                  >
+                    ↗ {channel.label}
+                  </a>
+                ))}
+              </div>
+            </div>
+          </details>
+        )}
 
         {/* Draft preview */}
         {!party.guidanceOnly && (
@@ -265,6 +376,109 @@ function PartyCard({
           </details>
         )}
 
+        {formGuide.length > 0 && (
+          <details className="no-print group rounded-xl border border-sky-200 bg-sky-50/60 dark:border-sky-500/30 dark:bg-sky-500/5">
+            <summary className="cursor-pointer list-none px-3.5 py-2.5 text-xs font-semibold text-sky-800 dark:text-sky-200">
+              <span className="group-open:hidden">
+                View the verified form filling guide ({formGuide.length} fields) ▾
+              </span>
+              <span className="hidden group-open:inline">Hide form filling guide ▴</span>
+            </summary>
+            <div className="space-y-2 px-3.5 pb-3.5">
+              {(party.captcha || party.loginRequired) && (
+                <p className="rounded-lg bg-amber-50 px-2.5 py-2 text-[11px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+                  {party.loginRequired
+                    ? "This form requires sign-in. "
+                    : ""}
+                  {party.captcha ? "Complete the CAPTCHA yourself. " : ""}
+                  Autofill never bypasses these checks. Automatic submission is only offered by a
+                  separately reviewed site adapter and asks for confirmation again.
+                </p>
+              )}
+              {formGuide.map((entry, index) => {
+                const key =
+                  entry.field.rawName ?? entry.field.rawId ?? `${entry.field.label}-${index}`;
+                return (
+                  <div
+                    key={key}
+                    className="rounded-lg border border-sky-100 bg-white px-3 py-2 dark:border-sky-500/20 dark:bg-stone-900"
+                  >
+                    <div className="flex items-start gap-2">
+                      <div className="min-w-0 flex-1">
+                        <p className="text-[11px] font-semibold text-stone-700 dark:text-stone-200">
+                          {entry.field.label}
+                          {entry.field.required && (
+                            <span className="ml-1 text-rose-500">required</span>
+                          )}
+                        </p>
+                        {entry.suggestedValue ? (
+                          <p className="mt-1 break-words text-xs text-stone-600 dark:text-stone-300">
+                            {entry.suggestedValue}
+                          </p>
+                        ) : (
+                          <p className="mt-1 text-[11px] text-amber-700 dark:text-amber-300">
+                            {entry.note ??
+                              (entry.needsUserInput
+                                ? "Complete this field on the official website."
+                                : "No value suggested.")}
+                          </p>
+                        )}
+                      </div>
+                      {entry.suggestedValue && (
+                        <button
+                          type="button"
+                          onClick={() => copyField(key, entry.suggestedValue as string)}
+                          className="rounded-lg border border-sky-200 px-2 py-1 text-[10px] font-semibold text-sky-700 hover:bg-sky-50 dark:border-sky-500/30 dark:text-sky-300 dark:hover:bg-sky-500/10"
+                        >
+                          {copiedField === key ? "Copied" : "Copy"}
+                        </button>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </details>
+        )}
+
+        {sameReport && previousSubmission && (
+          <div className="no-print rounded-xl border border-amber-200 bg-amber-50 px-3 py-2 text-[11px] text-amber-800 dark:border-amber-500/30 dark:bg-amber-500/10 dark:text-amber-200">
+            This exact report was already{" "}
+            {previousSubmission.status === "opened"
+              ? "opened"
+              : previousSubmission.status === "receipt_confirmed"
+                ? "saved with a receipt"
+                : "marked as sent"}{" "}
+            on {new Date(previousSubmission.updatedAt).toLocaleString()}. Check its status before
+            sending it again.
+          </div>
+        )}
+
+        {!party.guidanceOnly && (
+          <details className="no-print rounded-xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+            <summary className="cursor-pointer list-none px-3 py-2 text-[11px] font-semibold text-stone-600 dark:text-stone-300">
+              Save a case number or receipt
+            </summary>
+            <div className="flex flex-wrap gap-2 px-3 pb-3">
+              <input
+                value={receipt}
+                onChange={(event) => setReceipt(event.target.value)}
+                placeholder="Case number or receipt URL"
+                maxLength={500}
+                className="min-w-52 flex-1 rounded-lg border border-stone-200 bg-white px-2.5 py-1.5 text-xs text-stone-700 outline-none focus:border-orange-400 dark:border-stone-700 dark:bg-stone-950 dark:text-stone-200"
+              />
+              <button
+                type="button"
+                disabled={!receipt.trim()}
+                onClick={() => recordSubmission("receipt_confirmed", receipt)}
+                className="rounded-lg bg-stone-800 px-3 py-1.5 text-xs font-semibold text-white disabled:opacity-40 dark:bg-stone-100 dark:text-stone-900"
+              >
+                Save receipt
+              </button>
+            </div>
+          </details>
+        )}
+
         {/* Status tracker */}
         <div className="no-print flex items-center gap-2 pt-1">
           <span className="text-xs text-stone-400">Status</span>
@@ -272,7 +486,10 @@ function PartyCard({
             <button
               key={s}
               type="button"
-              onClick={() => onSetState(s)}
+              onClick={() => {
+                onSetState(s);
+                if (s === "sent") recordSubmission("user_confirmed");
+              }}
               className={cx(
                 "rounded-full px-2.5 py-1 text-[11px] font-semibold transition",
                 state === s
@@ -329,7 +546,7 @@ function ContactPrompt({
       </div>
       <details className="group mt-2">
         <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-xs font-medium text-stone-400 hover:text-stone-600 dark:hover:text-stone-300">
-          <span className="transition group-open:rotate-90">▸</span> Add your name (optional, some forms need it)
+          <span className="transition group-open:rotate-90">▸</span> Add name or postal address (optional)
         </summary>
         <div className="mt-2">
           <TextInput
@@ -337,6 +554,13 @@ function ContactPrompt({
             onChange={(e) => onContact({ name: e.target.value })}
             placeholder="Your name"
           />
+          <div className="mt-2">
+            <TextInput
+              value={contact.postalAddress ?? ""}
+              onChange={(e) => onContact({ postalAddress: e.target.value })}
+              placeholder="Postal address"
+            />
+          </div>
         </div>
       </details>
       {!ready && (
@@ -353,11 +577,13 @@ export default function StepReport({
   resolved,
   onSetState,
   onContact,
+  onSubmission,
 }: {
   lostCase: LostCase;
   resolved: ResolvedParty[];
   onSetState: (partyId: string, state: ReportState) => void;
   onContact: (patch: Partial<Contact>) => void;
+  onSubmission: (record: SubmissionRecord) => void;
 }) {
   if (resolved.length === 0) {
     return (
@@ -366,6 +592,7 @@ export default function StepReport({
       </div>
     );
   }
+  const contactReady = hasContact(lostCase.contact);
 
   return (
     <div className="space-y-4">
@@ -399,11 +626,13 @@ export default function StepReport({
       <ol className="case-sheet space-y-3">
         {resolved.map((r) => (
           <PartyCard
-            key={r.party.id}
+            key={`${r.party.id}:${submissionFingerprint(lostCase, r)}`}
             lostCase={lostCase}
             resolved={r}
             state={lostCase.reported[r.party.id] ?? "todo"}
+            contactReady={contactReady}
             onSetState={(s) => onSetState(r.party.id, s)}
+            onSubmission={onSubmission}
           />
         ))}
       </ol>

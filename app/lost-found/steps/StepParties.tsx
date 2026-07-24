@@ -60,6 +60,17 @@ export default function StepParties({ resolved }: { resolved: ResolvedParty[] })
                     {r.party.nextStep}
                   </p>
                 )}
+                {Boolean(r.party.alternativeChannels?.length) && (
+                  <p className="mt-2 rounded-xl border border-sky-100 bg-sky-50/60 px-3 py-2 text-xs leading-relaxed text-sky-800 dark:border-sky-500/20 dark:bg-sky-500/5 dark:text-sky-200">
+                    <span className="font-semibold">
+                      {r.party.alternativeChannels?.length} verified backup
+                      {r.party.alternativeChannels?.length === 1 ? "" : "s"}:
+                    </span>{" "}
+                    use one only if the primary channel is unavailable or asks you
+                    to follow up. Do not send identical reports through every
+                    channel.
+                  </p>
+                )}
               </div>
             </div>
           </li>
