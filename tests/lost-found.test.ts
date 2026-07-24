@@ -14,11 +14,32 @@ import {
 import { loadCase } from "../app/lost-found/storage";
 import { addCalendarDays, berlinDateKey } from "../app/lost-found/time";
 import { emptyCase, type ItineraryEntry } from "../app/lost-found/types";
+import {
+  blockerForStep,
+  hasSearchDestination,
+  isItemReady,
+} from "../app/lost-found/progress";
 
 test("uses the Berlin calendar date around a summer UTC day boundary", () => {
   assert.equal(berlinDateKey(new Date("2026-07-22T22:30:00Z")), "2026-07-23");
   assert.equal(addCalendarDays("2026-03-29", 1), "2026-03-30");
   assert.equal(addCalendarDays("2026-01-01", -1), "2025-12-31");
+});
+
+test("keeps users out of empty contact and report steps", () => {
+  const lostCase = emptyCase();
+  assert.equal(isItemReady(lostCase), false);
+  assert.equal(blockerForStep(1, lostCase)?.step, 0);
+
+  lostCase.item.description = "Black backpack";
+  assert.equal(isItemReady(lostCase), true);
+  assert.equal(blockerForStep(1, lostCase), null);
+  assert.equal(hasSearchDestination(lostCase), false);
+  assert.equal(blockerForStep(2, lostCase)?.step, 1);
+
+  lostCase.item.includeCentralOffice = true;
+  assert.equal(hasSearchDestination(lostCase), true);
+  assert.equal(blockerForStep(3, lostCase), null);
 });
 
 test("routes documents to police and embassy guidance before lost-property offices", () => {

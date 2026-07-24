@@ -92,20 +92,20 @@ export function TextArea(props: TextareaHTMLAttributes<HTMLTextAreaElement>) {
 export function VerifyBadge() {
   return (
     <span className="inline-flex items-center rounded-full bg-amber-100 px-2 py-0.5 text-[10px] font-semibold text-amber-700 dark:bg-amber-500/15 dark:text-amber-300">
-      unverified
+      check before sharing details
     </span>
   );
 }
 
 export function VerifiedBadge({ date }: { date?: string }) {
   const label = date
-    ? `verified · ${new Intl.DateTimeFormat("en-GB", {
+    ? `source checked · ${new Intl.DateTimeFormat("en-GB", {
         day: "numeric",
         month: "short",
         year: "numeric",
         timeZone: "UTC",
       }).format(new Date(`${date}T00:00:00Z`))}`
-    : "verified";
+    : "source checked";
   return (
     <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
       {label}

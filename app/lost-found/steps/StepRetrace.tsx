@@ -364,70 +364,10 @@ export default function StepRetrace({
 
   return (
     <div className="space-y-5">
-      {/* Read photo metadata locally; remote route inference is a separate opt-in. */}
-      <div className="rounded-2xl border border-orange-200 bg-orange-50/60 p-4 dark:border-orange-500/30 dark:bg-orange-500/5">
-        <p className="text-sm font-semibold text-stone-800 dark:text-stone-100">
-          📷 Rebuild your route from today&rsquo;s photos
-        </p>
-        <p className="mt-0.5 text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-          Pick the photos you took today. The original files stay on this device and are never
-          uploaded. GPS coordinates and capture times are read locally to find nearby sights.
-          Nothing is sent to VBB at this stage.
-        </p>
-        <div className="mt-3 flex flex-wrap items-center gap-3">
-          <label
-            className={cx(
-              "inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition",
-              photoBusy || !index ? "bg-stone-300 dark:bg-stone-700" : "bg-orange-600 hover:bg-orange-500"
-            )}
-          >
-            {photoBusy ? "Reading on your device…" : "Choose photos"}
-            <input
-              type="file"
-              accept="image/*"
-              multiple
-              disabled={photoBusy || !index}
-              onChange={(e) => handlePhotos(e.currentTarget)}
-              className="hidden"
-            />
-          </label>
-          {photoMsg && (
-            <span className="text-xs text-stone-500 dark:text-stone-400">{photoMsg}</span>
-          )}
-        </div>
-      </div>
-
-      <JourneyInference
-        anchors={anchors}
-        busy={photoBusy || inferenceBusy}
-        busyMessage={
-          photoBusy
-            ? "Reading photo locations and capture times on this device."
-            : "Sending route coordinates and a departure time to VBB for comparison."
-        }
-        candidates={candidates}
-        selectedIndex={selectedCandidate}
-        offlinePlan={offlinePlan}
-        addedRefs={addedRefs}
-        notice={routeNotice}
-        used={inferredUsed}
-        onSelect={setSelectedCandidate}
-        onUse={useInferredItinerary}
-        onAddLine={addLineById}
-        canCompare={
-          !photoBusy &&
-          !inferenceBusy &&
-          candidates.length === 0 &&
-          !offlinePlan &&
-          anchors.length >= 2 &&
-          polylineLength(anchors.map((anchor) => anchor.point)) >= 150
-        }
-        onCompare={compareWithVbb}
-      />
-
       <p className="text-sm text-stone-500 dark:text-stone-400">
-        Or search and tick any lines or places the inference missed. We work out{" "}
-        <span className="font-medium text-stone-700 dark:text-stone-200">who to contact for each</span>.
+        Start with the places and lines you remember. Add every realistic
+        possibility; we combine entries that lead to the same lost-property
+        office.
       </p>
 
       {/* Selected itinerary */}
@@ -557,6 +497,78 @@ export default function StepRetrace({
           )}
         </div>
       )}
+
+      <details className="group rounded-2xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
+        <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-semibold text-stone-700 dark:text-stone-200">
+          <span className="group-open:hidden">
+            📷 Use photos to remember your route (optional) ▾
+          </span>
+          <span className="hidden group-open:inline">
+            Hide photo route helper ▴
+          </span>
+        </summary>
+        <div className="space-y-4 border-t border-stone-100 p-4 dark:border-stone-800">
+          <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
+            Choose photos from that day. We read their time and location on
+            this device to suggest nearby sights. The images are never
+            uploaded. A timetable comparison happens only if you choose it
+            separately.
+          </p>
+          <div className="flex flex-wrap items-center gap-3">
+            <label
+              className={cx(
+                "inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition",
+                photoBusy || !index
+                  ? "bg-stone-300 dark:bg-stone-700"
+                  : "bg-orange-600 hover:bg-orange-500"
+              )}
+            >
+              {photoBusy ? "Reading on your device…" : "Choose photos"}
+              <input
+                type="file"
+                accept="image/*"
+                multiple
+                disabled={photoBusy || !index}
+                onChange={(e) => handlePhotos(e.currentTarget)}
+                className="hidden"
+              />
+            </label>
+            {photoMsg && (
+              <span className="text-xs text-stone-500 dark:text-stone-400">
+                {photoMsg}
+              </span>
+            )}
+          </div>
+
+          <JourneyInference
+            anchors={anchors}
+            busy={photoBusy || inferenceBusy}
+            busyMessage={
+              photoBusy
+                ? "Reading photo locations and capture times on this device."
+                : "Comparing the possible route with Berlin’s timetable."
+            }
+            candidates={candidates}
+            selectedIndex={selectedCandidate}
+            offlinePlan={offlinePlan}
+            addedRefs={addedRefs}
+            notice={routeNotice}
+            used={inferredUsed}
+            onSelect={setSelectedCandidate}
+            onUse={useInferredItinerary}
+            onAddLine={addLineById}
+            canCompare={
+              !photoBusy &&
+              !inferenceBusy &&
+              candidates.length === 0 &&
+              !offlinePlan &&
+              anchors.length >= 2 &&
+              polylineLength(anchors.map((anchor) => anchor.point)) >= 150
+            }
+            onCompare={compareWithVbb}
+          />
+        </div>
+      </details>
     </div>
   );
 }

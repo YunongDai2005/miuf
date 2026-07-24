@@ -193,69 +193,81 @@ function PartyCard({
             {party.guidanceOnly && state === "sent" ? "Done" : STATE_META[state].label}
           </span>
         </div>
-        <p className="mt-1 text-xs text-stone-400">{party.operatorName} · {party.scope}</p>
+        <p className="mt-1 text-xs text-stone-400">
+          {party.operatorName} · {party.scope}
+        </p>
 
-        <div className="mt-3 space-y-1.5">
-          <ContactRow label="Website" source={party.fieldSources.website}>
-            <a
-              href={party.website}
-              target="_blank"
-              rel="noopener noreferrer"
-              className="break-all text-orange-600 underline-offset-2 hover:underline dark:text-orange-400"
-            >
-              {party.website}
-            </a>
-          </ContactRow>
-          {party.formUrl && (
-            <ContactRow label="Form" source={party.fieldSources.formUrl}>
+        {party.nextStep && (
+          <p className="mt-3 rounded-xl bg-orange-50 px-3 py-2.5 text-xs leading-relaxed text-orange-900 dark:bg-orange-500/10 dark:text-orange-100">
+            <span className="font-semibold">What to do: </span>
+            {party.nextStep}
+          </p>
+        )}
+        {party.note && (
+          <p className="mt-2 rounded-xl bg-amber-50 px-3 py-2 text-xs leading-relaxed text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
+            {party.note}
+          </p>
+        )}
+
+        <details className="group mt-3 rounded-xl border border-stone-200 dark:border-stone-700">
+          <summary className="cursor-pointer list-none px-3 py-2 text-xs font-semibold text-stone-600 dark:text-stone-300">
+            <span className="group-open:hidden">
+              Contact details and official sources ▾
+            </span>
+            <span className="hidden group-open:inline">
+              Hide contact details ▴
+            </span>
+          </summary>
+          <div className="space-y-1.5 border-t border-stone-100 px-3 py-3 dark:border-stone-800">
+            <ContactRow label="Website" source={party.fieldSources.website}>
               <a
-                href={party.formUrl}
+                href={party.website}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="break-all text-orange-600 underline-offset-2 hover:underline dark:text-orange-400"
               >
-                {party.formUrl}
+                {party.website}
               </a>
             </ContactRow>
-          )}
-          {party.email && (
-            <ContactRow label="Email" source={party.fieldSources.email}>
-              {party.email}
-            </ContactRow>
-          )}
-          {party.phone && (
-            <ContactRow label="Phone" source={party.fieldSources.phone}>
-              {party.phone}
-            </ContactRow>
-          )}
-          {party.address && (
-            <ContactRow label="Address" source={party.fieldSources.address}>
-              {party.address}
-            </ContactRow>
-          )}
-          {party.hours && (
-            <ContactRow label="Hours" source={party.fieldSources.hours}>
-              {party.hours}
-            </ContactRow>
-          )}
-          {party.retention && (
-            <ContactRow label="Timing" source={party.fieldSources.retention}>
-              {party.retention}
-            </ContactRow>
-          )}
-          {party.nextStep && (
-            <ContactRow label="Next" source={party.fieldSources.nextStep}>
-              <span className="font-medium text-stone-700 dark:text-stone-200">
-                {party.nextStep}
-              </span>
-            </ContactRow>
-          )}
-          {party.note && (
-            <ContactRow label="Caution" source={party.fieldSources.note}>
-              <span className="text-amber-700 dark:text-amber-300">{party.note}</span>
-            </ContactRow>
-          )}
-        </div>
+            {party.formUrl && (
+              <ContactRow label="Form" source={party.fieldSources.formUrl}>
+                <a
+                  href={party.formUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="break-all text-orange-600 underline-offset-2 hover:underline dark:text-orange-400"
+                >
+                  {party.formUrl}
+                </a>
+              </ContactRow>
+            )}
+            {party.email && (
+              <ContactRow label="Email" source={party.fieldSources.email}>
+                {party.email}
+              </ContactRow>
+            )}
+            {party.phone && (
+              <ContactRow label="Phone" source={party.fieldSources.phone}>
+                {party.phone}
+              </ContactRow>
+            )}
+            {party.address && (
+              <ContactRow label="Address" source={party.fieldSources.address}>
+                {party.address}
+              </ContactRow>
+            )}
+            {party.hours && (
+              <ContactRow label="Hours" source={party.fieldSources.hours}>
+                {party.hours}
+              </ContactRow>
+            )}
+            {party.retention && (
+              <ContactRow label="Timing" source={party.fieldSources.retention}>
+                {party.retention}
+              </ContactRow>
+            )}
+          </div>
+        </details>
       </div>
 
       <div className="space-y-3 p-4">
@@ -286,19 +298,15 @@ function PartyCard({
               onClick={() => recordSubmission("opened")}
               target="_blank"
               rel="noopener noreferrer"
-              className="inline-flex items-center gap-1.5 rounded-xl border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+              className={cx(
+                "inline-flex items-center gap-1.5 rounded-xl px-3.5 py-2 text-xs font-semibold transition",
+                party.email && contactReady
+                  ? "border border-stone-200 text-stone-700 hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+                  : "bg-orange-600 text-white hover:bg-orange-500"
+              )}
             >
               ↗ {party.formLabel ?? "Open official form"}
             </a>
-          )}
-          {autofillPackage && (
-            <button
-              type="button"
-              onClick={copyAutofillPackage}
-              className="inline-flex items-center gap-1.5 rounded-xl border border-sky-200 px-3.5 py-2 text-xs font-semibold text-sky-700 transition hover:bg-sky-50 dark:border-sky-500/30 dark:text-sky-300 dark:hover:bg-sky-500/10"
-            >
-              {copiedPackage ? "✓ Package copied" : "Copy safe autofill package"}
-            </button>
           )}
           {party.relatedLinks?.map((link) => (
             <a
@@ -408,19 +416,39 @@ function PartyCard({
           <details className="no-print group rounded-xl border border-sky-200 bg-sky-50/60 dark:border-sky-500/30 dark:bg-sky-500/5">
             <summary className="cursor-pointer list-none px-3.5 py-2.5 text-xs font-semibold text-sky-800 dark:text-sky-200">
               <span className="group-open:hidden">
-                View the verified form filling guide ({formGuide.length} fields) ▾
+                Form-filling help ({formGuide.length} fields) ▾
               </span>
-              <span className="hidden group-open:inline">Hide form filling guide ▴</span>
+              <span className="hidden group-open:inline">
+                Hide form-filling help ▴
+              </span>
             </summary>
             <div className="space-y-2 px-3.5 pb-3.5">
+              {autofillPackage && (
+                <div className="rounded-lg border border-sky-200 bg-white p-3 dark:border-sky-500/20 dark:bg-stone-900">
+                  <p className="text-[11px] leading-relaxed text-stone-500 dark:text-stone-400">
+                    Using the optional browser helper? Copy the reviewed field
+                    data after opening the official form.
+                  </p>
+                  <button
+                    type="button"
+                    onClick={copyAutofillPackage}
+                    className="mt-2 inline-flex items-center gap-1.5 rounded-lg border border-sky-200 px-3 py-1.5 text-xs font-semibold text-sky-700 transition hover:bg-sky-50 dark:border-sky-500/30 dark:text-sky-300 dark:hover:bg-sky-500/10"
+                  >
+                    {copiedPackage
+                      ? "✓ Helper data copied"
+                      : "Copy form helper data"}
+                  </button>
+                </div>
+              )}
               {(party.captcha || party.loginRequired) && (
                 <p className="rounded-lg bg-amber-50 px-2.5 py-2 text-[11px] text-amber-800 dark:bg-amber-500/10 dark:text-amber-200">
                   {party.loginRequired
                     ? "This form requires sign-in. "
                     : ""}
                   {party.captcha ? "Complete the CAPTCHA yourself. " : ""}
-                  Autofill never bypasses these checks. Automatic submission is only offered by a
-                  separately reviewed site adapter and asks for confirmation again.
+                  The helper never bypasses these checks. Submission is
+                  available only for a separately reviewed official form and
+                  always asks for confirmation again.
                 </p>
               )}
               {formGuide.map((entry, index) => {
@@ -510,8 +538,8 @@ function PartyCard({
               <div className="border-t border-stone-100 px-3 py-3 dark:border-stone-800">
                 <p className="text-[11px] leading-5 text-stone-500 dark:text-stone-400">
                   If the browser helper submitted this report, paste its copied
-                  result here. The report fingerprint must match before it is
-                  added to this case.
+                  result here. The exact report and destination must match
+                  before it is added to this case.
                 </p>
                 <textarea
                   value={helperResult}
@@ -591,8 +619,11 @@ function ContactPrompt({
       )}
     >
       <p className="mb-1 text-sm font-semibold text-stone-800 dark:text-stone-100">
-        Leave one contact detail{" "}
-        <span className="text-xs font-normal text-stone-400">the office replies to you here — just one is enough</span>
+        Where should the offices reply?
+      </p>
+      <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
+        Add an email address or phone number. One is enough, and it is used only
+        inside the reports you choose to send.
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <Field label="Email">
@@ -660,25 +691,27 @@ export default function StepReport({
     );
   }
   const contactReady = hasContact(lostCase.contact);
+  const completed = resolved.filter((entry) => {
+    const state = lostCase.reported[entry.party.id] ?? "todo";
+    return state === "sent" || state === "replied";
+  }).length;
 
   return (
     <div className="space-y-4">
-      <div className="no-print flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 dark:border-stone-700 dark:bg-stone-900">
-        <div>
-          <p className="text-sm font-semibold text-stone-800 dark:text-stone-100">
-            Keep a case sheet with you
+      <div className="rounded-2xl border border-orange-200 bg-orange-50/70 p-4 dark:border-orange-500/30 dark:bg-orange-500/10">
+        <div className="flex flex-wrap items-center justify-between gap-2">
+          <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+            Your action plan
           </p>
-          <p className="text-xs text-stone-400">
-            Print or save this contact plan as a PDF before visiting an office.
-          </p>
+          <span className="rounded-full bg-white px-2.5 py-1 text-[11px] font-semibold text-orange-700 dark:bg-stone-900 dark:text-orange-300">
+            {completed} of {resolved.length} completed
+          </span>
         </div>
-        <button
-          type="button"
-          onClick={() => window.print()}
-          className="rounded-xl border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
-        >
-          Print case sheet
-        </button>
+        <p className="mt-2 text-xs leading-relaxed text-stone-600 dark:text-stone-300">
+          Open each official destination, review the prepared German or English
+          text, submit it yourself, then mark it sent here. This app never sends
+          a report in the background.
+        </p>
       </div>
       {resolved.some((entry) => !entry.party.guidanceOnly) && (
         <div className="no-print">
@@ -686,9 +719,8 @@ export default function StepReport({
         </div>
       )}
       <p className="text-sm text-stone-500 dark:text-stone-400">
-        Each contact already has a German / English report drafted from your details. Ones with an intake
-        email can be sent in one tap; for the rest, copy the text into the official form and track your
-        progress below.
+        Start with the first card. Backup links and field-by-field form help
+        stay folded away until you need them.
       </p>
       <ol className="case-sheet space-y-3">
         {resolved.map((r) => (
@@ -703,6 +735,23 @@ export default function StepReport({
           />
         ))}
       </ol>
+      <div className="no-print flex flex-wrap items-center justify-between gap-3 rounded-xl border border-stone-200 bg-white px-4 py-3 dark:border-stone-700 dark:bg-stone-900">
+        <div>
+          <p className="text-sm font-semibold text-stone-800 dark:text-stone-100">
+            Need an offline copy?
+          </p>
+          <p className="text-xs text-stone-400">
+            Print or save this action plan as a PDF.
+          </p>
+        </div>
+        <button
+          type="button"
+          onClick={() => window.print()}
+          className="rounded-xl border border-stone-200 px-3.5 py-2 text-xs font-semibold text-stone-700 transition hover:bg-stone-50 dark:border-stone-700 dark:text-stone-200 dark:hover:bg-stone-800"
+        >
+          Print case sheet
+        </button>
+      </div>
     </div>
   );
 }

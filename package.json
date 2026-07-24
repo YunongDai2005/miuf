@@ -15,7 +15,6 @@
     "typecheck": "tsc --noEmit",
     "data:lines": "node scripts/build-line-index.mjs",
     "data:venue-sources": "node --import tsx scripts/enrich-venue-sources.mts",
-    "data:discover-venues": "node --import tsx scripts/discover-venue-pages.mts",
     "data:lost-found:inventory": "node --import tsx scripts/lost-found-crawler/cli.mts inventory",
     "data:lost-found:discover": "node --import tsx scripts/lost-found-crawler/cli.mts discover",
     "data:lost-found:extract": "node --import tsx scripts/lost-found-crawler/cli.mts extract",

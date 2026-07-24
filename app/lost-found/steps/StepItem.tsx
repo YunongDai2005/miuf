@@ -50,6 +50,48 @@ export default function StepItem({
         })}
       </div>
 
+      {item.category === "documents" && (
+        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm dark:border-rose-500/30 dark:bg-rose-500/10">
+          <p className="font-semibold text-rose-900 dark:text-rose-100">
+            Passport or ID missing?
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-rose-800 dark:text-rose-200">
+            Report a lost or stolen passport to the police immediately. If you
+            are visiting Berlin and need to travel, contact your country’s
+            embassy as well.
+          </p>
+          <a
+            href="https://www.berlin.de/en/tourism/travel-information/1735948-2862820-lost-and-found-and-lost-property-offices.en.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex text-xs font-semibold text-rose-800 underline underline-offset-2 dark:text-rose-200"
+          >
+            Open Berlin’s official guidance ↗
+          </a>
+        </div>
+      )}
+
+      {(item.category === "wallet" || item.category === "phone") && (
+        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
+          <p className="font-semibold text-amber-900 dark:text-amber-100">
+            Protect your accounts first
+          </p>
+          <p className="mt-1 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
+            {item.category === "wallet"
+              ? "Block payment cards now through your bank. If the wallet may have been stolen, report the theft to police."
+              : "Block the SIM and secure the device now. If the phone may have been stolen, keep the IMEI number for the police report."}
+          </p>
+          <a
+            href="https://www.berlin.de/en/tourism/travel-information/2832639-2862820-pickpockets.en.html"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex text-xs font-semibold text-amber-800 underline underline-offset-2 dark:text-amber-200"
+          >
+            Open Berlin’s official safety steps ↗
+          </a>
+        </div>
+      )}
+
       {/* The one field that matters */}
       <Field label="Describe what you lost, in one line" hint="colour, brand, what's inside…">
         <TextArea
@@ -85,12 +127,12 @@ export default function StepItem({
         />
         <span>
           <span className="block text-sm font-medium text-stone-700 dark:text-stone-200">
-            It may have been lost on a street, in a taxi, or somewhere not listed
+            I am not sure where I lost it
           </span>
           <span className="mt-0.5 block text-xs leading-relaxed text-stone-400">
-            Also include Berlin’s central lost-property office. Leave this off when
-            the possible locations are only the operators and venues in your route,
-            so you do not file an unnecessary duplicate.
+            Include Berlin’s city-wide lost-property search for streets, taxis
+            and uncertain locations. Leave this off if your possible locations
+            are only the operators and venues you add next.
           </span>
         </span>
       </label>

@@ -21,8 +21,9 @@ test("server-renders the lost-and-found product shell", async () => {
   assert.match(html, /<html lang="en">/);
   assert.match(html, /Berlin/);
   assert.match(html, /Lost &amp; Found/);
-  assert.match(html, /Retrace/);
-  assert.match(html, /Contacts/);
+  assert.match(html, /Rebuild/);
+  assert.match(html, /Send &amp; track/);
+  assert.match(html, /You stay in control/);
   assert.match(html, /What did you lose/);
   assert.match(html, /VBB/);
   assert.doesNotMatch(html, /Starter Project|Building your site|react-loading-skeleton/);

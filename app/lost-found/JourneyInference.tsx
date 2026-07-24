@@ -45,7 +45,9 @@ function PriorityRow({
           <span className={cx("rounded-full px-2 py-0.5 text-[9px] font-semibold", meta.className)}>
             {meta.label}
           </span>
-          <span className="text-[9px] tabular-nums text-stone-400">{line.routeMatch}% route match</span>
+          <span className="text-[9px] tabular-nums text-stone-400">
+            {line.routeMatch}% confidence
+          </span>
           <span className="text-[9px] text-stone-400">{modeLabel(line.mode)}</span>
         </span>
         <span className="mt-0.5 block truncate text-[10px] text-stone-400">
@@ -292,8 +294,10 @@ function RouteSketch({
         })}
       </svg>
       <div className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-semibold text-stone-500 shadow-sm backdrop-blur dark:bg-stone-950/85 dark:text-stone-300">
-        {offlinePlan ? "Search corridor · solid primary · faded alternatives" : "Schematic"} ·{" "}
-        {anchors.length} photo {anchors.length === 1 ? "anchor" : "anchors"}
+        {offlinePlan
+          ? "Possible route · solid primary · faded alternatives"
+          : "Schematic"}{" "}
+        · {anchors.length} photo {anchors.length === 1 ? "location" : "locations"}
       </div>
     </div>
   );
@@ -396,7 +400,7 @@ export default function JourneyInference({
             <div className="min-w-0">
               <div className="flex flex-wrap items-center gap-2">
                 <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-orange-700 dark:text-orange-400">
-                  Inferred itinerary
+                  Suggested route
                 </p>
                 <span
                   className={cx(
@@ -406,7 +410,11 @@ export default function JourneyInference({
                       : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
                   )}
                 >
-                  {journey ? "VBB schedule matched" : offlinePlan ? "Geometry estimate" : "Photo anchors only"}
+                  {journey
+                    ? "Matches the timetable"
+                    : offlinePlan
+                      ? "Best estimate"
+                      : "Photo locations only"}
                 </span>
               </div>
               <h3 className="mt-1 truncate text-base font-bold text-stone-900 dark:text-stone-50">
@@ -425,7 +433,7 @@ export default function JourneyInference({
             {confidence != null && (
               <div className="flex-none text-right">
                 <div className="text-base font-bold tabular-nums text-orange-600">{confidence}%</div>
-                <div className="text-[9px] text-stone-400">route match</div>
+                <div className="text-[9px] text-stone-400">route confidence</div>
               </div>
             )}
           </div>
@@ -474,7 +482,7 @@ export default function JourneyInference({
                   <div className="text-xs font-semibold tabular-nums">
                     {Math.round(journey.coverage * 100)}%
                   </div>
-                  <div className="text-[9px] text-stone-400">anchor coverage</div>
+                  <div className="text-[9px] text-stone-400">photo stops matched</div>
                 </div>
               </div>
 
@@ -516,7 +524,10 @@ export default function JourneyInference({
             <div className="mt-4 space-y-3">
               <div>
                 <h4 className="text-[11px] font-bold text-stone-700 dark:text-stone-200">
-                  Route estimate <span className="font-normal text-stone-400">· ranked by search priority</span>
+                  Possible route{" "}
+                  <span className="font-normal text-stone-400">
+                    · ranked by search priority
+                  </span>
                 </h4>
                 <ol className="mt-1 space-y-1" aria-label="Offline route estimate">
                   {offlinePlan.segments.map((line, index) => (

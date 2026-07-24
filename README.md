@@ -4,12 +4,13 @@ Berlin Lost & Found helps visitors work out which lost-property offices to conta
 
 ## Product flow
 
-1. **Item** — Choose a category, describe the item, and enter the Berlin date and approximate time.
-2. **Retrace** — Add transit lines and places manually, or read GPS and capture times from selected photos on the device.
-3. **Contacts** — See each responsible operator or venue contact and the reason it applies. Passports and identity documents are also routed to Berlin Police and the traveller’s embassy.
-4. **Report** — Open the verified official form, copy a report that includes boarding stop, alighting stop, departure time and direction, track progress, download a follow-up calendar reminder, or print a case sheet.
+1. **Describe** — Choose a category, describe the item, and enter the Berlin date and approximate time. Urgent document, wallet and phone actions appear immediately.
+2. **Rebuild** — Add transit lines and places manually. Photo-based route suggestions are available as an optional helper.
+3. **Check** — Review each responsible operator or venue and why it applies. Passports and identity documents are also routed to Berlin Police and the traveller’s embassy.
+4. **Send & track** — Review the prepared report, open the official destination, submit it yourself, save a receipt, and track follow-up.
 
-The current case and contact details are stored locally in the browser.
+The current case and contact details are stored locally in the browser. The app
+does not submit a report in the background.
 
 ## Photo privacy
 
@@ -72,7 +73,7 @@ The generator updates both the full geometry and the lightweight line index. If 
 npm run data:lines
 ```
 
-## Refreshing venue contacts
+## Refreshing venue sources
 
 Refresh offline venue contact candidates from OSM/Overpass:
 
@@ -80,17 +81,9 @@ Refresh offline venue contact candidates from OSM/Overpass:
 npm run data:venue-sources
 ```
 
-To scan those official homepages for likely lost-property or contact pages, without publishing unreviewed links:
-
-```bash
-npm run data:discover-venues
-```
-
-The discovery output is a review queue in `data/venue-responsibility-candidates.json`; a candidate is not treated as verified automatically.
-
 ## Reviewed lost-property channel pipeline
 
-The newer channel pipeline keeps discovered pages separate from public data:
+The channel pipeline keeps discovered pages separate from public data:
 
 ```bash
 npm run data:lost-found:inventory

@@ -16,9 +16,10 @@ export async function generateMetadata(): Promise<Metadata> {
   const forwardedProtocol = requestHeaders.get("x-forwarded-proto");
   const protocol = forwardedProtocol === "http" || host.startsWith("localhost") ? "http" : "https";
   const metadataBase = new URL(`${protocol}://${host}`);
-  const title = "Berlin Lost & Found｜Retrace your day, reach the right lost-property offices";
+  const title =
+    "Berlin Lost & Found｜Find the right office and prepare your report";
   const description =
-    "Lost something in Berlin? Retrace the public transport you took and the sights you visited, find every lost-property office responsible along the way, and generate ready-to-send German/English reports.";
+    "Lost something in Berlin? Rebuild your route, find the official services that may have your item, and prepare German/English reports to review and submit yourself.";
 
   return {
     metadataBase,
@@ -34,7 +35,7 @@ export async function generateMetadata(): Promise<Metadata> {
           url: "/og-lost-found.png",
           width: 1732,
           height: 908,
-          alt: "Berlin Lost & Found — retrace your day and reach the right office",
+          alt: "Berlin Lost & Found — find the right office and prepare your report",
         },
       ],
     },

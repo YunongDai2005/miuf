@@ -18,12 +18,33 @@ import StepItem from "./steps/StepItem";
 import StepParties from "./steps/StepParties";
 import StepReport from "./steps/StepReport";
 import StepRetrace from "./steps/StepRetrace";
+import { blockerForStep } from "./progress";
 
 const STEPS = [
-  { n: "01", tab: "Item", heading: "What did you lose?", sub: "Just describe it — everything else can wait." },
-  { n: "02", tab: "Retrace", heading: "Where did you go today?", sub: "Tick the lines you rode and the places you visited." },
-  { n: "03", tab: "Contacts", heading: "Who to contact", sub: "The operator or venue contact for each leg — and why." },
-  { n: "04", tab: "Report", heading: "Send the report", sub: "Leave one contact detail, then send or copy the German / English report." },
+  {
+    n: "01",
+    tab: "Describe",
+    heading: "What did you lose?",
+    sub: "A short, recognisable description is enough to start.",
+  },
+  {
+    n: "02",
+    tab: "Rebuild",
+    heading: "Where might you have lost it?",
+    sub: "Add the places and transport lines you remember.",
+  },
+  {
+    n: "03",
+    tab: "Check",
+    heading: "Check the destinations",
+    sub: "We group your route into the offices and venues that may have your item.",
+  },
+  {
+    n: "04",
+    tab: "Send & track",
+    heading: "Send and track your reports",
+    sub: "Review each prepared report, submit it on the official channel, then save the result.",
+  },
 ] as const;
 
 function newUid(): string {
@@ -102,6 +123,7 @@ export default function LostFound() {
   const [index, setIndex] = useState<SourceIndex | null>(null);
   const [loading, setLoading] = useState(true);
   const [sourceError, setSourceError] = useState<string | null>(null);
+  const [stepMessage, setStepMessage] = useState<string | null>(null);
   const hydrated = useRef(false);
 
   const loadSources = useCallback(() => {
@@ -174,11 +196,14 @@ export default function LostFound() {
     ]
   );
 
-  const updateItem = (patch: Partial<LostItem>) =>
+  const updateItem = (patch: Partial<LostItem>) => {
+    setStepMessage(null);
     setLostCase((c) => ({ ...c, item: { ...c.item, ...patch } }));
+  };
   const updateContact = (patch: Partial<Contact>) =>
     setLostCase((c) => ({ ...c, contact: { ...c.contact, ...patch } }));
-  const addItinerary = (item: SearchItem) =>
+  const addItinerary = (item: SearchItem) => {
+    setStepMessage(null);
     setLostCase((current) => {
       const existingIndex = current.itinerary.findIndex((entry) => entry.refId === item.refId);
       if (existingIndex < 0) {
@@ -202,6 +227,7 @@ export default function LostFound() {
       };
       return { ...current, itinerary };
     });
+  };
   const removeItinerary = (uid: string) =>
     setLostCase((c) => ({ ...c, itinerary: c.itinerary.filter((e) => e.uid !== uid) }));
   const setReportState = (partyId: string, state: ReportState) =>
@@ -233,40 +259,51 @@ export default function LostFound() {
     fresh.contact = loadContact();
     setLostCase(fresh);
     setStep(0);
+    setStepMessage(null);
   };
 
   const meta = STEPS[step];
   const canForward = step < STEPS.length - 1;
+  const goToStep = (target: number) => {
+    const blocker = blockerForStep(target, lostCase);
+    if (blocker) {
+      setStep(blocker.step);
+      setStepMessage(blocker.message);
+      return;
+    }
+    setStep(Math.max(0, Math.min(STEPS.length - 1, target)));
+    setStepMessage(null);
+  };
 
   return (
     <main className="min-h-screen bg-gradient-to-b from-orange-50/60 via-stone-50 to-stone-100 dark:from-stone-950 dark:via-stone-950 dark:to-black">
       <div className="mx-auto flex min-h-screen max-w-2xl flex-col px-4 py-6 sm:px-6">
         {/* Header */}
-        <header className="mb-5 flex items-center gap-3">
+        <header className="mb-5 flex items-start gap-3 sm:items-center">
           <span className="brand-mark" aria-hidden>
             <span />
             <span />
             <span />
           </span>
-          <div className="flex-1">
+          <div className="min-w-0 flex-1">
             <h1 className="text-base font-bold tracking-tight text-stone-900 dark:text-stone-50">
               Berlin <span className="text-orange-600">Lost &amp; Found</span>
             </h1>
-            <p className="text-xs text-stone-500 dark:text-stone-400">
-              Retrace your day, reach the right operators and venues, file reports in a tap
+            <p className="max-w-md text-xs leading-relaxed text-stone-500 dark:text-stone-400">
+              Find the right offices, prepare each report and track what happens next
             </p>
           </div>
           <button
             type="button"
             onClick={reset}
-            className="rounded-lg px-2.5 py-1.5 text-xs text-stone-400 transition hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-stone-800"
+            className="flex-none rounded-lg px-2.5 py-1.5 text-xs text-stone-400 transition hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-stone-800"
           >
             Start over
           </button>
         </header>
 
         {/* Step tabs */}
-        <nav className="mb-6 flex items-center gap-1.5">
+        <nav className="mb-5 flex items-center gap-1.5" aria-label="Report progress">
           {STEPS.map((s, i) => {
             const done = i < step;
             const active = i === step;
@@ -274,7 +311,9 @@ export default function LostFound() {
               <button
                 key={s.n}
                 type="button"
-                onClick={() => setStep(i)}
+                onClick={() => goToStep(i)}
+                aria-label={`Step ${i + 1}: ${s.tab}`}
+                aria-current={active ? "step" : undefined}
                 className={cx(
                   "flex flex-1 items-center gap-2 rounded-xl px-2.5 py-2 text-left transition",
                   active
@@ -309,12 +348,36 @@ export default function LostFound() {
 
         {/* Content */}
         <section className="flex-1">
+          {step === 0 && (
+            <div className="mb-5 rounded-2xl border border-orange-200 bg-white/80 p-4 shadow-sm dark:border-orange-500/30 dark:bg-stone-900/80">
+              <p className="text-sm font-semibold text-stone-900 dark:text-stone-100">
+                We prepare the route and reports. You stay in control.
+              </p>
+              <p className="mt-1 text-xs leading-relaxed text-stone-500 dark:text-stone-400">
+                This takes about 5–10 minutes. Your case stays in this browser.
+                Nothing is submitted automatically: you review every report and
+                send it through the official service.
+              </p>
+            </div>
+          )}
           <div className="mb-4">
+            <p className="mb-1 text-[11px] font-semibold uppercase tracking-[0.12em] text-orange-600 dark:text-orange-400">
+              Step {step + 1} of {STEPS.length} · {meta.tab}
+            </p>
             <h2 className="text-xl font-bold tracking-tight text-stone-900 dark:text-stone-50">
               {meta.heading}
             </h2>
             <p className="mt-1 text-sm text-stone-500 dark:text-stone-400">{meta.sub}</p>
           </div>
+
+          {stepMessage && (
+            <div
+              role="alert"
+              className="mb-4 rounded-xl border border-amber-300 bg-amber-50 px-3.5 py-3 text-sm text-amber-900 dark:border-amber-500/40 dark:bg-amber-500/10 dark:text-amber-200"
+            >
+              {stepMessage}
+            </div>
+          )}
 
           {step === 0 && <StepItem item={lostCase.item} onItem={updateItem} />}
           {step === 1 && (
@@ -343,8 +406,8 @@ export default function LostFound() {
         </section>
 
         {/* Nav */}
-        <footer className="sticky bottom-0 mt-6 flex items-center justify-between gap-3 border-t border-stone-200/70 bg-gradient-to-t from-stone-100 to-transparent py-4 dark:border-stone-800 dark:from-black">
-          <GhostButton onClick={() => setStep((s) => Math.max(0, s - 1))} disabled={step === 0}>
+        <footer className="sticky bottom-0 z-20 mt-6 flex items-center justify-between gap-3 border-t border-stone-200/70 bg-stone-100/95 py-4 backdrop-blur dark:border-stone-800 dark:bg-black/95">
+          <GhostButton onClick={() => goToStep(step - 1)} disabled={step === 0}>
             ← Back
           </GhostButton>
           <div className="flex items-center gap-3">
@@ -354,8 +417,12 @@ export default function LostFound() {
               </span>
             )}
             {canForward ? (
-              <PrimaryButton onClick={() => setStep((s) => Math.min(STEPS.length - 1, s + 1))}>
-                {step === 2 ? "Draft reports →" : "Next →"}
+              <PrimaryButton onClick={() => goToStep(step + 1)}>
+                {step === 0
+                  ? "Rebuild my day →"
+                  : step === 1
+                    ? "Find destinations →"
+                    : "Prepare reports →"}
               </PrimaryButton>
             ) : (
               <span className="text-xs text-stone-400">{resolved.length} to contact</span>

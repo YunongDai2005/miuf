@@ -128,7 +128,7 @@ test("renders primary and alternative offline geometry as a search corridor", ()
   );
 
   assert.match(html, /Search corridor showing the primary inferred route/);
-  assert.match(html, /Search corridor · solid primary · faded alternatives/);
+  assert.match(html, /Possible route · solid primary · faded alternatives/);
   assert.match(html, /Other lines in the corridor/);
   assert.match(html, /stroke-opacity="0\.95"/);
   assert.match(html, /stroke-opacity="0\.48"/);
