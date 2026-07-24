@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-24T00:22:49.767Z",
+  "generatedAt": "2026-07-24T09:57:06.974Z",
   "sourceFile": "public/berlin-attractions.json",
   "operators": [
     {
@@ -65,6 +65,25 @@
       ]
     },
     {
+      "id": "operator_14bc63c3941e285a",
+      "name": "Grün Berlin GmbH – Gärten der Welt",
+      "website": "https://www.gaertenderwelt.de/",
+      "discoverySeedUrls": [],
+      "venueIds": [
+        "node/1447377048",
+        "way/36126649",
+        "way/549688688"
+      ],
+      "confidence": 0.98,
+      "resolutionSource": "official_source_audit",
+      "evidenceUrls": [
+        "https://www.gaertenderwelt.de/impressum/",
+        "https://www.gaertenderwelt.de/service/eure-ansprechpersonen-im-park/",
+        "https://www.wikidata.org/wiki/Q140129805",
+        "https://www.wikidata.org/wiki/Q464302"
+      ]
+    },
+    {
       "id": "operator_9ce72cac090069d3",
       "name": "Regierender Senat Berlins",
       "venueIds": [
@@ -80,6 +99,7 @@
       "id": "operator_89cf7cec301d41a8",
       "name": "Staatliche Museen zu Berlin",
       "website": "https://www.smb.museum/",
+      "discoverySeedUrls": [],
       "venueIds": [
         "node/1860480265",
         "node/3755207008",
@@ -133,6 +153,28 @@
       ]
     },
     {
+      "id": "operator_9f343b200f922ce7",
+      "name": "Stiftung Denkmal für die ermordeten Juden Europas",
+      "website": "https://www.stiftung-denkmal.de/",
+      "discoverySeedUrls": [
+        "https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/"
+      ],
+      "venueIds": [
+        "node/13951345000",
+        "way/166709624",
+        "way/172234733"
+      ],
+      "confidence": 0.98,
+      "resolutionSource": "official_source_audit",
+      "evidenceUrls": [
+        "https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/",
+        "https://www.stiftung-denkmal.de/impressum/",
+        "https://www.wikidata.org/wiki/Q140363177",
+        "https://www.wikidata.org/wiki/Q160700",
+        "https://www.wikidata.org/wiki/Q76632431"
+      ]
+    },
+    {
       "id": "operator_08102aae15fd5928",
       "name": "Stiftung Humboldt Forum im Berliner Schloss",
       "venueIds": [
@@ -148,6 +190,7 @@
       "id": "operator_0fa1189548278b11",
       "name": "Stiftung Planetarium Berlin",
       "website": "https://www.planetarium.berlin/",
+      "discoverySeedUrls": [],
       "venueIds": [
         "relation/2309788",
         "relation/2309795",
@@ -178,6 +221,7 @@
       "id": "operator_3eee5be1e3f5e40a",
       "name": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
       "website": "https://www.spsg.de/",
+      "discoverySeedUrls": [],
       "venueIds": [
         "node/5723205465",
         "node/9979815162",
@@ -210,6 +254,7 @@
       "id": "operator_fb33de75a6d88844",
       "name": "Stiftung Stadtmuseum Berlin",
       "website": "https://www.stadtmuseum.de/",
+      "discoverySeedUrls": [],
       "venueIds": [
         "relation/1652105",
         "way/23813200",
@@ -23801,9 +23846,15 @@
       "entityGroupId": "venue_group_2f57abbfca48129b",
       "canonicalVenueId": "way/172234733",
       "officialWebsite": "http://www.stiftung-denkmal.de/",
+      "operatorId": "operator_9f343b200f922ce7",
+      "operatorName": "Stiftung Denkmal für die ermordeten Juden Europas",
+      "operatorWebsite": "https://www.stiftung-denkmal.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.stiftung-denkmal.de/impressum/",
+        "https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/",
         "https://www.wikidata.org/wiki/Q160700"
       ]
     },
@@ -29193,9 +29244,15 @@
       "entityGroupId": "venue_group_102297389dc60fc7",
       "canonicalVenueId": "way/549688688",
       "officialWebsite": "https://www.gaertenderwelt.de/",
+      "operatorId": "operator_14bc63c3941e285a",
+      "operatorName": "Grün Berlin GmbH – Gärten der Welt",
+      "operatorWebsite": "https://www.gaertenderwelt.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.gaertenderwelt.de/service/eure-ansprechpersonen-im-park/",
+        "https://www.gaertenderwelt.de/impressum/",
         "https://www.wikidata.org/wiki/Q464302"
       ]
     },
@@ -29210,9 +29267,16 @@
       "entityGroupId": "venue_group_102297389dc60fc7",
       "canonicalVenueId": "way/549688688",
       "officialWebsite": "https://www.gaertenderwelt.de/",
+      "operatorId": "operator_14bc63c3941e285a",
+      "operatorName": "Grün Berlin GmbH – Gärten der Welt",
+      "operatorWebsite": "https://www.gaertenderwelt.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
-      "evidenceUrls": []
+      "confidence": 0.98,
+      "evidenceUrls": [
+        "https://www.gaertenderwelt.de/service/eure-ansprechpersonen-im-park/",
+        "https://www.gaertenderwelt.de/impressum/"
+      ]
     },
     {
       "venueId": "node/11582043915",
@@ -33718,9 +33782,15 @@
       "entityGroupId": "venue_group_8717acf22ff1f1b2",
       "canonicalVenueId": "way/36126649",
       "officialWebsite": "https://www.gaertenderwelt.de/welt-entdecken/themengaerten/irrgarten-und-labyrinth/",
+      "operatorId": "operator_14bc63c3941e285a",
+      "operatorName": "Grün Berlin GmbH – Gärten der Welt",
+      "operatorWebsite": "https://www.gaertenderwelt.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.gaertenderwelt.de/service/eure-ansprechpersonen-im-park/",
+        "https://www.gaertenderwelt.de/impressum/",
         "https://www.wikidata.org/wiki/Q140129805"
       ]
     },
@@ -37839,9 +37909,15 @@
       "entityGroupId": "venue_group_d4316aa507920f0a",
       "canonicalVenueId": "node/13951345000",
       "officialWebsite": "https://www.stiftung-denkmal.de/denkmaeler/mahnmal-fuer-die-im-nationalsozialismus-verfolgten-und-ermordeten-zeugen-jehovas/",
+      "operatorId": "operator_9f343b200f922ce7",
+      "operatorName": "Stiftung Denkmal für die ermordeten Juden Europas",
+      "operatorWebsite": "https://www.stiftung-denkmal.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.stiftung-denkmal.de/impressum/",
+        "https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/",
         "https://www.wikidata.org/wiki/Q140363177"
       ]
     },
@@ -40779,9 +40855,15 @@
       "entityGroupId": "venue_group_07baa8575ea500df",
       "canonicalVenueId": "way/166709624",
       "officialWebsite": "http://www.stiftung-denkmal.de/",
+      "operatorId": "operator_9f343b200f922ce7",
+      "operatorName": "Stiftung Denkmal für die ermordeten Juden Europas",
+      "operatorWebsite": "https://www.stiftung-denkmal.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.stiftung-denkmal.de/impressum/",
+        "https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/",
         "https://www.wikidata.org/wiki/Q76632431"
       ]
     },
@@ -51277,7 +51359,7 @@
     "independentCandidates": 225,
     "parentVenueRequired": 1622,
     "insufficientSource": 409,
-    "explicitOperators": 13,
+    "explicitOperators": 15,
     "officialWebsites": 224,
     "duplicateGroups": 33,
     "parentCandidates": 410

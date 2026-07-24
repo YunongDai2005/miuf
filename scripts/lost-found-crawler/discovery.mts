@@ -23,7 +23,7 @@ const ROBOT_NAME = "Berlin-Lost-Found-Channel-Research";
 const LOST_PATTERN =
   /fundbüro|fundbuero|fundsache|verlust|verloren|lost[- ]?found|lost property/i;
 const PAGE_LOST_PATTERN =
-  /fundbüro|fundbuero|fundsache|verlustmeldung|gegenstand.{0,30}verloren|verloren.{0,30}gegenstand|lost[- ]?found|lost property/i;
+  /fundbüro|fundbuero|fundsache|verlustmeldung|gegenstand.{0,30}verloren|verloren.{0,30}gegenstand|etwas.{0,20}verloren|verloren.{0,20}oder.{0,20}gefunden|lost[- ]?found|lost property|lost.{0,20}or.{0,20}found/i;
 const CONTACT_PURPOSE_PATTERN =
   /fundbüro|fundbuero|fundsache|verlust|verloren|lost[- ]?found|lost property|fahrrad|handy|schlüssel|gegenstände?|haustier|katze|hund|schildkröte|item|belonging|animal|pet/i;
 const CONTACT_PATTERN =
@@ -70,6 +70,9 @@ export function buildDiscoverySeedGroups(
   const entityVenueIds = new Map(
     inventory.entityGroups.map((group) => [group.id, group.venueIds])
   );
+  const operatorsById = new Map(
+    inventory.operators.map((operator) => [operator.id, operator])
+  );
   for (const venue of inventory.venues) {
     const usesAuditedOperator =
       venue.operatorResolutionSource === "official_source_audit" &&
@@ -101,8 +104,20 @@ export function buildDiscoverySeedGroups(
       venueIds: new Set<string>(),
       operatorIds: new Set<string>(),
     };
-    if (!existing.seeds.includes(url.toString())) {
-      existing.seeds.push(url.toString());
+    const seedCandidates =
+      usesAuditedOperator
+        ? [
+            url.toString(),
+            ...(operatorsById.get(venue.operatorId!)?.discoverySeedUrls ?? []),
+            ...(venue.officialWebsite ? [venue.officialWebsite] : []),
+          ]
+        : [url.toString()];
+    for (const seedCandidate of seedCandidates) {
+      const candidateUrl = new URL(seedCandidate);
+      if (usesAuditedOperator && !sameSiteHost(url, candidateUrl)) continue;
+      if (!existing.seeds.includes(candidateUrl.toString())) {
+        existing.seeds.push(candidateUrl.toString());
+      }
     }
     const relatedVenueIds = usesOperatorSeed
       ? [venue.venueId]
@@ -122,6 +137,26 @@ export function buildDiscoverySeedGroups(
 
 function compactText(value: string): string {
   return value.replace(/\s+/g, " ").trim();
+}
+
+function primaryContentRoot($: cheerio.CheerioAPI) {
+  const body = $("body");
+  const bodyClone = body.clone();
+  bodyClone
+    .find("nav, header, footer, aside, script, style, noscript")
+    .remove();
+  const bodyTextLength = compactText(bodyClone.text()).length;
+  const candidates = $("main, article, [role='main']").toArray();
+  const [best] = candidates
+    .map((node) => {
+      const clone = $(node).clone();
+      clone.find("nav, header, footer, aside, script, style, noscript").remove();
+      return { node, textLength: compactText(clone.text()).length };
+    })
+    .sort((left, right) => right.textLength - left.textLength);
+  return best && best.textLength >= bodyTextLength * 0.25
+    ? $(best.node)
+    : body;
 }
 
 function canonicalUrl(rawUrl: string): string {
@@ -173,10 +208,12 @@ function sameSiteHost(left: URL, right: URL): boolean {
 
 function publicContactValues(
   $: cheerio.CheerioAPI,
-  dedicatedPage: boolean
+  dedicatedPage: boolean,
+  allowPageWideAnchors = dedicatedPage
 ): DiscoveredPublicContact[] {
-  const preferred = $("main, article, [role='main']").first();
-  const root = preferred.length ? preferred : $("body");
+  const preferred = primaryContentRoot($);
+  const root = (preferred.length ? preferred : $("body")).clone();
+  root.find("nav, header, footer, aside, script, style, noscript").remove();
   const contacts: Array<{
     kind: "email" | "phone";
     value: string;
@@ -227,13 +264,17 @@ function publicContactValues(
     return excerptAround(value, fallback);
   };
   root.find("a[href]").each((_, anchor) => {
-    if (!dedicatedPage) {
+    if (!allowPageWideAnchors) {
       let context = $(anchor);
       let locallyRelevant = false;
       for (let level = 0; level < 4; level += 1) {
         context = context.parent();
         if (!context.length || context.is("main, body")) break;
-        if (PAGE_LOST_PATTERN.test(compactText(context.text()))) {
+        const contextText = compactText(context.text());
+        if (
+          contextText.length <= 1_500 &&
+          PAGE_LOST_PATTERN.test(contextText)
+        ) {
           locallyRelevant = true;
           break;
         }
@@ -280,8 +321,14 @@ function publicContactValues(
   });
 
   if (dedicatedPage) {
+    const obfuscatedEmailPattern =
+      /([a-z0-9.!#$%&'*+/=?^_`{|}~-]{1,64})\s*(?:\(\s*at\s*\)|\[\s*at\s*\])\s*([a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?(?:\.[a-z0-9](?:[a-z0-9-]{0,62}[a-z0-9])?)+)/gi;
     const phonePattern =
       /(?:telefon|tel\.?|phone)\s*:?\s*((?:\+|00)?\d[\d\s()./–-]{4,}\d)/gi;
+    const visibleContactPattern = new RegExp(
+      `(?:${obfuscatedEmailPattern.source})|(?:${phonePattern.source})`,
+      "i"
+    );
     const sections: string[] = [];
     root.find("h1, h2, h3, h4, h5, h6").each((_, heading) => {
       const section = $(heading).add(
@@ -295,7 +342,64 @@ function publicContactValues(
         .join(" ");
       if (CONTACT_PURPOSE_PATTERN.test(text)) sections.push(text);
     });
-    for (const sectionText of sections.length ? sections : [rootText]) {
+    root
+      .find("summary, dt, [class*='accordion-title'], [role='button']")
+      .each((_, trigger) => {
+        if (!PAGE_LOST_PATTERN.test(compactText($(trigger).text()))) return;
+        let context = $(trigger);
+        for (let level = 0; level < 6; level += 1) {
+          context = context.parent();
+          if (!context.length || context.is("body")) break;
+          const text = compactText(context.text());
+          if (
+            text.length >= 20 &&
+            text.length <= 1_500 &&
+            (visibleContactPattern.test(text) ||
+              context.find("a[href^='mailto:'], a[href^='tel:']").length > 0)
+          ) {
+            if (!sections.includes(text)) sections.push(text);
+            break;
+          }
+        }
+      });
+    const purposeContext = sections.length
+      ? [...sections].sort(
+          (left, right) => purposeScore(right) - purposeScore(left)
+        )[0]
+      : "";
+    root
+      .find("*")
+      .addBack()
+      .contents()
+      .each((_, node) => {
+        if (node.type !== "text") return;
+        const fragment = compactText($(node).text());
+        for (const match of fragment.matchAll(obfuscatedEmailPattern)) {
+          const value = `${match[1]}@${match[2]}`;
+          if (value.length > 254) continue;
+          contacts.push({
+            kind: "email",
+            value,
+            selector: "main",
+            excerpt: compactText(
+              `${purposeContext} ${excerptAround(match[0], fragment)}`
+            ).slice(0, 700),
+          });
+        }
+      });
+    const visiblePhoneCountBefore = contacts.filter(
+      (contact) => contact.kind === "phone"
+    ).length;
+    const addVisiblePhones = (
+      sectionText: string,
+      purposeContext = ""
+    ): void => {
+      const contactExcerpt = (needle: string): string =>
+        compactText(
+          purposeContext
+            ? `${purposeContext} ${excerptAround(needle, sectionText)}`
+            : sectionText
+        ).slice(0, 700);
       for (const match of sectionText.matchAll(phonePattern)) {
         const value = match[1].replace(/[./–-]+$/g, "").trim();
         if (value.replace(/\D/g, "").length < 6 || value.length > 40) continue;
@@ -303,9 +407,19 @@ function publicContactValues(
           kind: "phone",
           value,
           selector: "main",
-          excerpt: sectionText.slice(0, 700),
+          excerpt: contactExcerpt(match[0]),
         });
       }
+    };
+    for (const sectionText of sections.length ? sections : [rootText]) {
+      addVisiblePhones(sectionText);
+    }
+    if (
+      sections.length &&
+      contacts.filter((contact) => contact.kind === "phone").length ===
+        visiblePhoneCountBefore
+    ) {
+      addVisiblePhones(rootText, purposeContext);
     }
   }
 
@@ -338,7 +452,14 @@ export function extractPublicContactValues(
 ): DiscoveredPublicContact[] {
   const $ = cheerio.load(html);
   const title = compactText($("title").first().text() || $("h1").first().text());
-  return publicContactValues($, PAGE_LOST_PATTERN.test(title));
+  const bodyText = compactText(
+    primaryContentRoot($).text() || $("body").text()
+  );
+  return publicContactValues(
+    $,
+    PAGE_LOST_PATTERN.test(`${title} ${bodyText.slice(0, 100_000)}`),
+    PAGE_LOST_PATTERN.test(title)
+  );
 }
 
 /**
@@ -451,8 +572,11 @@ export function isRelevantDiscoveredForm(
   form: import("./schemas").FormSnapshot,
   contactPage: boolean
 ): boolean {
+  const visibleFields = form.fields.filter(
+    (field) => field.control !== "hidden"
+  );
   const semanticKeys = new Set<string>(
-    form.fields.map((field) => field.semanticKey)
+    visibleFields.map((field) => field.semanticKey)
   );
   const lostSpecificFields = [
     "lossDate",
@@ -465,14 +589,14 @@ export function isRelevantDiscoveredForm(
   const looksLikeGeneralContact =
     contactPage &&
     !IRRELEVANT_GENERAL_CONTACT_PATTERN.test(purposeText) &&
-    form.fields.length >= 2 &&
-    form.fields.some(
+    visibleFields.length >= 2 &&
+    visibleFields.some(
       (field) =>
         field.semanticKey === "email" ||
         field.semanticKey === "phone" ||
         field.semanticKey === "fullName"
     ) &&
-    form.fields.some(
+    visibleFields.some(
       (field) =>
         field.semanticKey === "messageBody" || field.control === "textarea"
     ) &&
@@ -480,9 +604,10 @@ export function isRelevantDiscoveredForm(
       `${form.contextText} ${form.formAction ?? ""}`
     );
   return (
-    PAGE_LOST_PATTERN.test(form.contextText) ||
-    lostSpecificFields >= 2 ||
-    looksLikeGeneralContact
+    visibleFields.length > 0 &&
+    (PAGE_LOST_PATTERN.test(form.contextText) ||
+      lostSpecificFields >= 2 ||
+      looksLikeGeneralContact)
   );
 }
 
@@ -639,7 +764,7 @@ export async function discoverChannels(options: {
         const { title, bodyText } = pageEvidence;
         const forms = extractFormsFromHtml({ html: response.body, pageUrl: finalUrl });
         const pageHasLostEvidence = PAGE_LOST_PATTERN.test(
-          `${finalUrl} ${title} ${bodyText.slice(0, 12_000)}`
+          `${finalUrl} ${title} ${bodyText.slice(0, 100_000)}`
         );
         const pageLooksRelevant =
           pageHasLostEvidence ||
@@ -724,6 +849,7 @@ export async function discoverChannels(options: {
           if (pageHasLostEvidence) {
             for (const contact of publicContactValues(
               $,
+              pageHasLostEvidence,
               PAGE_LOST_PATTERN.test(`${finalUrl} ${title}`)
             )) {
               const contactKey = `${ownerScopeKey}|${contact.kind}|${contact.value.toLowerCase()}`;

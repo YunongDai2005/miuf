@@ -64,6 +64,91 @@
       "kindOverride": "general_contact_form",
       "submissionMode": "assisted_fill",
       "reviewedContentHash": "955a4433ac53b6ab94210c2a2e5898ba726be6cc4f5fd62c233ead378ea6e080"
+    },
+    {
+      "candidateId": "channel_da87a1ed9cff9600",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T09:51:38.016Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_da87a1ed9cff9600\",\"operatorId\":\"operator_14bc63c3941e285a\",\"venueIds\":[\"node/1447377048\",\"way/36126649\",\"way/549688688\"],\"kind\":\"email\",\"pageUrl\":\"https://www.gaertenderwelt.de/service/faq/\",\"contactValue\":\"besucherzentrum@gaertenderwelt.de\",\"formContentHash\":null,\"evidenceHashes\":[\"d44ea0ae78ccc94a113da10f42a2ff3ecee2895877c18ae585dc4fd130db7fcf\"]}",
+      "notes": "Official Gärten der Welt FAQ directs lost-property questions to the Visitor Centre and publishes this address. Use this written channel as the primary destination; do not also send a duplicate report by phone.",
+      "kindOverride": "email",
+      "submissionMode": "open_only"
+    },
+    {
+      "candidateId": "channel_0d86dd21f49f38d2",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T09:51:38.776Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_0d86dd21f49f38d2\",\"operatorId\":\"operator_14bc63c3941e285a\",\"venueIds\":[\"node/1447377048\",\"way/36126649\",\"way/549688688\"],\"kind\":\"phone\",\"pageUrl\":\"https://www.gaertenderwelt.de/service/eure-ansprechpersonen-im-park/\",\"contactValue\":\"030 700 906 – 720\",\"formContentHash\":null,\"evidenceHashes\":[\"8238ff92df4c1c3e96db7573987ced902518321ce7543274c907315584cbcbe6\"]}",
+      "notes": "Official Gärten der Welt Visitor Centre page states that it serves as the lost-property office and publishes this number. Keep it as a backup to the written channel, not a second report destination.",
+      "kindOverride": "phone",
+      "submissionMode": "open_only"
+    },
+    {
+      "candidateId": "channel_8e1a4bc6b78b9c4a",
+      "decision": "reject",
+      "reviewedAt": "2026-07-24T09:51:39.484Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_8e1a4bc6b78b9c4a\",\"operatorId\":\"operator_14bc63c3941e285a\",\"venueIds\":[\"node/1447377048\",\"way/36126649\",\"way/549688688\"],\"kind\":\"phone\",\"pageUrl\":\"https://www.gaertenderwelt.de/en/service-info/contact-inquries/contact-visitor-centre/\",\"contactValue\":\"030 700 906 - 720\",\"formContentHash\":null,\"evidenceHashes\":[\"a67dd6d1fb7313cafc606be842582ac249123dc45ff2b66a0fca7e92733b1f4d\"]}",
+      "notes": "Duplicate English-page rendering of the same Visitor Centre phone number; the German official lost-property page candidate is retained as the single phone backup."
+    },
+    {
+      "candidateId": "channel_edc1b8e4f296a96c",
+      "decision": "reject",
+      "reviewedAt": "2026-07-24T09:51:40.220Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_edc1b8e4f296a96c\",\"operatorId\":\"operator_14bc63c3941e285a\",\"venueIds\":[\"node/1447377048\",\"way/36126649\",\"way/549688688\"],\"kind\":\"manual_review\",\"pageUrl\":\"https://www.gaertenderwelt.de/en/service-info/contact-inquries/contact-visitor-centre/\",\"contactValue\":null,\"formContentHash\":null,\"evidenceHashes\":[\"a67dd6d1fb7313cafc606be842582ac249123dc45ff2b66a0fca7e92733b1f4d\"]}",
+      "notes": "Evidence-only page lead; exact email and phone candidates were extracted and reviewed separately."
+    },
+    {
+      "candidateId": "channel_55ae299c40c50d9e",
+      "decision": "reject",
+      "reviewedAt": "2026-07-24T09:51:40.932Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_55ae299c40c50d9e\",\"operatorId\":\"operator_14bc63c3941e285a\",\"venueIds\":[\"node/1447377048\",\"way/36126649\",\"way/549688688\"],\"kind\":\"manual_review\",\"pageUrl\":\"https://www.gaertenderwelt.de/service/eure-ansprechpersonen-im-park/\",\"contactValue\":null,\"formContentHash\":null,\"evidenceHashes\":[\"8238ff92df4c1c3e96db7573987ced902518321ce7543274c907315584cbcbe6\"]}",
+      "notes": "Evidence-only page lead; exact email and phone candidates were extracted and reviewed separately."
+    },
+    {
+      "candidateId": "channel_cfe92a413f6807c4",
+      "decision": "reject",
+      "reviewedAt": "2026-07-24T09:51:41.633Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_cfe92a413f6807c4\",\"operatorId\":\"operator_14bc63c3941e285a\",\"venueIds\":[\"node/1447377048\",\"way/36126649\",\"way/549688688\"],\"kind\":\"manual_review\",\"pageUrl\":\"https://www.gaertenderwelt.de/service/faq/\",\"contactValue\":null,\"formContentHash\":null,\"evidenceHashes\":[\"d44ea0ae78ccc94a113da10f42a2ff3ecee2895877c18ae585dc4fd130db7fcf\"]}",
+      "notes": "Evidence-only page lead; exact email and phone candidates were extracted and reviewed separately."
+    },
+    {
+      "candidateId": "channel_aa15cef5b87786a9",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T10:11:38.500Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_aa15cef5b87786a9\",\"operatorId\":\"operator_9f343b200f922ce7\",\"venueIds\":[\"node/13951345000\",\"way/166709624\",\"way/172234733\"],\"kind\":\"phone\",\"pageUrl\":\"https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/\",\"contactValue\":\"+49 (0) 30-200 766 0\",\"formContentHash\":null,\"evidenceHashes\":[\"5c5f453f77ea76bc4bf73632110861d411192820f1bac284e50c15e76c3c5212\"]}",
+      "notes": "Official memorial FAQ explicitly directs lost-or-found enquiries to the reception desk in the Information Centre at this number. Scope is deliberately limited to the Holocaust Memorial and its Information Centre; it does not cover the foundation’s separate outdoor memorials.",
+      "kindOverride": "phone",
+      "venueIdsOverride": [
+        "way/166709624",
+        "way/172234733"
+      ],
+      "submissionMode": "open_only"
+    },
+    {
+      "candidateId": "channel_867c1ba831252871",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T10:11:39.229Z",
+      "reviewedBy": "Codex official-page and rendered-form audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_867c1ba831252871\",\"operatorId\":\"operator_9f343b200f922ce7\",\"venueIds\":[\"node/13951345000\",\"way/166709624\",\"way/172234733\"],\"kind\":\"general_contact_form\",\"pageUrl\":\"https://www.stiftung-denkmal.de/en/service/contact/\",\"contactValue\":null,\"formContentHash\":\"a01274009588d82195908152b71f659ca182caaf293aa324c013716188da99b0\",\"evidenceHashes\":[\"57d2e03c187c1335629794ff03182704ae347efcc59b1cc1582daf82ce585327\"]}",
+      "notes": "Official foundation general contact form, retained as a fallback rather than a dedicated lost-property service. Rendered inspection confirmed the visible Caldera form and excluded a hidden duplicate plus a hidden Order Number honeypot. Checked required first name, surname, email, Visitor Service department select and message; privacy consent remains for the user, and a visible Cap human check must be solved before Submit is enabled. No data was entered or sent.",
+      "kindOverride": "general_contact_form",
+      "submissionMode": "assisted_fill",
+      "reviewedContentHash": "a01274009588d82195908152b71f659ca182caaf293aa324c013716188da99b0"
+    },
+    {
+      "candidateId": "channel_197e5f6c6d7ad3f6",
+      "decision": "reject",
+      "reviewedAt": "2026-07-24T10:11:39.931Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_197e5f6c6d7ad3f6\",\"operatorId\":\"operator_9f343b200f922ce7\",\"venueIds\":[\"node/13951345000\",\"way/166709624\",\"way/172234733\"],\"kind\":\"manual_review\",\"pageUrl\":\"https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/\",\"contactValue\":null,\"formContentHash\":null,\"evidenceHashes\":[\"5c5f453f77ea76bc4bf73632110861d411192820f1bac284e50c15e76c3c5212\"]}",
+      "notes": "Evidence-only page lead; the exact reception phone and the separately reviewed general contact form cover the usable actions."
     }
   ]
 }

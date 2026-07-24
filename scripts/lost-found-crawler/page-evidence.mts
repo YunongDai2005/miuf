@@ -18,8 +18,21 @@ export interface PageEvidenceSnapshot {
 export function pageEvidenceFromHtml(html: string): PageEvidenceSnapshot {
   const $ = cheerio.load(html);
   const title = compactText($("title").first().text() || $("h1").first().text());
-  const preferred = $("main, article, [role='main']").first();
-  const root = preferred.length ? preferred.clone() : $("body").clone();
+  const body = $("body").clone();
+  body.find("nav, header, footer, aside, script, style, noscript").remove();
+  const bodyTextLength = compactText(body.text()).length;
+  const candidates = $("main, article, [role='main']").toArray();
+  const preferred = candidates
+    .map((node) => {
+      const clone = $(node).clone();
+      clone.find("nav, header, footer, aside, script, style, noscript").remove();
+      return { node, textLength: compactText(clone.text()).length };
+    })
+    .sort((left, right) => right.textLength - left.textLength)[0];
+  const root =
+    preferred && preferred.textLength >= bodyTextLength * 0.25
+      ? $(preferred.node).clone()
+      : body;
   root.find("nav, header, footer, aside, script, style, noscript").remove();
   return {
     title,

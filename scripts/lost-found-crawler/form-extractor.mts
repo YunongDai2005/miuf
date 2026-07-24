@@ -129,6 +129,31 @@ function isHoneypotField(input: {
   );
 }
 
+function isVisuallyHiddenField(
+  node: cheerio.Cheerio<AnyNode>
+): boolean {
+  let context = node;
+  for (let level = 0; level < 16 && context.length; level += 1) {
+    const className = compactText(context.attr("class"));
+    const style = compactText(context.attr("style"));
+    if (
+      !context.is("form") &&
+      (context.attr("hidden") !== undefined ||
+        context.attr("aria-hidden")?.toLowerCase() === "true" ||
+        /(?:^|\s)(?:hide|hidden)(?:\s|$)/i.test(className) ||
+        (/elementor-hidden-desktop/i.test(className) &&
+          /elementor-hidden-tablet/i.test(className) &&
+          /elementor-hidden-mobile/i.test(className)) ||
+        /display\s*:\s*none|visibility\s*:\s*hidden/i.test(style))
+    ) {
+      return true;
+    }
+    if (context.is("body")) break;
+    context = context.parent();
+  }
+  return false;
+}
+
 function hasHumanCaptcha(
   $: cheerio.CheerioAPI,
   form: cheerio.Cheerio<AnyNode>,
@@ -148,7 +173,7 @@ function hasHumanCaptcha(
   return (
     form
       .find(
-        'iframe[src*="recaptcha"], iframe[src*="hcaptcha"], iframe[src*="frcapi"], .g-recaptcha, .h-captcha, .frc-captcha, .cf-turnstile, [class*="captcha"], [id*="captcha"]'
+        'iframe[src*="recaptcha"], iframe[src*="hcaptcha"], iframe[src*="frcapi"], cap-widget, .g-recaptcha, .h-captcha, .frc-captcha, .cf-turnstile, [class*="captcha"], [id*="captcha"]'
       )
       .filter((_, element) => {
         const node = $(element);
@@ -208,6 +233,9 @@ function extractFields(
     const placeholder = compactText(node.attr("placeholder")) || undefined;
     const rawName = compactText(node.attr("name")) || undefined;
     const rawId = compactText(node.attr("id")) || undefined;
+    if (control !== "hidden" && isVisuallyHiddenField(node)) {
+      control = "hidden";
+    }
     if (
       control !== "hidden" &&
       isHoneypotField({ node, label, helpText, placeholder })

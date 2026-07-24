@@ -1,7 +1,40 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-24T09:31:30.318Z",
+  "generatedAt": "2026-07-24T10:14:59.740Z",
   "channels": [
+    {
+      "id": "channel_0d86dd21f49f38d2",
+      "operatorId": "operator_14bc63c3941e285a",
+      "venueIds": [
+        "node/1447377048",
+        "way/36126649",
+        "way/549688688"
+      ],
+      "kind": "phone",
+      "scope": "operator",
+      "pageUrl": "https://www.gaertenderwelt.de/service/eure-ansprechpersonen-im-park/",
+      "contactValue": "030 700 906 – 720",
+      "language": [
+        "und"
+      ],
+      "fields": [],
+      "captcha": false,
+      "loginRequired": false,
+      "submissionMode": "open_only",
+      "verifiedAt": "2026-07-24T09:51:38.776Z",
+      "reviewDueAt": "2026-10-22T09:51:38.776Z",
+      "verifiedBy": "Codex official-page audit",
+      "evidence": [
+        {
+          "sourceUrl": "https://www.gaertenderwelt.de/service/eure-ansprechpersonen-im-park/",
+          "selector": "main",
+          "excerpt": "Eure Ansprechpersonen im ParkDamit ihr euch schnell bei uns zurechtfindetBesucherzentrumDas Besucherzentrum ist der Service- und Informationspunkt für Besucher*innen der Gärten der Welt.Haupteingang Blumberger Damm 4412685 BerlinTel.: 030 700 906 – 720E-Mail: besucherzentrum(at)gaertenderwelt.deÖffnungszeiten des BesucherzentrumsMärz – Oktober: 10 – 18:30 UhrNovember – Februar: 10 – 16 UhrWir sind eure Ansprechpartner*innen wenn ihr Fragen zu Preisen und Öffnungszeiten habt oder mehr Informationen zu unseren Parkfesten und Konzerten benötigt. Kommt gerne vorbei, schreibt uns eine E-Mail oder ruft uns an. Neben tagesaktuellen Empfehlungen für euren Besuch in den Gärten der Welt erhaltet ihr i",
+          "contentHash": "8238ff92df4c1c3e96db7573987ced902518321ce7543274c907315584cbcbe6",
+          "observedAt": "2026-07-24T09:50:50.363Z"
+        }
+      ],
+      "contentHash": "8238ff92df4c1c3e96db7573987ced902518321ce7543274c907315584cbcbe6"
+    },
     {
       "id": "channel_0f6318a24ea3c94f",
       "operatorId": "operator_3eee5be1e3f5e40a",
@@ -89,6 +122,135 @@
       "contentHash": "5e2ef918c7049796633a075d147428b14658a40dd849befbea363810e9e16293"
     },
     {
+      "id": "channel_867c1ba831252871",
+      "operatorId": "operator_9f343b200f922ce7",
+      "venueIds": [
+        "node/13951345000",
+        "way/166709624",
+        "way/172234733"
+      ],
+      "kind": "general_contact_form",
+      "scope": "operator",
+      "pageUrl": "https://www.stiftung-denkmal.de/en/service/contact/",
+      "formAction": "https://www.stiftung-denkmal.de/en/service/contact/",
+      "formMethod": "POST",
+      "language": [
+        "en"
+      ],
+      "fields": [
+        {
+          "rawName": "fld_8768091",
+          "rawId": "fld_8768091_1",
+          "label": "Firstname *",
+          "placeholder": "Firstname",
+          "control": "text",
+          "required": true,
+          "step": 1,
+          "semanticKey": "firstName",
+          "semanticConfidence": 0.97,
+          "evidenceSelector": "#fld_8768091_1"
+        },
+        {
+          "rawName": "fld_9970286",
+          "rawId": "fld_9970286_1",
+          "label": "Surname *",
+          "placeholder": "Surname",
+          "control": "text",
+          "required": true,
+          "step": 1,
+          "semanticKey": "lastName",
+          "semanticConfidence": 0.97,
+          "evidenceSelector": "#fld_9970286_1"
+        },
+        {
+          "rawName": "fld_6009157",
+          "rawId": "fld_6009157_1",
+          "label": "Email address *",
+          "placeholder": "Email address",
+          "control": "email",
+          "required": true,
+          "step": 1,
+          "semanticKey": "email",
+          "semanticConfidence": 0.99,
+          "evidenceSelector": "#fld_6009157_1"
+        },
+        {
+          "rawName": "fld_8079253",
+          "rawId": "fld_8079253_1",
+          "label": "Institution",
+          "placeholder": "Institution",
+          "control": "text",
+          "required": false,
+          "step": 1,
+          "semanticKey": "other",
+          "semanticConfidence": 0.2,
+          "evidenceSelector": "#fld_8079253_1"
+        },
+        {
+          "rawName": "fld_1021617",
+          "rawId": "fld_1021617_1",
+          "label": "Abteilung",
+          "control": "select",
+          "required": true,
+          "options": [
+            {
+              "value": "",
+              "label": "Please choose.."
+            },
+            {
+              "value": "Visitor Service",
+              "label": "Visitor Service"
+            },
+            {
+              "value": "Press & Public Relations",
+              "label": "Press & Public Relations"
+            }
+          ],
+          "step": 1,
+          "semanticKey": "other",
+          "semanticConfidence": 0.2,
+          "evidenceSelector": "#fld_1021617_1"
+        },
+        {
+          "rawName": "fld_7683514",
+          "rawId": "fld_7683514_1",
+          "label": "Message *",
+          "control": "textarea",
+          "required": true,
+          "step": 1,
+          "semanticKey": "messageBody",
+          "semanticConfidence": 0.9,
+          "evidenceSelector": "#fld_7683514_1"
+        },
+        {
+          "rawName": "fld_5894334[opt1750901]",
+          "rawId": "fld_5894334_1_opt1750901",
+          "label": "I hereby agree that the personal data provided by me may only be collected, processed and stored in the internal address database by the Foundation Memorial to the Murdered Jews of Europe for the stated purpose in accordance with the European Data Protection Regulation (EU-GDPR) and the Federal Data Protection Act (BDSG). For more information, read our Privacy Policy.",
+          "control": "checkbox",
+          "required": false,
+          "step": 1,
+          "semanticKey": "privacyConsent",
+          "semanticConfidence": 0.96,
+          "evidenceSelector": "#fld_5894334_1_opt1750901"
+        }
+      ],
+      "captcha": true,
+      "loginRequired": false,
+      "submissionMode": "assisted_fill",
+      "verifiedAt": "2026-07-24T10:11:39.229Z",
+      "reviewDueAt": "2026-10-22T10:11:39.229Z",
+      "verifiedBy": "Codex official-page and rendered-form audit",
+      "evidence": [
+        {
+          "sourceUrl": "https://www.stiftung-denkmal.de/en/service/contact/",
+          "excerpt": "Contact Order NumberCONTACT REQUESTPlease use the form below or contact us for individual questions under +49(0)30 - 26 39 43 - 0 . Firstname * Surname * Email address * Institution How can we help?Please choose your concern and we will get back to you as soon as possible. Abteilung Please choose.. Visitor Service Press & Public Relations Message * Datenschutz I hereby agree that the personal data provided by me may only be collected, processed and stored in the internal address database by the ",
+          "contentHash": "57d2e03c187c1335629794ff03182704ae347efcc59b1cc1582daf82ce585327",
+          "observedAt": "2026-07-24T10:09:47.207Z"
+        }
+      ],
+      "contentHash": "a01274009588d82195908152b71f659ca182caaf293aa324c013716188da99b0"
+    },
+    {
       "id": "channel_8855ebf1d43575e9",
       "operatorId": "operator_fb33de75a6d88844",
       "venueIds": [
@@ -152,7 +314,7 @@
         },
         {
           "rawName": "select-1",
-          "rawId": "forminator-form-13068__field--select-1_6a632fd1e0609",
+          "rawId": "forminator-form-13068__field--select-1_6a633b13ea1b5",
           "label": "select-1",
           "control": "select",
           "required": false,
@@ -173,7 +335,7 @@
           "step": 1,
           "semanticKey": "other",
           "semanticConfidence": 0.2,
-          "evidenceSelector": "#forminator-form-13068__field--select-1_6a632fd1e0609"
+          "evidenceSelector": "#forminator-form-13068__field--select-1_6a633b13ea1b5"
         },
         {
           "rawName": "textarea-1",
@@ -209,10 +371,42 @@
           "sourceUrl": "https://www.stadtmuseum.de/en/contact",
           "excerpt": "Contact Your direct line to Stadtmuseum Berlin Do you have any questions about the Stiftung Stadtmuseum Berlin, its collections, museums or services? Would you like to send us your wishes, suggestions or criticism? Or do you have a press enquiry that we can help you with? Then write to us! Our staff will be happy to help you. First nameLast nameEmail *PhoneTopicGeneralCollectionPressMessage *Security test: 2+3 equals? *Send messagePlease do not fill in this field. Infoline Mo – Fr | 10 – 18 Uhr ",
           "contentHash": "59410b5cd87fac8b485261ad1056d124ecddd97bf3a1ed5293cebde6a320e5ea",
-          "observedAt": "2026-07-24T09:26:42.178Z"
+          "observedAt": "2026-07-24T10:14:44.178Z"
         }
       ],
       "contentHash": "955a4433ac53b6ab94210c2a2e5898ba726be6cc4f5fd62c233ead378ea6e080"
+    },
+    {
+      "id": "channel_aa15cef5b87786a9",
+      "operatorId": "operator_9f343b200f922ce7",
+      "venueIds": [
+        "way/166709624",
+        "way/172234733"
+      ],
+      "kind": "phone",
+      "scope": "operator",
+      "pageUrl": "https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/",
+      "contactValue": "+49 (0) 30-200 766 0",
+      "language": [
+        "und"
+      ],
+      "fields": [],
+      "captcha": false,
+      "loginRequired": false,
+      "submissionMode": "open_only",
+      "verifiedAt": "2026-07-24T10:11:38.500Z",
+      "reviewDueAt": "2026-10-22T10:11:38.500Z",
+      "verifiedBy": "Codex official-page audit",
+      "evidence": [
+        {
+          "sourceUrl": "https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/",
+          "selector": "main",
+          "excerpt": "An wen kann man sich wenden, wenn man etwas verloren oder gefunden hat?Bitte kontaktieren Sie die Rezeption im Ort der Information: Tel.: +49 (0) 30-200 766 0",
+          "contentHash": "5c5f453f77ea76bc4bf73632110861d411192820f1bac284e50c15e76c3c5212",
+          "observedAt": "2026-07-24T10:09:43.981Z"
+        }
+      ],
+      "contentHash": "5c5f453f77ea76bc4bf73632110861d411192820f1bac284e50c15e76c3c5212"
     },
     {
       "id": "channel_ba353bf8a92f6988",
@@ -599,6 +793,39 @@
         }
       ],
       "contentHash": "7bd344451ab5398603235802bce33e19fb450e14777aa338037443840f54c056"
+    },
+    {
+      "id": "channel_da87a1ed9cff9600",
+      "operatorId": "operator_14bc63c3941e285a",
+      "venueIds": [
+        "node/1447377048",
+        "way/36126649",
+        "way/549688688"
+      ],
+      "kind": "email",
+      "scope": "operator",
+      "pageUrl": "https://www.gaertenderwelt.de/service/faq/",
+      "contactValue": "besucherzentrum@gaertenderwelt.de",
+      "language": [
+        "und"
+      ],
+      "fields": [],
+      "captcha": false,
+      "loginRequired": false,
+      "submissionMode": "open_only",
+      "verifiedAt": "2026-07-24T09:51:38.016Z",
+      "reviewDueAt": "2026-10-22T09:51:38.016Z",
+      "verifiedBy": "Codex official-page audit",
+      "evidence": [
+        {
+          "sourceUrl": "https://www.gaertenderwelt.de/service/faq/",
+          "selector": "main",
+          "excerpt": "Darf ich mit meinem Fahrrad durch die Gärten der Welt fahren? Kraftfahrzeuge, Fahrräder (auch: Skateboards, Kickboards, Rollschuhe, Inliner und Ähnliches) sowie Mofas dürfen nicht mit in den Park genommen werden. Die Nutzung von Dreirädern und elektromobilen Scootern ist bei Vorlage einer amtlichen Bescheinigung (Schwerbehindertenausweis mit Merkzeichen G bzw. aG) erlaubt. Kinder bis einschließlich 5 Jahre dürfen gerne einen Roller oder ein Laufrad mit in den Park nehmen. Jedoch ist das Befahren der Themengärten und Gartenkabinette mit Rollern, Laufrädern u. Ä. nicht gestattet. m Haupteingang Blumberger Damm auszuleihen. Die Ausleihe ist während der Öffnungszeiten des Besucherzentrums möglic",
+          "contentHash": "d44ea0ae78ccc94a113da10f42a2ff3ecee2895877c18ae585dc4fd130db7fcf",
+          "observedAt": "2026-07-24T09:50:50.060Z"
+        }
+      ],
+      "contentHash": "d44ea0ae78ccc94a113da10f42a2ff3ecee2895877c18ae585dc4fd130db7fcf"
     },
     {
       "id": "channel_e4607a01042a4561",

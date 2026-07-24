@@ -45,7 +45,10 @@ import {
   exportExtensionAdapters,
   publishReviewedChannels,
 } from "../scripts/lost-found-crawler/publish.mjs";
-import { isUnexpectedVerificationRedirect } from "../scripts/lost-found-crawler/verify.mjs";
+import {
+  isUnexpectedVerificationRedirect,
+  publicContactStillPublished,
+} from "../scripts/lost-found-crawler/verify.mjs";
 import { selectRefreshedForm } from "../scripts/lost-found-crawler/refresh.mjs";
 import { verifiedDateLabel } from "../app/lost-found/ui";
 
@@ -140,6 +143,59 @@ test("hides a German bot-trap whose negation follows the verb", () => {
   );
 });
 
+test("hides CSS-concealed fields and recognises a visible Cap challenge", () => {
+  const [form] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact",
+    html: `<form>
+      <div class="hide" style="display:none; height:0; width:0">
+        <label>Order Number</label>
+        <input name="order_number" type="text">
+      </div>
+      <label for="first">Firstname *</label>
+      <input id="first" name="firstname" required>
+      <label for="message">Message *</label>
+      <textarea id="message" name="message" required></textarea>
+      <script src="https://captcha.example/assets/widget.js"></script>
+      <cap-widget id="cap-widget"></cap-widget>
+    </form>`,
+  });
+  assert.equal(
+    form.fields.find((field) => field.rawName === "order_number")?.control,
+    "hidden"
+  );
+  assert.equal(
+    form.fields.find((field) => field.rawName === "firstname")?.semanticKey,
+    "firstName"
+  );
+  assert.equal(form.captcha, true);
+});
+
+test("hides every field in an all-breakpoint hidden duplicate form", () => {
+  const [form] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact",
+    html: `<section class="elementor-hidden-desktop elementor-hidden-tablet elementor-hidden-mobile">
+      <form>
+        <label for="email">Email</label><input id="email" name="email">
+        <label for="message">Message</label><textarea id="message" name="message"></textarea>
+      </form>
+    </section>`,
+  });
+  assert.ok(form.fields.every((field) => field.control === "hidden"));
+  assert.equal(isRelevantDiscoveredForm(form, true), false);
+});
+
+test("does not treat a JavaScript-initialised form itself as permanently hidden", () => {
+  const [form] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact",
+    html: `<form style="display: none">
+      <label for="email">Email</label><input id="email" name="email">
+      <label for="message">Message</label><textarea id="message" name="message"></textarea>
+    </form>`,
+  });
+  assert.ok(form.fields.some((field) => field.control !== "hidden"));
+  assert.equal(isRelevantDiscoveredForm(form, true), true);
+});
+
 test("keeps a visible security question as a manual CAPTCHA", () => {
   const [form] = extractFormsFromHtml({
     pageUrl: "https://museum.example/contact",
@@ -224,6 +280,21 @@ test("page evidence ignores changing navigation while retaining main-content cha
   assert.notEqual(snapshot("Report a lost bag", "Menu"), snapshot("The service is closed", "Menu"));
 });
 
+test("page evidence selects the substantial content region when a site has several main elements", () => {
+  const evidence = pageEvidenceFromHtml(`
+    <html><head><title>Visitor information</title></head><body>
+      <main>Language menu</main>
+      <main>
+        <h1>Frequently asked questions</h1>
+        <p>Who should I contact if I lost or found something?</p>
+        <p>Call the reception desk.</p>
+      </main>
+    </body></html>
+  `);
+  assert.match(evidence.bodyText, /reception desk/);
+  assert.doesNotMatch(evidence.bodyText, /Language menu/);
+});
+
 test("verification tolerates a trailing slash but flags a moved or cross-domain form", () => {
   assert.equal(
     isUnexpectedVerificationRedirect(
@@ -245,6 +316,32 @@ test("verification tolerates a trailing slash but flags a moved or cross-domain 
       "https://forms.example/lost"
     ),
     true
+  );
+});
+
+test("verification checks that a reviewed public contact still has a lost-property purpose", () => {
+  const html = `
+    <main>
+      <h1>Fundbüro</h1>
+      <p>Verlorene Gegenstände: Tel.: +49 (0) 30-200 766 0</p>
+      <p>E-Mail: fundbuero(at)museum.example</p>
+    </main>
+  `;
+  assert.equal(
+    publicContactStillPublished({
+      html,
+      kind: "phone",
+      contactValue: "+49 30 200 766 0",
+    }),
+    true
+  );
+  assert.equal(
+    publicContactStillPublished({
+      html: "<main><p>General visitor information</p></main>",
+      kind: "phone",
+      contactValue: "+49 30 200 766 0",
+    }),
+    false
   );
 });
 
@@ -284,7 +381,7 @@ test("runtime registry validation rejects malformed adapter channels and review 
   );
 });
 
-test("bundled reviewed registry covers 33 venues without publishing bot traps", async () => {
+test("bundled reviewed registry covers 39 venues without publishing bot traps", async () => {
   const registry = JSON.parse(
     await readFile(
       new URL("../public/berlin-lost-found-channels.json", import.meta.url),
@@ -292,11 +389,25 @@ test("bundled reviewed registry covers 33 venues without publishing bot traps", 
     )
   );
   assert.equal(isPublishedChannelRegistry(registry), true);
-  assert.equal(registry.channels.length, 6);
+  assert.equal(registry.channels.length, 10);
   assert.equal(
     new Set(registry.channels.flatMap((channel: { venueIds: string[] }) => channel.venueIds))
       .size,
-    33
+    39
+  );
+  assert.ok(
+    registry.channels.some(
+      (channel: { kind: string; contactValue?: string }) =>
+        channel.kind === "email" &&
+        channel.contactValue === "besucherzentrum@gaertenderwelt.de"
+    )
+  );
+  assert.equal(
+    registry.channels.some(
+      (channel: { fields: Array<{ rawName?: string }> }) =>
+        channel.fields.some((field) => field.rawName === "order_number")
+    ),
+    false
   );
   assert.equal(
     registry.channels.some((channel: { fields: Array<{ rawName?: string; label: string }> }) =>
@@ -313,7 +424,7 @@ test("bundled reviewed registry covers 33 venues without publishing bot traps", 
       (channel: { submissionMode: string }) =>
         channel.submissionMode === "assisted_fill"
     ).length,
-    4
+    5
   );
   assert.equal(
     registry.channels.some(
@@ -657,6 +768,9 @@ test("official-source operator overrides safely consolidate separately listed ve
         {
           name: "Audited Museum Network",
           website: "https://museum-network.example/",
+          discoverySeedUrls: [
+            "https://museum-network.example/lost-and-found"
+          ],
           matchWebsiteHosts: ["museum-network.example"],
           evidenceUrls: ["https://museum-network.example/imprint"],
           auditedAt: "2026-07-24T00:00:00Z",
@@ -683,6 +797,12 @@ test("official-source operator overrides safely consolidate separately listed ve
   const groups = buildDiscoverySeedGroups(inventory);
   assert.equal(groups.length, 1);
   assert.equal(groups[0].origin, "https://museum-network.example");
+  assert.deepEqual(groups[0].seeds, [
+    "https://museum-network.example/",
+    "https://museum-network.example/lost-and-found",
+    "https://museum-network.example/a",
+    "https://www.museum-network.example/b",
+  ]);
   assert.deepEqual([...groups[0].venueIds].sort(), ["venue-a", "venue-b"]);
 });
 
@@ -737,6 +857,57 @@ test("keeps claim-specific evidence and discovers visible phones on a dedicated 
         contact.kind === "phone" && contact.value === "030 111111"
     ),
     false
+  );
+});
+
+test("extracts deliberately obfuscated email addresses only from lost-property pages", () => {
+  const dedicatedContacts = extractPublicContactValues(`
+    <html><head><title>Besucherzentrum</title></head><body><main>
+      <h1>Besucherzentrum</h1>
+      <p>Tel.: 030 700 906 – 720</p>
+      <p>E-Mail: besucherzentrum(at)gaertenderwelt.de</p>
+      <h2>Weitere Serviceangebote</h2>
+      <p>Das Besucherzentrum dient als Fundbüro für verlorene Gegenstände.</p>
+    </main></body></html>
+  `);
+  assert.ok(
+    dedicatedContacts.some(
+      (contact) =>
+        contact.kind === "email" &&
+        contact.value === "besucherzentrum@gaertenderwelt.de"
+    )
+  );
+  assert.ok(
+    dedicatedContacts.some(
+      (contact) =>
+        contact.kind === "phone" && contact.value === "030 700 906 – 720"
+    )
+  );
+
+  const generalContacts = extractPublicContactValues(`
+    <html><head><title>Besucherservice</title></head><body><main>
+      <p>E-Mail: besucherzentrum(at)gaertenderwelt.de</p>
+    </main></body></html>
+  `);
+  assert.equal(generalContacts.length, 0);
+});
+
+test("recognises an official lost-or-found FAQ question and its reception phone", () => {
+  const contacts = extractPublicContactValues(`
+    <html><head><title>Besuchsinformationen</title></head><body><main>
+      <h1>Häufige Fragen</h1>
+      <h2>An wen kann man sich wenden, wenn man etwas verloren oder gefunden hat?</h2>
+      <p>Bitte kontaktieren Sie die Rezeption im Ort der Information:
+        Tel.: +49 (0) 30-200 766 0
+      </p>
+    </main></body></html>
+  `);
+  assert.ok(
+    contacts.some(
+      (contact) =>
+        contact.kind === "phone" &&
+        contact.value === "+49 (0) 30-200 766 0"
+    )
   );
 });
 

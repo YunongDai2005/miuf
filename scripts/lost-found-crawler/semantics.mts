@@ -93,7 +93,7 @@ const RULES: SemanticRule[] = [
   },
   {
     key: "firstName",
-    pattern: /\b(vorname|first name|given name)\b/i,
+    pattern: /\b(vorname|first ?name|given name)\b/i,
     confidence: 0.97,
   },
   {

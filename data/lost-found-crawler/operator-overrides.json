@@ -44,6 +44,33 @@
         "https://www.planetarium.berlin/impressum"
       ],
       "auditedAt": "2026-07-24T00:00:00.000Z"
+    },
+    {
+      "name": "Grün Berlin GmbH – Gärten der Welt",
+      "website": "https://www.gaertenderwelt.de/",
+      "matchWebsiteHosts": [
+        "gaertenderwelt.de"
+      ],
+      "evidenceUrls": [
+        "https://www.gaertenderwelt.de/service/eure-ansprechpersonen-im-park/",
+        "https://www.gaertenderwelt.de/impressum/"
+      ],
+      "auditedAt": "2026-07-24T00:00:00.000Z"
+    },
+    {
+      "name": "Stiftung Denkmal für die ermordeten Juden Europas",
+      "website": "https://www.stiftung-denkmal.de/",
+      "discoverySeedUrls": [
+        "https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/"
+      ],
+      "matchWebsiteHosts": [
+        "stiftung-denkmal.de"
+      ],
+      "evidenceUrls": [
+        "https://www.stiftung-denkmal.de/impressum/",
+        "https://www.stiftung-denkmal.de/denkmaeler/denkmal-fuer-die-ermordeten-juden-europas-mit-ausstellung-im-ort-der-information/"
+      ],
+      "auditedAt": "2026-07-24T00:00:00.000Z"
     }
   ]
 }

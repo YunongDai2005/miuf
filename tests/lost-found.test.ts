@@ -299,6 +299,37 @@ test("quick-add chooses Berlin's central Siegessäule rather than a distant same
   );
 });
 
+test("prefers the exact memorial reception phone and keeps the general form as backup", async () => {
+  const attractions = JSON.parse(
+    await readFile(
+      new URL("../public/berlin-attractions.json", import.meta.url),
+      "utf8"
+    )
+  ) as Parameters<typeof buildIndex>[1];
+  const registry = JSON.parse(
+    await readFile(
+      new URL("../public/berlin-lost-found-channels.json", import.meta.url),
+      "utf8"
+    )
+  ) as NonNullable<Parameters<typeof buildIndex>[3]>;
+  const index = buildIndex([], attractions, {}, registry);
+  const memorial = index.items.find(
+    (item) => item.refId === "way/172234733"
+  );
+  assert.deepEqual(
+    memorial?.lostFoundChannels?.map((channel) => channel.kind),
+    ["phone", "general_contact_form"]
+  );
+
+  const separateMemorial = index.items.find(
+    (item) => item.refId === "node/13951345000"
+  );
+  assert.deepEqual(
+    separateMemorial?.lostFoundChannels?.map((channel) => channel.kind),
+    ["general_contact_form"]
+  );
+});
+
 test("retains journey details and includes category plus description in both reports", () => {
   const entry: ItineraryEntry = {
     uid: "u5-trip",

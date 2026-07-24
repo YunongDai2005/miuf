@@ -198,9 +198,9 @@ export function buildIndex(
   const channelRank: Record<PublishedLostFoundChannel["kind"], number> = {
     dedicated_lost_found_form: 0,
     operator_lost_found_form: 1,
-    general_contact_form: 2,
-    email: 3,
-    phone: 4,
+    email: 2,
+    phone: 3,
+    general_contact_form: 4,
     central_office_fallback: 5,
   };
   for (const channels of channelsByVenue.values()) {

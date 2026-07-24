@@ -10,6 +10,7 @@ import {
   pageEvidenceFromHtml,
   pageEvidenceHash,
 } from "./page-evidence.mjs";
+import { extractPublicContactValues } from "./discovery.mjs";
 import { selectRefreshedForm } from "./refresh.mjs";
 import { safeFetchText } from "./safe-fetch.mjs";
 
@@ -30,7 +31,11 @@ export interface VerificationReport {
     finalUrl?: string;
     previousHash: string;
     currentHash?: string;
-    method?: "static_form" | "rendered_form" | "page_evidence";
+    method?:
+      | "static_form"
+      | "rendered_form"
+      | "public_contact"
+      | "page_evidence";
     consecutiveFailures?: number;
     error?: string;
   }>;
@@ -65,6 +70,27 @@ export function isUnexpectedVerificationRedirect(
   finalUrl: string
 ): boolean {
   return normalizedVerificationUrl(expectedUrl) !== normalizedVerificationUrl(finalUrl);
+}
+
+export function publicContactStillPublished(input: {
+  html: string;
+  kind: "email" | "phone";
+  contactValue: string;
+}): boolean {
+  const normalizedContact = (value: string): string =>
+    input.kind === "email"
+      ? value.trim().toLowerCase()
+      : value
+          .replace(
+            /^(\s*(?:\+|00)\s*\d{1,3})\s*\(\s*0\s*\)/,
+            "$1"
+          )
+          .replace(/\D/g, "");
+  return extractPublicContactValues(input.html).some(
+    (contact) =>
+      contact.kind === input.kind &&
+      normalizedContact(contact.value) === normalizedContact(input.contactValue)
+  );
 }
 
 async function fetchForVerification(url: string) {
@@ -192,6 +218,19 @@ export async function verifyPublishedChannels(options: {
           method = "rendered_form";
         }
         currentHash = matchingForm?.contentHash;
+      } else if (
+        (channel.kind === "email" || channel.kind === "phone") &&
+        channel.contactValue
+      ) {
+        const stillPublished = publicContactStillPublished({
+          html: response.body,
+          kind: channel.kind,
+          contactValue: channel.contactValue,
+        });
+        currentHash = stillPublished
+          ? channel.contentHash
+          : pageEvidenceHash(pageEvidenceFromHtml(response.body));
+        method = "public_contact";
       } else {
         currentHash = pageEvidenceHash(pageEvidenceFromHtml(response.body));
         method = "page_evidence";

@@ -36,6 +36,7 @@ export interface OperatorRecord {
   id: string;
   name: string;
   website?: string;
+  discoverySeedUrls?: string[];
   venueIds: string[];
   confidence: number;
   resolutionSource: OperatorResolutionSource;
@@ -45,6 +46,7 @@ export interface OperatorRecord {
 export interface OperatorOverride {
   name: string;
   website: string;
+  discoverySeedUrls?: string[];
   matchWebsiteHosts?: string[];
   venueIds?: string[];
   evidenceUrls: string[];

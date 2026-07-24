@@ -121,10 +121,26 @@ function validateOperatorOverrides(
       !Array.isArray(entry.evidenceUrls) ||
       entry.evidenceUrls.length === 0 ||
       entry.evidenceUrls.some((url) => !validWebUrl(url)) ||
+      (entry.discoverySeedUrls !== undefined &&
+        (!Array.isArray(entry.discoverySeedUrls) ||
+          entry.discoverySeedUrls.some((url) => !validWebUrl(url)))) ||
       typeof entry.auditedAt !== "string" ||
       !Number.isFinite(Date.parse(entry.auditedAt))
     ) {
       throw new Error(`Invalid operator override at index ${index}`);
+    }
+    const website = validWebUrl(entry.website)!;
+    const discoverySeedUrls = (entry.discoverySeedUrls ?? []).map(
+      (url) => validWebUrl(url)!
+    );
+    if (
+      discoverySeedUrls.some(
+        (url) => normalizedHostname(url) !== normalizedHostname(website)
+      )
+    ) {
+      throw new Error(
+        `Operator discovery seed must share the audited website host at index ${index}`
+      );
     }
     const matchWebsiteHosts = (entry.matchWebsiteHosts ?? []).map((host) =>
       host.replace(/^www\./i, "").trim().toLowerCase()
@@ -151,7 +167,8 @@ function validateOperatorOverrides(
     venueIds.forEach((id) => claimedVenues.add(id));
     return {
       name: entry.name.trim(),
-      website: validWebUrl(entry.website)!,
+      website,
+      discoverySeedUrls,
       matchWebsiteHosts,
       venueIds,
       evidenceUrls: entry.evidenceUrls.map((url) => validWebUrl(url)!),
@@ -307,6 +324,12 @@ export async function buildInventory(options: {
         for (const evidence of evidenceUrls) {
           if (!existing.evidenceUrls.includes(evidence)) existing.evidenceUrls.push(evidence);
         }
+        for (const seedUrl of auditedOverride?.discoverySeedUrls ?? []) {
+          existing.discoverySeedUrls ??= [];
+          if (!existing.discoverySeedUrls.includes(seedUrl)) {
+            existing.discoverySeedUrls.push(seedUrl);
+          }
+        }
         existing.website ??= operatorWebsite;
         if (operatorResolutionSource === "official_source_audit") {
           existing.resolutionSource = operatorResolutionSource;
@@ -317,6 +340,7 @@ export async function buildInventory(options: {
           id: operatorId,
           name: operatorName,
           website: operatorWebsite,
+          discoverySeedUrls: auditedOverride?.discoverySeedUrls,
           venueIds: [attraction.id],
           confidence:
             operatorResolutionSource === "official_source_audit"
@@ -393,6 +417,9 @@ export async function buildInventory(options: {
   const operators = [...operatorsByKey.values()]
     .map((operator) => ({
       ...operator,
+      discoverySeedUrls: operator.discoverySeedUrls
+        ? [...operator.discoverySeedUrls].sort()
+        : undefined,
       venueIds: [...operator.venueIds].sort(),
       evidenceUrls: [...operator.evidenceUrls].sort(),
     }))
