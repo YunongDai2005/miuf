@@ -222,6 +222,20 @@ function safeAction(pageUrl: string, action: string | undefined): string | undef
   }
 }
 
+function stableUrlShape(rawUrl: string): string {
+  const url = new URL(rawUrl);
+  url.hash = "";
+  for (const key of [...url.searchParams.keys()]) {
+    if (/^(utm_|fbclid|gclid|cHash|csrf|token|nonce|state|timestamp|_ts)/i.test(key)) {
+      url.searchParams.delete(key);
+    }
+  }
+  if (url.pathname !== "/") {
+    url.pathname = url.pathname.replace(/\/+$/, "");
+  }
+  return url.toString();
+}
+
 export function extractFormsFromHtml(input: {
   html: string;
   pageUrl: string;
@@ -290,8 +304,8 @@ export function extractFormsFromHtml(input: {
       loginRequired,
     };
     const stableShape = {
-      pageUrl: input.pageUrl,
-      formAction,
+      pageUrl: stableUrlShape(input.pageUrl),
+      formAction: formAction ? stableUrlShape(formAction) : undefined,
       formMethod,
       language,
       fields: fields.map((field) => ({

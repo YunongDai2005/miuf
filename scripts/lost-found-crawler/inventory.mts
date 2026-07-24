@@ -3,6 +3,8 @@ import { dirname } from "node:path";
 import { stableId } from "./hash.mjs";
 import type {
   InventoryFile,
+  OperatorOverride,
+  OperatorOverrideFile,
   OperatorRecord,
   VenueOwnerResolution,
 } from "./schemas";
@@ -92,12 +94,94 @@ function validWebUrl(value: string | undefined): string | undefined {
   }
 }
 
+function normalizedHostname(value: string): string {
+  return new URL(value).hostname.replace(/^www\./i, "").toLowerCase();
+}
+
+function validateOperatorOverrides(
+  value: unknown
+): OperatorOverride[] {
+  if (!value || typeof value !== "object") {
+    throw new Error("Operator override file must be an object");
+  }
+  const file = value as Partial<OperatorOverrideFile>;
+  if (file.version !== 1 || !Array.isArray(file.operators)) {
+    throw new Error("Unsupported operator override file");
+  }
+  const claimedHosts = new Set<string>();
+  const claimedVenues = new Set<string>();
+  return file.operators.map((entry, index) => {
+    if (
+      !entry ||
+      typeof entry !== "object" ||
+      typeof entry.name !== "string" ||
+      !entry.name.trim() ||
+      typeof entry.website !== "string" ||
+      !validWebUrl(entry.website) ||
+      !Array.isArray(entry.evidenceUrls) ||
+      entry.evidenceUrls.length === 0 ||
+      entry.evidenceUrls.some((url) => !validWebUrl(url)) ||
+      typeof entry.auditedAt !== "string" ||
+      !Number.isFinite(Date.parse(entry.auditedAt))
+    ) {
+      throw new Error(`Invalid operator override at index ${index}`);
+    }
+    const matchWebsiteHosts = (entry.matchWebsiteHosts ?? []).map((host) =>
+      host.replace(/^www\./i, "").trim().toLowerCase()
+    );
+    if (
+      matchWebsiteHosts.some(
+        (host) =>
+          !host ||
+          host.includes("/") ||
+          host.includes(":") ||
+          claimedHosts.has(host)
+      )
+    ) {
+      throw new Error(`Invalid or duplicate operator host at index ${index}`);
+    }
+    const venueIds = (entry.venueIds ?? []).map((id) => id.trim());
+    if (
+      venueIds.some((id) => !id || claimedVenues.has(id)) ||
+      (matchWebsiteHosts.length === 0 && venueIds.length === 0)
+    ) {
+      throw new Error(`Invalid or duplicate operator venue at index ${index}`);
+    }
+    matchWebsiteHosts.forEach((host) => claimedHosts.add(host));
+    venueIds.forEach((id) => claimedVenues.add(id));
+    return {
+      name: entry.name.trim(),
+      website: validWebUrl(entry.website)!,
+      matchWebsiteHosts,
+      venueIds,
+      evidenceUrls: entry.evidenceUrls.map((url) => validWebUrl(url)!),
+      auditedAt: new Date(entry.auditedAt).toISOString(),
+    };
+  });
+}
+
 export async function buildInventory(options: {
   inputPath: string;
   outputPath: string;
   sourceLabel?: string;
+  operatorOverridePath?: string;
 }): Promise<InventoryFile> {
   const payload = JSON.parse(await readFile(options.inputPath, "utf8")) as AttractionFile;
+  const operatorOverrides = options.operatorOverridePath
+    ? validateOperatorOverrides(
+        JSON.parse(await readFile(options.operatorOverridePath, "utf8"))
+      )
+    : [];
+  const overridesByHost = new Map<string, OperatorOverride>();
+  const overridesByVenue = new Map<string, OperatorOverride>();
+  for (const override of operatorOverrides) {
+    for (const host of override.matchWebsiteHosts ?? []) {
+      overridesByHost.set(host, override);
+    }
+    for (const venueId of override.venueIds ?? []) {
+      overridesByVenue.set(venueId, override);
+    }
+  }
   const operatorsByKey = new Map<string, OperatorRecord>();
   const disjointSet = new DisjointSet();
   for (const attraction of payload.attractions) disjointSet.add(attraction.id);
@@ -187,17 +271,34 @@ export async function buildInventory(options: {
     if (!entityGroup) throw new Error(`Missing entity group for ${attraction.id}`);
     const canonical = entityGroup.canonical;
     const officialWebsite = validWebUrl(attraction.website ?? canonical.website);
-    const operatorWebsite = validWebUrl(
+    const auditedOverride =
+      overridesByVenue.get(attraction.id) ??
+      (officialWebsite
+        ? overridesByHost.get(normalizedHostname(officialWebsite))
+        : undefined);
+    const operatorWebsite = auditedOverride?.website ?? validWebUrl(
       attraction.operatorWebsite ?? canonical.operatorWebsite
     );
     const operatorName =
-      attraction.operator?.trim() || canonical.operator?.trim() || undefined;
+      auditedOverride?.name ??
+      attraction.operator?.trim() ??
+      canonical.operator?.trim() ??
+      undefined;
+    const operatorResolutionSource = operatorName
+      ? auditedOverride
+        ? "official_source_audit"
+        : "metadata_candidate"
+      : undefined;
     const operatorKey = operatorName ? normalizedName(operatorName) : "";
     const operatorId = operatorKey ? stableId("operator", operatorKey) : undefined;
     const evidenceUrls = [
+      ...(auditedOverride?.evidenceUrls ?? []),
       attraction.contactSourceUrl,
       attraction.websiteSourceUrl,
-    ].filter((value): value is string => Boolean(value));
+    ].filter(
+      (value, index, all): value is string =>
+        Boolean(value) && all.indexOf(value) === index
+    );
 
     if (operatorId && operatorName) {
       const existing = operatorsByKey.get(operatorKey);
@@ -207,13 +308,24 @@ export async function buildInventory(options: {
           if (!existing.evidenceUrls.includes(evidence)) existing.evidenceUrls.push(evidence);
         }
         existing.website ??= operatorWebsite;
+        if (operatorResolutionSource === "official_source_audit") {
+          existing.resolutionSource = operatorResolutionSource;
+          existing.confidence = 0.98;
+        }
       } else {
         operatorsByKey.set(operatorKey, {
           id: operatorId,
           name: operatorName,
           website: operatorWebsite,
           venueIds: [attraction.id],
-          confidence: operatorWebsite ? 0.85 : 0.72,
+          confidence:
+            operatorResolutionSource === "official_source_audit"
+              ? 0.98
+              : operatorWebsite
+                ? 0.85
+                : 0.72,
+          resolutionSource:
+            operatorResolutionSource ?? "metadata_candidate",
           evidenceUrls: [...evidenceUrls],
         });
       }
@@ -243,11 +355,14 @@ export async function buildInventory(options: {
       operatorId,
       operatorName,
       operatorWebsite,
+      operatorResolutionSource,
       resolutionStatus,
       confidence: operatorName
-        ? operatorWebsite
-          ? 0.85
-          : 0.72
+        ? operatorResolutionSource === "official_source_audit"
+          ? 0.98
+          : operatorWebsite
+            ? 0.85
+            : 0.72
         : officialWebsite
           ? 0.62
           : 0.1,

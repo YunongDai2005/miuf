@@ -83,7 +83,7 @@ const RULES: SemanticRule[] = [
   {
     key: "messageBody",
     pattern:
-      /^(nachricht|ihre nachricht|mitteilung|anfrage|message|your message|enquiry)$/i,
+      /^(nachricht|ihre nachricht|mitteilung|ihre mitteilung(?: an .+)?|anfrage|message|your message|enquiry)$/i,
     confidence: 0.9,
   },
   {
@@ -129,7 +129,7 @@ const RULES: SemanticRule[] = [
   {
     key: "privacyConsent",
     pattern:
-      /\b(datenschutz|einwilligung|privacy|consent|dsgvo|gdpr|agb|terms(?: and conditions)?)\b/i,
+      /\b(datenschutz(?:erklärung)?|einwilligung|privacy|consent|dsgvo|gdpr|agb|terms(?: and conditions)?|speicherung (?:ihrer|personenbezogener) daten|storage of personal data|agree.{0,40}data provided)\b/i,
     confidence: 0.96,
   },
 ];
@@ -151,7 +151,12 @@ export function inferSemanticField(input: {
     input.rawName,
   ]
     .filter(Boolean)
-    .map((value) => String(value).replace(/\s+/g, " ").trim());
+    .map((value) =>
+      String(value)
+        .replace(/\s+/g, " ")
+        .replace(/\s*\*+\s*$/, "")
+        .trim()
+    );
   const text = pieces
     .join(" ")
     .replace(/\s+/g, " ")

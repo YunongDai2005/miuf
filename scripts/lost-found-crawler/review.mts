@@ -78,7 +78,21 @@ export async function recordReviewDecision(options: {
       | "adapter"
       | undefined,
     adapterId: options.adapterId?.trim() || undefined,
+    reviewedContentHash:
+      options.submissionMode === "assisted_fill" ||
+      options.submissionMode === "adapter"
+        ? candidate.form?.contentHash
+        : undefined,
   };
+  if (
+    (options.submissionMode === "assisted_fill" ||
+      options.submissionMode === "adapter") &&
+    !decision.reviewedContentHash
+  ) {
+    throw new Error(
+      "Assisted filling requires a currently extracted form to review"
+    );
+  }
   reviewFile.decisions = [
     ...reviewFile.decisions.filter(
       (entry) => entry.candidateId !== options.candidateId
@@ -152,11 +166,10 @@ export async function exportReviewReport(options: {
       const operator = candidate.operatorId
         ? operators.get(candidate.operatorId)
         : undefined;
-      const acceptCommand = `npm run data:lost-found:review -- --candidate=${candidate.id} --decision=accept --reviewer=&quot;YOUR NAME&quot; --kind=${
+      const acceptCommand =
         candidate.kind === "manual_review"
-          ? "dedicated_lost_found_form"
-          : candidate.kind
-      } --submission-mode=open_only`;
+          ? "No safe accept shortcut: this is evidence only. Accept a separately extracted form, email or phone candidate; otherwise reject this lead."
+          : `npm run data:lost-found:review -- --candidate=${candidate.id} --decision=accept --reviewer=&quot;YOUR NAME&quot; --kind=${candidate.kind} --submission-mode=open_only`;
       const rejectCommand = `npm run data:lost-found:review -- --candidate=${candidate.id} --decision=reject --reviewer=&quot;YOUR NAME&quot; --notes=&quot;REASON&quot;`;
       return `
         <article>

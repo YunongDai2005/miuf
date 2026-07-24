@@ -1,0 +1,49 @@
+{
+  "version": 1,
+  "operators": [
+    {
+      "name": "Staatliche Museen zu Berlin",
+      "website": "https://www.smb.museum/",
+      "matchWebsiteHosts": [
+        "smb.museum"
+      ],
+      "evidenceUrls": [
+        "https://www.smb.museum/impressum/"
+      ],
+      "auditedAt": "2026-07-24T00:00:00.000Z"
+    },
+    {
+      "name": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "website": "https://www.spsg.de/",
+      "matchWebsiteHosts": [
+        "spsg.de"
+      ],
+      "evidenceUrls": [
+        "https://www.spsg.de/impressum"
+      ],
+      "auditedAt": "2026-07-24T00:00:00.000Z"
+    },
+    {
+      "name": "Stiftung Stadtmuseum Berlin",
+      "website": "https://www.stadtmuseum.de/",
+      "matchWebsiteHosts": [
+        "stadtmuseum.de"
+      ],
+      "evidenceUrls": [
+        "https://www.stadtmuseum.de/impressum"
+      ],
+      "auditedAt": "2026-07-24T00:00:00.000Z"
+    },
+    {
+      "name": "Stiftung Planetarium Berlin",
+      "website": "https://www.planetarium.berlin/",
+      "matchWebsiteHosts": [
+        "planetarium.berlin"
+      ],
+      "evidenceUrls": [
+        "https://www.planetarium.berlin/impressum"
+      ],
+      "auditedAt": "2026-07-24T00:00:00.000Z"
+    }
+  ]
+}

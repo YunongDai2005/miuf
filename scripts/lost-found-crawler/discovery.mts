@@ -1,6 +1,7 @@
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import * as cheerio from "cheerio";
+import type { Element } from "domhandler";
 import robotsParser from "robots-parser";
 import { extractRenderedForms } from "./browser.mjs";
 import { extractFormsFromHtml } from "./form-extractor.mjs";
@@ -23,12 +24,16 @@ const LOST_PATTERN =
   /fundbüro|fundbuero|fundsache|verlust|verloren|lost[- ]?found|lost property/i;
 const PAGE_LOST_PATTERN =
   /fundbüro|fundbuero|fundsache|verlustmeldung|gegenstand.{0,30}verloren|verloren.{0,30}gegenstand|lost[- ]?found|lost property/i;
+const CONTACT_PURPOSE_PATTERN =
+  /fundbüro|fundbuero|fundsache|verlust|verloren|lost[- ]?found|lost property|fahrrad|handy|schlüssel|gegenstände?|haustier|katze|hund|schildkröte|item|belonging|animal|pet/i;
 const CONTACT_PATTERN =
   /kontakt|contact|besucherservice|visitor service|gästeservice|service|hilfe|faq/i;
 const CONTACT_PAGE_PATTERN =
   /kontakt|contact|besucherservice|visitor service|gästeservice/i;
+const IRRELEVANT_GENERAL_CONTACT_PATTERN =
+  /buchung|booking|group|gruppe|feedback|survey|umfrage|ticket|presse|press/i;
 const SKIP_PATTERN =
-  /\/(news|presse|press|karriere|jobs|shop|tickets?|events?|kalender|calendar|datenschutz|privacy|impressum|legal|sitemap)(\/|$)|\.(?:jpe?g|png|gif|webp|svg|pdf|zip|mp[34]|ics)$/i;
+  /\/(news|presse(?:mitteilungen)?|press|karriere|jobs|shop|tickets?|events?|kalender|calendar|datenschutz|privacy|impressum|legal|sitemap)(?:\/|$)|\.(?:jpe?g|png|gif|webp|svg|pdf|zip|mp[34]|ics)$/i;
 
 type QueueEntry = {
   url: string;
@@ -42,6 +47,13 @@ type RobotsPolicy = {
   isAllowed(url: string, userAgent?: string): boolean | undefined;
   getSitemaps(): string[];
 };
+
+export interface DiscoveredPublicContact {
+  kind: "email" | "phone";
+  value: string;
+  selector: string;
+  excerpt: string;
+}
 
 export interface DiscoverySeedGroup {
   origin: string;
@@ -59,7 +71,16 @@ export function buildDiscoverySeedGroups(
     inventory.entityGroups.map((group) => [group.id, group.venueIds])
   );
   for (const venue of inventory.venues) {
-    const seed = venue.officialWebsite ?? venue.operatorWebsite;
+    const usesAuditedOperator =
+      venue.operatorResolutionSource === "official_source_audit" &&
+      Boolean(venue.operatorId && venue.operatorWebsite);
+    const usesOperatorSeed =
+      usesAuditedOperator ||
+      (!venue.officialWebsite &&
+        Boolean(venue.operatorId && venue.operatorWebsite));
+    const seed = usesOperatorSeed
+      ? venue.operatorWebsite
+      : venue.officialWebsite ?? venue.operatorWebsite;
     if (!seed || venue.resolutionStatus === "parent_venue_required") continue;
     const url = new URL(seed);
     if (
@@ -70,9 +91,6 @@ export function buildDiscoverySeedGroups(
     }
     // A shared host is not evidence of a shared responsible organisation.
     // Only an explicit operator website may merge venues by operator.
-    const usesOperatorSeed =
-      !venue.officialWebsite &&
-      Boolean(venue.operatorId && venue.operatorWebsite);
     const ownerKey = usesOperatorSeed
       ? `operator:${venue.operatorId}`
       : `entity:${venue.entityGroupId}`;
@@ -115,6 +133,32 @@ function canonicalUrl(rawUrl: string): string {
   return url.toString();
 }
 
+export function candidateUrlIdentity(rawUrl: string): string {
+  const url = new URL(canonicalUrl(rawUrl));
+  if (url.pathname !== "/") {
+    url.pathname = url.pathname.replace(/\/+$/, "");
+  }
+  return url.toString();
+}
+
+export function formCandidateId(input: {
+  ownerScopeKey: string;
+  pageUrl: string;
+  formIndex: number;
+  hasForm: boolean;
+}): string {
+  return stableId(
+    "channel",
+    `${input.ownerScopeKey}|${candidateUrlIdentity(input.pageUrl)}|${
+      input.hasForm ? `form:${input.formIndex}` : "page"
+    }`
+  );
+}
+
+export function shouldSkipDiscoveryUrl(rawUrl: string): boolean {
+  return SKIP_PATTERN.test(new URL(rawUrl).pathname);
+}
+
 function linkPriority(url: string, label: string): number {
   const text = `${url} ${label}`;
   if (LOST_PATTERN.test(text)) return 100;
@@ -130,14 +174,58 @@ function sameSiteHost(left: URL, right: URL): boolean {
 function publicContactValues(
   $: cheerio.CheerioAPI,
   dedicatedPage: boolean
-): Array<{ kind: "email" | "phone"; value: string; selector: string }> {
+): DiscoveredPublicContact[] {
   const preferred = $("main, article, [role='main']").first();
   const root = preferred.length ? preferred : $("body");
   const contacts: Array<{
     kind: "email" | "phone";
     value: string;
     selector: string;
+    excerpt: string;
   }> = [];
+  const rootText = compactText(
+    root
+      .clone()
+      .find("nav, header, footer, aside, script, style, noscript")
+      .remove()
+      .end()
+      .text()
+  );
+  const purposeScore = (excerpt: string): number =>
+    Number(/fahrrad|handy|schlüssel|gegenstände?|item|belonging/i.test(excerpt)) *
+      2 -
+    Number(/haustier|katze|hund|schildkröte|animal|pet/i.test(excerpt));
+  const excerptAround = (needle: string, fallback: string): string => {
+    const haystack = rootText.toLowerCase();
+    const target = needle.toLowerCase();
+    const excerpts: string[] = [];
+    let searchFrom = 0;
+    while (searchFrom < haystack.length) {
+      const index = haystack.indexOf(target, searchFrom);
+      if (index < 0) break;
+      const start = Math.max(0, index - 260);
+      const end = Math.min(rootText.length, index + needle.length + 360);
+      excerpts.push(rootText.slice(start, end).trim());
+      searchFrom = index + Math.max(1, target.length);
+    }
+    if (!excerpts.length) return compactText(fallback).slice(0, 700);
+    return excerpts.sort(
+      (left, right) => purposeScore(right) - purposeScore(left)
+    )[0];
+  };
+  const localExcerpt = (anchor: Element, value: string): string => {
+    let context = $(anchor);
+    let fallback = compactText($(anchor).parent().text());
+    for (let level = 0; level < 5; level += 1) {
+      context = context.parent();
+      if (!context.length || context.is("body")) break;
+      const text = compactText(context.text());
+      if (text.length >= 20 && text.length <= 900) fallback = text;
+      if (CONTACT_PURPOSE_PATTERN.test(text) && text.length <= 900) return text;
+      if (context.is("main, article, [role='main']")) break;
+    }
+    return excerptAround(value, fallback);
+  };
   root.find("a[href]").each((_, anchor) => {
     if (!dedicatedPage) {
       let context = $(anchor);
@@ -168,6 +256,7 @@ function publicContactValues(
           kind: "email",
           value,
           selector: 'a[href^="mailto:"]',
+          excerpt: localExcerpt(anchor, value),
         });
       }
     } else if (/^tel:/i.test(href)) {
@@ -177,32 +266,224 @@ function publicContactValues(
       } catch {
         // Retain the literal public value if its escaping is malformed.
       }
+      if (/[a-z]/i.test(value)) return;
       value = value.replace(/[^\d+() .-]/g, "").trim();
       if (value.replace(/\D/g, "").length >= 6 && value.length <= 40) {
         contacts.push({
           kind: "phone",
           value,
           selector: 'a[href^="tel:"]',
+          excerpt: localExcerpt(anchor, value),
         });
       }
     }
   });
-  return contacts.filter(
-    (contact, index, all) =>
-      all.findIndex(
-        (candidate) =>
-          candidate.kind === contact.kind &&
-          candidate.value.toLowerCase() === contact.value.toLowerCase()
-      ) === index
+
+  if (dedicatedPage) {
+    const phonePattern =
+      /(?:telefon|tel\.?|phone)\s*:?\s*((?:\+|00)?\d[\d\s()./–-]{4,}\d)/gi;
+    const sections: string[] = [];
+    root.find("h1, h2, h3, h4, h5, h6").each((_, heading) => {
+      const section = $(heading).add(
+        $(heading).nextUntil("h1, h2, h3, h4, h5, h6")
+      );
+      if (section.find("h1, h2, h3, h4, h5, h6").length) return;
+      const text = section
+        .map((__, node) => compactText($(node).text()))
+        .get()
+        .filter(Boolean)
+        .join(" ");
+      if (CONTACT_PURPOSE_PATTERN.test(text)) sections.push(text);
+    });
+    for (const sectionText of sections.length ? sections : [rootText]) {
+      for (const match of sectionText.matchAll(phonePattern)) {
+        const value = match[1].replace(/[./–-]+$/g, "").trim();
+        if (value.replace(/\D/g, "").length < 6 || value.length > 40) continue;
+        contacts.push({
+          kind: "phone",
+          value,
+          selector: "main",
+          excerpt: sectionText.slice(0, 700),
+        });
+      }
+    }
+  }
+
+  contacts.sort(
+    (left, right) =>
+      left.kind.localeCompare(right.kind) ||
+      left.value.localeCompare(right.value) ||
+      purposeScore(right.excerpt) - purposeScore(left.excerpt)
   );
+  return contacts
+    .filter(
+      (contact) =>
+        !/haustier|katze|hund|schildkröte|animal|pet/i.test(contact.excerpt) ||
+        /fahrrad|handy|schlüssel|gegenstände?|item|belonging/i.test(
+          contact.excerpt
+        )
+    )
+    .filter(
+      (contact, index, all) =>
+        all.findIndex(
+          (candidate) =>
+            candidate.kind === contact.kind &&
+            candidate.value.toLowerCase() === contact.value.toLowerCase()
+        ) === index
+    );
 }
 
 export function extractPublicContactValues(
   html: string
-): Array<{ kind: "email" | "phone"; value: string; selector: string }> {
+): DiscoveredPublicContact[] {
   const $ = cheerio.load(html);
   const title = compactText($("title").first().text() || $("h1").first().text());
   return publicContactValues($, PAGE_LOST_PATTERN.test(title));
+}
+
+/**
+ * Extract a conservative fallback from a venue's exact official page. Unlike
+ * lost-page contacts, only values inside a clearly labelled contact section
+ * are returned; navigation and footer-wide organisation contacts are ignored.
+ */
+export function extractOfficialVenueContactValues(
+  html: string
+): DiscoveredPublicContact[] {
+  const $ = cheerio.load(html);
+  const root = $("body");
+  const contacts: DiscoveredPublicContact[] = [];
+  root.find("h1, h2, h3, h4, h5, h6").each((_, heading) => {
+    if ($(heading).closest("nav, header, footer").length) return;
+    const headingText = compactText($(heading).text());
+    if (
+      !/^(kontakt|contact|ansprechpartner(?:in)?|visitor (?:contact|service))$/i.test(
+        headingText
+      )
+    ) {
+      return;
+    }
+    const section = $(heading)
+      .add($(heading).nextUntil("h1, h2, h3, h4, h5, h6"));
+    const sectionText = section
+      .map((_, node) => compactText($(node).text()))
+      .get()
+      .filter(Boolean)
+      .join(" ")
+      .slice(0, 1_500);
+    if (!sectionText) return;
+    section.find("a[href]").each((_, anchor) => {
+      const href = ($(anchor).attr("href") ?? "").trim();
+      if (/^mailto:/i.test(href)) {
+        let value = href.slice("mailto:".length).split("?")[0].trim();
+        try {
+          value = decodeURIComponent(value);
+        } catch {
+          // Keep a malformed-but-public literal for the reviewer.
+        }
+        if (/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(value)) {
+          contacts.push({
+            kind: "email",
+            value,
+            selector: 'a[href^="mailto:"]',
+            excerpt: sectionText,
+          });
+        }
+      } else if (/^tel:/i.test(href)) {
+        let value = href.slice("tel:".length).split("?")[0].trim();
+        try {
+          value = decodeURIComponent(value);
+        } catch {
+          // Keep a malformed-but-public literal for the reviewer.
+        }
+        if (/[a-z]/i.test(value)) return;
+        value = value.replace(/[^\d+() .-]/g, "").trim();
+        if (value.replace(/\D/g, "").length >= 6 && value.length <= 40) {
+          contacts.push({
+            kind: "phone",
+            value,
+            selector: 'a[href^="tel:"]',
+            excerpt: sectionText,
+          });
+        }
+      }
+    });
+    for (const match of sectionText.matchAll(
+      /\b[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}\b/gi
+    )) {
+      contacts.push({
+        kind: "email",
+        value: match[0],
+        selector: "main",
+        excerpt: sectionText,
+      });
+    }
+    for (const match of sectionText.matchAll(
+      /(?:\+49|0)\s?\d{2,5}(?:[\s./()-]*\d){5,}/g
+    )) {
+      const value = match[0].replace(/[./-]+$/g, "").trim();
+      if (value.replace(/\D/g, "").length >= 7 && value.length <= 40) {
+        contacts.push({
+          kind: "phone",
+          value,
+          selector: "main",
+          excerpt: sectionText,
+        });
+      }
+    }
+  });
+  return contacts
+    .sort(
+      (left, right) =>
+        left.kind.localeCompare(right.kind) ||
+        left.value.localeCompare(right.value)
+    )
+    .filter(
+      (contact, index, all) =>
+        all.findIndex(
+          (candidate) =>
+            candidate.kind === contact.kind &&
+            candidate.value.toLowerCase() === contact.value.toLowerCase()
+        ) === index
+    );
+}
+
+export function isRelevantDiscoveredForm(
+  form: import("./schemas").FormSnapshot,
+  contactPage: boolean
+): boolean {
+  const semanticKeys = new Set<string>(
+    form.fields.map((field) => field.semanticKey)
+  );
+  const lostSpecificFields = [
+    "lossDate",
+    "lossTime",
+    "lossLocation",
+    "itemCategory",
+    "itemDescription",
+  ].filter((key) => semanticKeys.has(key)).length;
+  const purposeText = `${new URL(form.pageUrl).pathname} ${form.title}`;
+  const looksLikeGeneralContact =
+    contactPage &&
+    !IRRELEVANT_GENERAL_CONTACT_PATTERN.test(purposeText) &&
+    form.fields.length >= 2 &&
+    form.fields.some(
+      (field) =>
+        field.semanticKey === "email" ||
+        field.semanticKey === "phone" ||
+        field.semanticKey === "fullName"
+    ) &&
+    form.fields.some(
+      (field) =>
+        field.semanticKey === "messageBody" || field.control === "textarea"
+    ) &&
+    !/newsletter|search|suche|site search/i.test(
+      `${form.contextText} ${form.formAction ?? ""}`
+    );
+  return (
+    PAGE_LOST_PATTERN.test(form.contextText) ||
+    lostSpecificFields >= 2 ||
+    looksLikeGeneralContact
+  );
 }
 
 async function sleep(milliseconds: number): Promise<void> {
@@ -301,7 +582,11 @@ export async function discoverChannels(options: {
           .filter(Boolean)
           .filter((url) => {
             const parsed = new URL(url);
-            return sameSiteHost(seedOrigin, parsed) && linkPriority(url, "") > 0;
+            return (
+              sameSiteHost(seedOrigin, parsed) &&
+              !shouldSkipDiscoveryUrl(url) &&
+              linkPriority(url, "") > 0
+            );
           })
           .slice(0, 40);
         for (const url of sitemapUrls) {
@@ -363,44 +648,18 @@ export async function discoverChannels(options: {
 
         if (pageLooksRelevant) {
           const contactPage = CONTACT_PAGE_PATTERN.test(`${finalUrl} ${title}`);
-          const isRelevantForm = (form: (typeof forms)[number]): boolean => {
-            const semanticKeys = new Set<string>(
-              form.fields.map((field) => field.semanticKey)
-            );
-            const lostSpecificFields = [
-              "lossDate",
-              "lossTime",
-              "lossLocation",
-              "itemCategory",
-              "itemDescription",
-            ].filter((key) => semanticKeys.has(key)).length;
-            const looksLikeGeneralContact =
-              contactPage &&
-              form.fields.length >= 2 &&
-              form.fields.some(
-                (field) =>
-                  field.semanticKey === "email" ||
-                  field.semanticKey === "phone" ||
-                  field.semanticKey === "fullName"
-              ) &&
-              form.fields.some((field) => field.control === "textarea") &&
-              !/newsletter|search|suche|site search/i.test(
-                `${form.contextText} ${form.formAction ?? ""}`
-              );
-            return (
-              PAGE_LOST_PATTERN.test(form.contextText) ||
-              lostSpecificFields >= 2 ||
-              looksLikeGeneralContact
-            );
-          };
-          let relevantForms = forms.filter(isRelevantForm);
+          let relevantForms = forms.filter((form) =>
+            isRelevantDiscoveredForm(form, contactPage)
+          );
           if (options.renderDynamic && relevantForms.length === 0) {
             try {
               const rendered = await extractRenderedForms(finalUrl, {
                 explore: true,
                 maxStates: 8,
               });
-              relevantForms = rendered.forms.filter(isRelevantForm);
+              relevantForms = rendered.forms.filter((form) =>
+                isRelevantDiscoveredForm(form, contactPage)
+              );
             } catch {
               // The static page remains a reviewable lead if browser rendering is unavailable.
             }
@@ -410,7 +669,7 @@ export async function discoverChannels(options: {
             : pageHasLostEvidence
               ? [undefined]
               : [];
-          for (const form of pageForms) {
+          for (const [formIndex, form] of pageForms.entries()) {
             const candidatePageUrl = form?.pageUrl ?? finalUrl;
             const scored = scoreCandidate({
               url: candidatePageUrl,
@@ -419,14 +678,17 @@ export async function discoverChannels(options: {
               form,
               linkedFromOfficialSeed: true,
             });
-            const key = `${ownerScopeKey}|${candidatePageUrl}|${
-              form?.contentHash ?? "page"
-            }`;
+            const key = formCandidateId({
+              ownerScopeKey,
+              pageUrl: candidatePageUrl,
+              formIndex,
+              hasForm: Boolean(form),
+            });
             if (candidateKeys.has(key)) continue;
             candidateKeys.add(key);
             const observedAt = new Date().toISOString();
             candidates.push({
-              id: stableId("channel", key),
+              id: key,
               operatorId:
                 group.operatorIds.size === 1 ? [...group.operatorIds][0] : undefined,
               venueIds: [...group.venueIds].sort(),
@@ -489,7 +751,7 @@ export async function discoverChannels(options: {
                   {
                     sourceUrl: finalUrl,
                     selector: contact.selector,
-                    excerpt: bodyText.slice(0, 500),
+                    excerpt: contact.excerpt.slice(0, 700),
                     contentHash: pageEvidenceHash(pageEvidence),
                     observedAt,
                   },
@@ -499,6 +761,47 @@ export async function discoverChannels(options: {
                 discoveredAt: observedAt,
               });
             }
+          }
+        }
+
+        if (
+          entry.depth === 0 &&
+          group.operatorIds.size === 0 &&
+          !pageHasLostEvidence
+        ) {
+          for (const contact of extractOfficialVenueContactValues(response.body)) {
+            const contactKey = `${ownerScopeKey}|official-venue-fallback|${
+              contact.kind
+            }|${contact.value.toLowerCase()}`;
+            if (candidateKeys.has(contactKey)) continue;
+            candidateKeys.add(contactKey);
+            const observedAt = new Date().toISOString();
+            candidates.push({
+              id: stableId("channel", contactKey),
+              venueIds: [...group.venueIds].sort(),
+              kind: contact.kind,
+              pageUrl: finalUrl,
+              contactValue: contact.value,
+              confidence: contact.kind === "email" ? 45 : 40,
+              reasons: [
+                "published in a contact section on the exact official venue page",
+                "no lost-property-specific purpose was confirmed",
+                "review as a venue fallback before use",
+              ],
+              discoveryPath: entry.path,
+              evidence: [
+                {
+                  sourceUrl: finalUrl,
+                  selector: contact.selector,
+                  excerpt: contact.excerpt,
+                  contentHash: pageEvidenceHash(pageEvidence),
+                  observedAt,
+                },
+              ],
+              fetchStatus: "ok",
+              reviewStatus: "needs_review",
+              discoveredAt: observedAt,
+            });
           }
         }
 
@@ -519,7 +822,10 @@ export async function discoverChannels(options: {
           } catch {
             return;
           }
-          if (!["http:", "https:"].includes(target.protocol) || SKIP_PATTERN.test(target.pathname)) {
+          if (
+            !["http:", "https:"].includes(target.protocol) ||
+            shouldSkipDiscoveryUrl(target.toString())
+          ) {
             return;
           }
           const url = canonicalUrl(target.toString());

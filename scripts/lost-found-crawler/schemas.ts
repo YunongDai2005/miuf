@@ -9,6 +9,10 @@ export type VenueResolutionStatus =
   | "parent_venue_required"
   | "insufficient_source";
 
+export type OperatorResolutionSource =
+  | "metadata_candidate"
+  | "official_source_audit";
+
 export interface VenueOwnerResolution {
   venueId: string;
   venueName: string;
@@ -22,6 +26,7 @@ export interface VenueOwnerResolution {
   operatorId?: string;
   operatorName?: string;
   operatorWebsite?: string;
+  operatorResolutionSource?: OperatorResolutionSource;
   resolutionStatus: VenueResolutionStatus;
   confidence: number;
   evidenceUrls: string[];
@@ -33,7 +38,22 @@ export interface OperatorRecord {
   website?: string;
   venueIds: string[];
   confidence: number;
+  resolutionSource: OperatorResolutionSource;
   evidenceUrls: string[];
+}
+
+export interface OperatorOverride {
+  name: string;
+  website: string;
+  matchWebsiteHosts?: string[];
+  venueIds?: string[];
+  evidenceUrls: string[];
+  auditedAt: string;
+}
+
+export interface OperatorOverrideFile {
+  version: 1;
+  operators: OperatorOverride[];
 }
 
 export interface InventoryFile {
@@ -116,6 +136,8 @@ export interface ReviewDecision {
   venueIdsOverride?: string[];
   submissionMode?: "open_only" | "assisted_fill" | "adapter";
   adapterId?: string;
+  /** Exact form version whose field meanings the reviewer checked. */
+  reviewedContentHash?: string;
 }
 
 export interface ReviewFile {

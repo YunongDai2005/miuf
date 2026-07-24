@@ -19,8 +19,14 @@ import { extractFormsFromHtml } from "../scripts/lost-found-crawler/form-extract
 import { mergeFormSnapshots } from "../scripts/lost-found-crawler/browser.mjs";
 import {
   buildDiscoverySeedGroups,
+  candidateUrlIdentity,
+  extractOfficialVenueContactValues,
   extractPublicContactValues,
+  formCandidateId,
+  isRelevantDiscoveredForm,
+  shouldSkipDiscoveryUrl,
 } from "../scripts/lost-found-crawler/discovery.mjs";
+import { buildInventory } from "../scripts/lost-found-crawler/inventory.mjs";
 import type { InventoryFile } from "../scripts/lost-found-crawler/schemas";
 import { isForbiddenIp } from "../scripts/lost-found-crawler/safe-fetch.mjs";
 import { scoreCandidate } from "../scripts/lost-found-crawler/scoring.mjs";
@@ -185,6 +191,22 @@ test("keeps the form fingerprint stable when a framework regenerates element ids
   assert.equal(first.contentHash, second.contentHash);
 });
 
+test("keeps the form fingerprint stable across a trailing slash and tracking query", () => {
+  const html = `<form method="post">
+    <input type="email" name="email" aria-label="Email">
+    <textarea name="message" aria-label="Message"></textarea>
+  </form>`;
+  const [plain] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact",
+    html,
+  });
+  const [variant] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact/?utm_source=newsletter",
+    html,
+  });
+  assert.equal(plain.contentHash, variant.contentHash);
+});
+
 test("merges multiple rendered steps into one channel form", () => {
   const state = (field: string, label: string, step: number) => {
     const form = extractFormsFromHtml({
@@ -232,6 +254,95 @@ test("interprets a plain Name field as first name when the same form also asks f
   assert.deepEqual(
     form.fields.map((field) => field.semanticKey),
     ["firstName", "lastName"]
+  );
+});
+
+test("normalises required message and consent labels for safe contact-form guidance", () => {
+  const [form] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/kontakt",
+    html: `<form>
+      <label>E-Mail *<input type="email" required></label>
+      <label>Ihre Mitteilung an das Team *<textarea required></textarea></label>
+      <label>Hiermit bestätige ich die Speicherung Ihrer Daten *
+        <input type="checkbox" required>
+      </label>
+    </form>`,
+  });
+  assert.deepEqual(
+    form.fields.map((field) => field.semanticKey),
+    ["email", "messageBody", "privacyConsent"]
+  );
+});
+
+test("excludes booking and feedback forms from the general-contact fallback", () => {
+  const makeForm = (pageUrl: string, title: string) =>
+    extractFormsFromHtml({
+      pageUrl,
+      html: `<title>${title}</title><form>
+        <input type="email" aria-label="Email">
+        <textarea aria-label="Message"></textarea>
+      </form>`,
+    })[0];
+  assert.equal(
+    isRelevantDiscoveredForm(
+      makeForm("https://museum.example/contact/questions", "Contact"),
+      true
+    ),
+    true
+  );
+  assert.equal(
+    isRelevantDiscoveredForm(
+      makeForm("https://museum.example/contact/booking/", "Group booking"),
+      true
+    ),
+    false
+  );
+  assert.equal(
+    isRelevantDiscoveredForm(
+      makeForm("https://museum.example/contact/feedback/", "Feedback"),
+      true
+    ),
+    false
+  );
+  assert.equal(
+    candidateUrlIdentity("https://museum.example/contact/?utm_source=test"),
+    candidateUrlIdentity("https://museum.example/contact")
+  );
+  assert.equal(
+    formCandidateId({
+      ownerScopeKey: "operator:one",
+      pageUrl: "https://museum.example/contact/?utm_source=old",
+      formIndex: 0,
+      hasForm: true,
+    }),
+    formCandidateId({
+      ownerScopeKey: "operator:one",
+      pageUrl: "https://museum.example/contact",
+      formIndex: 0,
+      hasForm: true,
+    })
+  );
+  assert.notEqual(
+    formCandidateId({
+      ownerScopeKey: "operator:one",
+      pageUrl: "https://museum.example/contact",
+      formIndex: 0,
+      hasForm: true,
+    }),
+    formCandidateId({
+      ownerScopeKey: "operator:one",
+      pageUrl: "https://museum.example/contact",
+      formIndex: 1,
+      hasForm: true,
+    })
+  );
+  assert.equal(
+    shouldSkipDiscoveryUrl("https://museum.example/rathaus/pressemitteilungen"),
+    true
+  );
+  assert.equal(
+    shouldSkipDiscoveryUrl("https://museum.example/service/fundbuero"),
+    false
   );
 });
 
@@ -335,6 +446,71 @@ test("keeps same-domain venues isolated unless an explicit operator website join
   );
 });
 
+test("official-source operator overrides safely consolidate separately listed venues", async () => {
+  const directory = await mkdtemp(join(tmpdir(), "lost-operator-"));
+  const inputPath = join(directory, "attractions.json");
+  const overridePath = join(directory, "operators.json");
+  const outputPath = join(directory, "inventory.json");
+  await writeFile(
+    inputPath,
+    JSON.stringify({
+      attractions: [
+        {
+          id: "venue-a",
+          name: "Museum A",
+          category: "museum",
+          point: [52.5, 13.4],
+          website: "https://museum-network.example/a",
+          websiteSourceUrl: "https://source.example/a",
+        },
+        {
+          id: "venue-b",
+          name: "Museum B",
+          category: "museum",
+          point: [52.51, 13.41],
+          website: "https://www.museum-network.example/b",
+          websiteSourceUrl: "https://source.example/b",
+        },
+      ],
+    })
+  );
+  await writeFile(
+    overridePath,
+    JSON.stringify({
+      version: 1,
+      operators: [
+        {
+          name: "Audited Museum Network",
+          website: "https://museum-network.example/",
+          matchWebsiteHosts: ["museum-network.example"],
+          evidenceUrls: ["https://museum-network.example/imprint"],
+          auditedAt: "2026-07-24T00:00:00Z",
+        },
+      ],
+    })
+  );
+
+  const inventory = await buildInventory({
+    inputPath,
+    outputPath,
+    operatorOverridePath: overridePath,
+  });
+  assert.equal(inventory.operators.length, 1);
+  assert.equal(inventory.operators[0].resolutionSource, "official_source_audit");
+  assert.deepEqual(inventory.operators[0].venueIds, ["venue-a", "venue-b"]);
+  assert.ok(
+    inventory.venues.every(
+      (venue) =>
+        venue.operatorResolutionSource === "official_source_audit" &&
+        venue.confidence === 0.98
+    )
+  );
+  const groups = buildDiscoverySeedGroups(inventory);
+  assert.equal(groups.length, 1);
+  assert.equal(groups[0].origin, "https://museum-network.example");
+  assert.deepEqual([...groups[0].venueIds].sort(), ["venue-a", "venue-b"]);
+});
+
 test("extracts public email and phone links from main content without footer contacts", () => {
   const contacts = extractPublicContactValues(`
     <body>
@@ -351,6 +527,61 @@ test("extracts public email and phone links from main content without footer con
     [
       { kind: "email", value: "fundbuero@museum.example" },
       { kind: "phone", value: "+49 30 123-456" },
+    ]
+  );
+});
+
+test("keeps claim-specific evidence and discovers visible phones on a dedicated page", () => {
+  const contacts = extractPublicContactValues(`
+    <html><head><title>Fundbüro</title></head><body><main>
+      <h1>Fundbüro</h1>
+      <section><h2>Haustiere, Hund oder Katze</h2>
+        <p>Telefon: 030 111111</p>
+        <a href="mailto:fund@museum.example">fund@museum.example</a>
+      </section>
+      <section><h2>Fahrrad, Handy, Schlüssel oder sonstige Gegenstände</h2>
+        <p>Telefon: 030 222222</p>
+        <a href="mailto:fund@museum.example">fund@museum.example</a>
+      </section>
+    </main></body></html>
+  `);
+  const email = contacts.find((contact) => contact.kind === "email");
+  assert.ok(email);
+  assert.match(email.excerpt, /Handy/);
+  assert.ok(
+    contacts.some(
+      (contact) =>
+        contact.kind === "phone" &&
+        contact.value === "030 222222" &&
+        /Gegenstände/.test(contact.excerpt)
+      )
+  );
+  assert.equal(
+    contacts.some(
+      (contact) =>
+        contact.kind === "phone" && contact.value === "030 111111"
+    ),
+    false
+  );
+});
+
+test("extracts an exact venue contact fallback without leaking footer contacts", () => {
+  const contacts = extractOfficialVenueContactValues(`
+    <body><main>
+      <h1>Heimathaus</h1><p>About the museum.</p>
+      <h2>Kontakt</h2>
+      <p>Dorfaue 8 · 030 6491105 oder 030 6493325</p>
+      <p>heimathaus.schoeneiche@gmx.de</p>
+      <h2>Öffnungszeiten</h2><p>Wednesday to Saturday</p>
+    </main>
+    <footer>Telefon: 030 000000 · info@municipality.example</footer></body>
+  `);
+  assert.deepEqual(
+    contacts.map(({ kind, value }) => ({ kind, value })),
+    [
+      { kind: "email", value: "heimathaus.schoeneiche@gmx.de" },
+      { kind: "phone", value: "030 6491105" },
+      { kind: "phone", value: "030 6493325" },
     ]
   );
 });
@@ -539,6 +770,54 @@ test("publishes only reviewed candidates and refuses an untested submit adapter"
   );
   await writeFile(adapterPath, JSON.stringify({ version: 1, adapters: [] }));
   await writeFile(
+    candidatePath,
+    JSON.stringify({
+      version: 1,
+      generatedAt: "2026-07-23T10:00:00Z",
+      candidates: [
+        {
+          ...candidate,
+          kind: "manual_review",
+          form: undefined,
+        },
+      ],
+      failures: [],
+    })
+  );
+  await writeFile(
+    reviewPath,
+    JSON.stringify({
+      version: 1,
+      decisions: [
+        {
+          candidateId: candidate.id,
+          decision: "accept",
+          reviewedAt: "2026-07-23T11:00:00Z",
+          reviewedBy: "Test reviewer",
+          kindOverride: "dedicated_lost_found_form",
+        },
+      ],
+    })
+  );
+  await assert.rejects(
+    publishReviewedChannels({
+      candidatePath,
+      reviewPath,
+      adapterPath,
+      outputPath,
+    }),
+    /without an extracted form/
+  );
+  await writeFile(
+    candidatePath,
+    JSON.stringify({
+      version: 1,
+      generatedAt: "2026-07-23T10:00:00Z",
+      candidates: [candidate],
+      failures: [],
+    })
+  );
+  await writeFile(
     reviewPath,
     JSON.stringify({
       version: 1,
@@ -550,6 +829,7 @@ test("publishes only reviewed candidates and refuses an untested submit adapter"
           reviewedBy: "Test reviewer",
           submissionMode: "adapter",
           adapterId: "missing-adapter",
+          reviewedContentHash: "form-hash",
         },
       ],
     })
@@ -574,6 +854,32 @@ test("publishes only reviewed candidates and refuses an untested submit adapter"
           reviewedAt: "2026-07-23T11:00:00Z",
           reviewedBy: "Test reviewer",
           submissionMode: "assisted_fill",
+          reviewedContentHash: "stale-form-hash",
+        },
+      ],
+    })
+  );
+  await assert.rejects(
+    publishReviewedChannels({
+      candidatePath,
+      reviewPath,
+      adapterPath,
+      outputPath,
+    }),
+    /form changed after its field review/
+  );
+  await writeFile(
+    reviewPath,
+    JSON.stringify({
+      version: 1,
+      decisions: [
+        {
+          candidateId: candidate.id,
+          decision: "accept",
+          reviewedAt: "2026-07-23T11:00:00Z",
+          reviewedBy: "Test reviewer",
+          submissionMode: "assisted_fill",
+          reviewedContentHash: "form-hash",
         },
       ],
     })

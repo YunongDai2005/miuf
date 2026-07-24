@@ -99,7 +99,9 @@ npm run data:lost-found:review-export
 ```
 
 `inventory` conservatively groups duplicate OSM objects and marks minor features
-that still need a parent venue. `discover` honours robots rules, follows a
+that still need a parent venue. Official-source operator assignments live in
+`data/lost-found-crawler/operator-overrides.json`; each one names the exact
+website host and the official page that proves common ownership. `discover` honours robots rules, follows a
 bounded same-site queue, blocks private-network destinations, and extracts
 static form fields. Dynamic or iframe forms can be inspected without submitting:
 
@@ -118,6 +120,12 @@ npm run data:lost-found:review -- \
   --kind=dedicated_lost_found_form
 npm run data:lost-found:publish
 ```
+
+The private `/review` route presents the same queue with venue/operator scope,
+official evidence, field-by-field checkboxes, accept/reject controls and a
+downloadable `reviews.json`. It does not mutate the repository or publish a
+channel. Assisted filling decisions are bound to the exact reviewed form hash;
+any later field change requires a new review.
 
 The app loads `public/berlin-lost-found-channels.json`. Reviewed forms expose a
 field-by-field guide and an expiring autofill package. The optional browser

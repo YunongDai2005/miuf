@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-24T00:12:45.163Z",
+  "generatedAt": "2026-07-24T00:37:54.539Z",
   "candidates": [
     {
       "id": "channel_c8e9a5da8e10b345",
@@ -30,14 +30,51 @@
         {
           "sourceUrl": "https://www.schoeneiche.de/fundbuero",
           "selector": "a[href^=\"mailto:\"]",
-          "excerpt": "Wer vermisst seine Katze, seinen Hund, seine Schildkröte oder sonstige Haustiere? Ansprechpartnerin Frau Frank Ruhender Verkehr - HundehalterverordnungTelefon: 030 - 643304 107E-Mail: ordnungsamt@schoeneiche.de Wer ein Tier findet, informiert bitte nach Möglichkeit zuerst das Ordnungsamt der Gemeinde (siehe oben) oder die Polizei. Diese vermitteln dann weiter an das zuständige und vertraglich gebundene Tierheim Wesendahl e. V.. Fundtiere können auch direkt im Tierheim Wesendahl abgegeben werden.",
+          "excerpt": "Wer vermisst seine Katze, seinen Hund, seine Schildkröte oder sonstige Haustiere? Ansprechpartnerin Frau Frank Ruhender Verkehr - HundehalterverordnungTelefon: 030 - 643304 107E-Mail: ordnungsamt@schoeneiche.de Wer ein Tier findet, informiert bitte nach Möglichkeit zuerst das Ordnungsamt der Gemeinde (siehe oben) oder die Polizei. Diese vermitteln dann weiter an das zuständige und vertraglich gebundene Tierheim Wesendahl e. V.. Fundtiere können auch direkt im Tierheim Wesendahl abgegeben werden. Vermissen Sie Ihr Fahrrad, Ihr Handy, Ihren Schlüssel oder sonstige Gegenstände? Ansprechpartner Frau Kieser Ordnungsamt - Straßenverkehrsangelegenheiten - SondernutzungTelefon: 030 643304-138E-Mail:",
           "contentHash": "ca896c5fcf0196c743f9df05ac1fe672e66fc497be2293588864719c8e5f2d9c",
-          "observedAt": "2026-07-24T00:12:20.565Z"
+          "observedAt": "2026-07-24T00:37:15.475Z"
         }
       ],
       "fetchStatus": "ok",
       "reviewStatus": "candidate",
-      "discoveredAt": "2026-07-24T00:12:20.565Z"
+      "discoveredAt": "2026-07-24T00:37:15.475Z"
+    },
+    {
+      "id": "channel_e4607a01042a4561",
+      "venueIds": [
+        "way/142801571"
+      ],
+      "kind": "phone",
+      "pageUrl": "https://www.schoeneiche.de/fundbuero",
+      "contactValue": "030 643304-138",
+      "confidence": 65,
+      "reasons": [
+        "linked from the official seed site",
+        "page explicitly mentions lost property",
+        "page publishes an official phone contact"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.schoeneiche.de",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.schoeneiche.de/fundbuero",
+          "label": "sitemap candidate"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.schoeneiche.de/fundbuero",
+          "selector": "main",
+          "excerpt": "Vermissen Sie Ihr Fahrrad, Ihr Handy, Ihren Schlüssel oder sonstige Gegenstände? Ansprechpartner Frau Kieser Ordnungsamt - Straßenverkehrsangelegenheiten - SondernutzungTelefon: 030 643304-138E-Mail: ordnungsamt@schoeneiche.de",
+          "contentHash": "ca896c5fcf0196c743f9df05ac1fe672e66fc497be2293588864719c8e5f2d9c",
+          "observedAt": "2026-07-24T00:37:15.475Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:37:15.475Z"
     },
     {
       "id": "channel_3f03077e81d3c0d3",
@@ -66,12 +103,12 @@
           "sourceUrl": "https://www.schoeneiche.de/fundbuero",
           "excerpt": "Wer vermisst seine Katze, seinen Hund, seine Schildkröte oder sonstige Haustiere? Ansprechpartnerin Frau Frank Ruhender Verkehr - HundehalterverordnungTelefon: 030 - 643304 107E-Mail: ordnungsamt@schoeneiche.de Wer ein Tier findet, informiert bitte nach Möglichkeit zuerst das Ordnungsamt der Gemeinde (siehe oben) oder die Polizei. Diese vermitteln dann weiter an das zuständige und vertraglich gebundene Tierheim Wesendahl e. V.. Fundtiere können auch direkt im Tierheim Wesendahl abgegeben werden.",
           "contentHash": "ca896c5fcf0196c743f9df05ac1fe672e66fc497be2293588864719c8e5f2d9c",
-          "observedAt": "2026-07-24T00:12:20.564Z"
+          "observedAt": "2026-07-24T00:37:15.473Z"
         }
       ],
       "fetchStatus": "ok",
       "reviewStatus": "needs_review",
-      "discoveredAt": "2026-07-24T00:12:20.564Z"
+      "discoveredAt": "2026-07-24T00:37:15.473Z"
     },
     {
       "id": "channel_a5cb607e1f540984",
@@ -100,15 +137,114 @@
           "sourceUrl": "https://www.schoeneiche.de/rathaus/verwaltung/haupt-und-ordnungsangelegenheiten",
           "excerpt": "Auszug der Aufgabengebiete: Organisation der Verwaltung, Wahlen, Schiedsstelle, Versicherungen, Einkauf, Ehrungen, Repräsentationen, Stadtmarketing, Kultur, Tourismus, Partnerschaften, Gefahrenabwehr, Straßenreinigung, Winterdienst, Tierschutz, ruhender Verkehr, Abfallbeseitigung, Obdachlosigkeit, Fundsachen, ordnungsbehördliche Bestattungen, Gewerbe An-, Um- und Abmeldungen, Anzeigen nach brandenburgischem Gaststättengesetz, Festsetzung von Märkten und Erlaubniserteilungen nach der Gewerbeordnu",
           "contentHash": "1bfd0ce2aa76f2ffe6479d0f632deceb1b0c658f57391e314c5896614745418b",
-          "observedAt": "2026-07-24T00:12:26.132Z"
+          "observedAt": "2026-07-24T00:37:19.031Z"
         }
       ],
       "fetchStatus": "ok",
       "reviewStatus": "needs_review",
-      "discoveredAt": "2026-07-24T00:12:26.132Z"
+      "discoveredAt": "2026-07-24T00:37:19.031Z"
     },
     {
-      "id": "channel_b597e7101c1377d8",
+      "id": "channel_e0e98029c6482594",
+      "venueIds": [
+        "way/142801571"
+      ],
+      "kind": "email",
+      "pageUrl": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+      "contactValue": "heimathaus.schoeneiche@gmx.de",
+      "confidence": 45,
+      "reasons": [
+        "published in a contact section on the exact official venue page",
+        "no lost-property-specific purpose was confirmed",
+        "review as a venue fallback before use"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+          "label": "official website"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+          "selector": "a[href^=\"mailto:\"]",
+          "excerpt": "Kontakt Frau KrauseVorsitzende des Vereins Heimatfreunde Schöneiche e.V.Dorfaue 8 15566 Schöneiche 030 6491105 oder 030 6493325 heimathaus.schoeneiche@gmx.de",
+          "contentHash": "1882fa240bb8534df8d3f5148efc9f938793689c652813435ca0a10c37f5175e",
+          "observedAt": "2026-07-24T00:37:15.179Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "needs_review",
+      "discoveredAt": "2026-07-24T00:37:15.179Z"
+    },
+    {
+      "id": "channel_2169825e700ef405",
+      "venueIds": [
+        "way/142801571"
+      ],
+      "kind": "phone",
+      "pageUrl": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+      "contactValue": "030 6491105",
+      "confidence": 40,
+      "reasons": [
+        "published in a contact section on the exact official venue page",
+        "no lost-property-specific purpose was confirmed",
+        "review as a venue fallback before use"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+          "label": "official website"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+          "selector": "main",
+          "excerpt": "Kontakt Frau KrauseVorsitzende des Vereins Heimatfreunde Schöneiche e.V.Dorfaue 8 15566 Schöneiche 030 6491105 oder 030 6493325 heimathaus.schoeneiche@gmx.de",
+          "contentHash": "1882fa240bb8534df8d3f5148efc9f938793689c652813435ca0a10c37f5175e",
+          "observedAt": "2026-07-24T00:37:15.179Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "needs_review",
+      "discoveredAt": "2026-07-24T00:37:15.179Z"
+    },
+    {
+      "id": "channel_ad5f519d2ff404d0",
+      "venueIds": [
+        "way/142801571"
+      ],
+      "kind": "phone",
+      "pageUrl": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+      "contactValue": "030 6493325",
+      "confidence": 40,
+      "reasons": [
+        "published in a contact section on the exact official venue page",
+        "no lost-property-specific purpose was confirmed",
+        "review as a venue fallback before use"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+          "label": "official website"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.schoeneiche.de/freizeit/sehenswuerdigkeiten/heimathaus",
+          "selector": "main",
+          "excerpt": "Kontakt Frau KrauseVorsitzende des Vereins Heimatfreunde Schöneiche e.V.Dorfaue 8 15566 Schöneiche 030 6491105 oder 030 6493325 heimathaus.schoeneiche@gmx.de",
+          "contentHash": "1882fa240bb8534df8d3f5148efc9f938793689c652813435ca0a10c37f5175e",
+          "observedAt": "2026-07-24T00:37:15.179Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "needs_review",
+      "discoveredAt": "2026-07-24T00:37:15.179Z"
+    },
+    {
+      "id": "channel_ba353bf8a92f6988",
       "venueIds": [
         "way/556435241"
       ],
@@ -237,7 +373,7 @@
         ],
         "captcha": true,
         "loginRequired": false,
-        "contentHash": "c7fa3121d6a8247f12d0a94f98ab71374e2dc6cce3ebb83344dea558afcf1f0f"
+        "contentHash": "f71941234a2b65028e6733d365c3c8aa3f36943b412789371364f993009aca43"
       },
       "confidence": 30,
       "reasons": [
@@ -263,16 +399,16 @@
         {
           "sourceUrl": "https://tv-turm.de/en/contact-us/",
           "excerpt": "CONTACT US I have a question regarding: FAQ buttons All FAQs On-site visit Purchase of voucher Restaurant Sphere Tim Raue Tickets Your visit on site Can I also purchase the giftcard at the cash desk onsite? No, the giftcard can only be purchased online here. How long is the giftcard valid? Our giftcards are valid for 3 years – so you have full flexibility for your time together. Can I print out the giftcard immediately? Yes, you will receive a PDF by e-mail immediately after your purchase. Perfe",
-          "contentHash": "58105b355234b2521d29c47680163bf97d049c9b3e63b3ae59fefd1c6cc37b35",
-          "observedAt": "2026-07-24T00:12:23.259Z"
+          "contentHash": "445730d57bc2a1241390ab2befb05b656acb5425aaaff0580bb9e08136ac86b6",
+          "observedAt": "2026-07-24T00:37:45.408Z"
         }
       ],
       "fetchStatus": "ok",
       "reviewStatus": "candidate",
-      "discoveredAt": "2026-07-24T00:12:23.259Z"
+      "discoveredAt": "2026-07-24T00:37:45.408Z"
     },
     {
-      "id": "channel_117cd0b618d33a6b",
+      "id": "channel_302666ec64362d50",
       "venueIds": [
         "way/556435241"
       ],
@@ -401,7 +537,7 @@
         ],
         "captcha": true,
         "loginRequired": false,
-        "contentHash": "200c268cfd07179e41f8a5faf651dd31d5cc44c3ab63b9c7651e25b037d7515a"
+        "contentHash": "47785291414cb9e93102b45fa59a043c1f2f1cfa9ddac64464ca9b7488fc852f"
       },
       "confidence": 30,
       "reasons": [
@@ -423,13 +559,1567 @@
         {
           "sourceUrl": "https://tv-turm.de/kontakt/",
           "excerpt": "Kontakt Ich habe eine Frage zu: FAQ buttons Alle FAQs Aufzug Besuch vor Ort Ermäßigungen und Rabatte Gutscheinkauf Restaurant Sphere Tim Raue Tickets Kann ich den Gutschein auch vor Ort an der Kasse kaufen? Nein, der Gutschein kann nur hier online erworben werden. Wie lange ist der Gutschein gültig? Unsere Gutscheine haben eine Gültigkeit von 3 Jahren – so habt ihr volle Flexibilität für eure gemeinsame Zeit. Kann ich den Gutschein sofort ausdrucken? Ja! Unmittelbar nach dem Kauf erhältst du ein",
-          "contentHash": "2538f84d1d43884ce23faee1ba6a78845b911510d5ecd0a537c25a5a603b6f60",
-          "observedAt": "2026-07-24T00:12:22.254Z"
+          "contentHash": "a10793f7ddd2b5bcecafc004f1ea302600f366707aba50c717f5f74542da56d0",
+          "observedAt": "2026-07-24T00:37:44.827Z"
         }
       ],
       "fetchStatus": "ok",
       "reviewStatus": "candidate",
-      "discoveredAt": "2026-07-24T00:12:22.254Z"
+      "discoveredAt": "2026-07-24T00:37:44.827Z"
+    },
+    {
+      "id": "channel_d04f75b9416ac3cc",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "venueIds": [
+        "node/1860480265",
+        "node/3755207008",
+        "node/6848662229",
+        "node/7063453003",
+        "relation/28134",
+        "relation/3619",
+        "relation/3626233",
+        "relation/4211594",
+        "way/137219848",
+        "way/18578139",
+        "way/22990276",
+        "way/25652321",
+        "way/26247891",
+        "way/313659704",
+        "way/313670733",
+        "way/87646457"
+      ],
+      "kind": "general_contact_form",
+      "pageUrl": "https://www.smb.museum/en/contact/questions/",
+      "form": {
+        "pageUrl": "https://www.smb.museum/en/contact/questions/",
+        "formAction": "https://www.smb.museum/en/contact/questions/",
+        "formMethod": "POST",
+        "title": "Questions for the Staatliche Museen zu Berlin",
+        "contextText": "Museum *Alte NationalgalerieAltes MuseumBode-MuseumDahlemForschungscampus DahlemFriedrichswerdersche KircheGemäldegalerieGipsformereiHamburger Bahnhof – Nationalgalerie der GegenwartHaus BastianJames-Simon-GalerieKulturforumKunstbibliothekKunstgewerbemuseumKupferstichkabinettMuseum BerggruenMuseum Europäischer KulturenMuseum für FotografieMuseumsinsel BerlinNeue NationalgalerieNeues MuseumPergamonmuseumPergamonmuseum. Das PanoramaPETRI BerlinSammlung Scharf-GerstenbergSchloss KöpenickStaatliche Museen zu Berlin (allgemein) Form of address Mrs / Ms Mr First name * Last name * E-mail address * Your message * Agree with the storage of personal data *I agree that the data provided in this form will be used exclusively for this specific request. In particular, data will not be passed on to unauthorized third parties. I am aware that I can revoke my consent at any time with effect for the future. I can do this via the following channels: by e-mail to: service[at]smb.museum or by post to: Stiftung Preussischer Kulturbesitz, Von-der-Heydt-Strasse 16-18, D-10785 Berlin. The privacy policy of the Staatliche Museen zu Berlin applies. The privacy policy also contains further information about the possibilities of correcting, deleting or blocking my data.Please enter here the word as displayed in the picture. This is to prevent spamming.If you can't read the word, click here. Contact tx_smb_pi1[submit] tx_smb_pi1[type] tx_smb_pi1[title] tx_smb_pi1[queue] no_cache Museum * Form of address First name * Last name * E-mail address * Your message * Agree with the storage of personal data * Please enter here the word as displayed in the picture. This is to prevent spamming.",
+        "language": [
+          "en"
+        ],
+        "fields": [
+          {
+            "rawName": "tx_smb_pi1[submit]",
+            "label": "tx_smb_pi1[submit]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_smb_pi1[submit]\"]"
+          },
+          {
+            "rawName": "tx_smb_pi1[type]",
+            "label": "tx_smb_pi1[type]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_smb_pi1[type]\"]"
+          },
+          {
+            "rawName": "tx_smb_pi1[title]",
+            "label": "tx_smb_pi1[title]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_smb_pi1[title]\"]"
+          },
+          {
+            "rawName": "tx_smb_pi1[queue]",
+            "label": "tx_smb_pi1[queue]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_smb_pi1[queue]\"]"
+          },
+          {
+            "rawName": "no_cache",
+            "label": "no_cache",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"no_cache\"]"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_museum]",
+            "rawId": "contact_field_museum",
+            "label": "Museum *",
+            "control": "select",
+            "required": true,
+            "options": [
+              {
+                "value": "Alte Nationalgalerie",
+                "label": "Alte Nationalgalerie"
+              },
+              {
+                "value": "Altes Museum",
+                "label": "Altes Museum"
+              },
+              {
+                "value": "Bode-Museum",
+                "label": "Bode-Museum"
+              },
+              {
+                "value": "Museen Dahlem",
+                "label": "Dahlem"
+              },
+              {
+                "value": "Forschungscampus Dahlem",
+                "label": "Forschungscampus Dahlem"
+              },
+              {
+                "value": "Friedrichswerdersche Kirche",
+                "label": "Friedrichswerdersche Kirche"
+              },
+              {
+                "value": "Gemäldegalerie",
+                "label": "Gemäldegalerie"
+              },
+              {
+                "value": "Gipsformerei",
+                "label": "Gipsformerei"
+              },
+              {
+                "value": "Hamburger Bahnhof",
+                "label": "Hamburger Bahnhof – Nationalgalerie der Gegenwart"
+              },
+              {
+                "value": "Haus Bastian",
+                "label": "Haus Bastian"
+              },
+              {
+                "value": "James-Simon-Galerie",
+                "label": "James-Simon-Galerie"
+              },
+              {
+                "value": "Sonderausstellungshallen Kulturforum",
+                "label": "Kulturforum"
+              },
+              {
+                "value": "Kunstbibliothek",
+                "label": "Kunstbibliothek"
+              },
+              {
+                "value": "Kunstgewerbemuseum",
+                "label": "Kunstgewerbemuseum"
+              },
+              {
+                "value": "Kupferstichkabinett",
+                "label": "Kupferstichkabinett"
+              },
+              {
+                "value": "Museum Berggruen",
+                "label": "Museum Berggruen"
+              },
+              {
+                "value": "Museum Europäischer Kulturen",
+                "label": "Museum Europäischer Kulturen"
+              },
+              {
+                "value": "Museum für Fotografie",
+                "label": "Museum für Fotografie"
+              },
+              {
+                "value": "Museumsinsel",
+                "label": "Museumsinsel Berlin"
+              },
+              {
+                "value": "Neue Nationalgalerie",
+                "label": "Neue Nationalgalerie"
+              },
+              {
+                "value": "Neues Museum",
+                "label": "Neues Museum"
+              },
+              {
+                "value": "Pergamonmuseum",
+                "label": "Pergamonmuseum"
+              },
+              {
+                "value": "Das Panorama",
+                "label": "Pergamonmuseum. Das Panorama"
+              },
+              {
+                "value": "PETRI Berlin",
+                "label": "PETRI Berlin"
+              },
+              {
+                "value": "Sammlung Scharf-Gerstenberg",
+                "label": "Sammlung Scharf-Gerstenberg"
+              },
+              {
+                "value": "Schloss Köpenick",
+                "label": "Schloss Köpenick"
+              },
+              {
+                "value": "Staatliche Museen zu Berlin (allgemein)",
+                "label": "Staatliche Museen zu Berlin (allgemein)"
+              }
+            ],
+            "step": 1,
+            "semanticKey": "venue",
+            "semanticConfidence": 0.72,
+            "evidenceSelector": "#contact_field_museum"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_salutation]",
+            "rawId": "contact_field_salutation",
+            "label": "Form of address",
+            "control": "select",
+            "required": false,
+            "options": [
+              {
+                "value": "\n                        Mrs / Ms\n                    ",
+                "label": "Mrs / Ms"
+              },
+              {
+                "value": "\n                        Mr\n                    ",
+                "label": "Mr"
+              }
+            ],
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#contact_field_salutation"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_firstname]",
+            "rawId": "contact_field_firstname",
+            "label": "First name *",
+            "control": "text",
+            "required": true,
+            "step": 1,
+            "semanticKey": "firstName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#contact_field_firstname"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_lastname]",
+            "rawId": "contact_field_lastname",
+            "label": "Last name *",
+            "control": "text",
+            "required": true,
+            "step": 1,
+            "semanticKey": "lastName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#contact_field_lastname"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_email]",
+            "rawId": "field_contact_email",
+            "label": "E-mail address *",
+            "control": "text",
+            "required": true,
+            "step": 1,
+            "semanticKey": "email",
+            "semanticConfidence": 0.98,
+            "evidenceSelector": "#field_contact_email"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_your_message]",
+            "rawId": "field_contact_your_message",
+            "label": "Your message *",
+            "control": "textarea",
+            "required": true,
+            "step": 1,
+            "semanticKey": "messageBody",
+            "semanticConfidence": 0.9,
+            "evidenceSelector": "#field_contact_your_message"
+          },
+          {
+            "rawName": "tx_smb_pi1[privacy]",
+            "rawId": "privacy",
+            "label": "Agree with the storage of personal data *",
+            "control": "checkbox",
+            "required": true,
+            "step": 1,
+            "semanticKey": "privacyConsent",
+            "semanticConfidence": 0.96,
+            "evidenceSelector": "#privacy"
+          },
+          {
+            "rawName": "tx_smb_pi1[captchaResponse]",
+            "rawId": "sjbr-freecap-captcha-response",
+            "label": "Please enter here the word as displayed in the picture. This is to prevent spamming.",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#sjbr-freecap-captcha-response"
+          }
+        ],
+        "captcha": true,
+        "loginRequired": false,
+        "contentHash": "7bd344451ab5398603235802bce33e19fb450e14777aa338037443840f54c056"
+      },
+      "confidence": 30,
+      "reasons": [
+        "linked from the official seed site",
+        "page contains a form",
+        "CAPTCHA requires user interaction"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.smb.museum/",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.smb.museum/kontakt/",
+          "label": "Kontakt"
+        },
+        {
+          "url": "https://www.smb.museum/en/contact/",
+          "label": "EN"
+        },
+        {
+          "url": "https://www.smb.museum/en/contact/questions/",
+          "label": "Questions"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.smb.museum/en/contact/questions/",
+          "excerpt": "Service Facebook Instagram YouTubeService Search Staatliche Museen zu Berlin Staatliche Museen zu Berlin Facebook Instagram YouTubeService Search Tickets Shop ContactQuestions | Booking | FeedbackGot a question relating to exhibitions or events at the Staatliche Museen zu Berlin? Then get in touch now!Please note: For research, conservation, and curatorial inquiries, please contact the respective museum or institution directly. The contact details are listed on each institution’s page. Museum *A",
+          "contentHash": "02f1cdeabddbfbe810c278b9067fd795e40782b6468061372fda46ebadc58175",
+          "observedAt": "2026-07-24T00:37:23.038Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:37:23.038Z"
+    },
+    {
+      "id": "channel_7a79ba40f352b37c",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "venueIds": [
+        "node/1860480265",
+        "node/3755207008",
+        "node/6848662229",
+        "node/7063453003",
+        "relation/28134",
+        "relation/3619",
+        "relation/3626233",
+        "relation/4211594",
+        "way/137219848",
+        "way/18578139",
+        "way/22990276",
+        "way/25652321",
+        "way/26247891",
+        "way/313659704",
+        "way/313670733",
+        "way/87646457"
+      ],
+      "kind": "general_contact_form",
+      "pageUrl": "https://www.smb.museum/kontaktformular/fragen/",
+      "form": {
+        "pageUrl": "https://www.smb.museum/kontaktformular/fragen/",
+        "formAction": "https://www.smb.museum/kontaktformular/fragen/",
+        "formMethod": "POST",
+        "title": "Fragen an die Staatlichen Museen zu Berlin",
+        "contextText": "Museum *Alte NationalgalerieAltes MuseumBode-MuseumDahlemForschungscampus DahlemFriedrichswerdersche KircheGemäldegalerieGipsformereiHamburger Bahnhof – Nationalgalerie der GegenwartHaus BastianJames-Simon-GalerieKulturforumKunstbibliothekKunstgewerbemuseumKupferstichkabinettMuseum BerggruenMuseum Europäischer KulturenMuseum für FotografieMuseumsinsel BerlinNeue NationalgalerieNeues MuseumPergamonmuseumPergamonmuseum. Das PanoramaPETRI BerlinSammlung Scharf-GerstenbergSchloss KöpenickStaatliche Museen zu Berlin (allgemein) Anrede Frau Herr Vorname * Nachname * E-Mail-Adresse * Ihre Nachricht * Zustimmung zur Speicherung Ihrer Daten *Ich bin damit einverstanden, dass meine Daten ausschließlich für die Anfrage genutzt werden. Insbesondere erfolgt keine Weitergabe an unberechtigte Dritte. Mir ist bekannt, dass ich meine Einwilligung jederzeit mit Wirkung für die Zukunft widerrufen kann. Dies kann ich über folgende Kanäle tun: per E-Mail an: service[at]smb.museum oder postalisch an: Stiftung Preußischer Kulturbesitz, Von-der-Heydt-Straße 16-18, D-10785 Berlin. Es gilt die Datenschutzerklärung der Staatlichen Museen zu Berlin, die auch weitere Informationen über Möglichkeiten zur Berichtigung, Löschung und Sperrung meiner Daten beinhaltet.Bitte geben Sie hier das Wort ein, das im Bild angezeigt wird. Dies dient der Spam-Abwehr.Wenn Sie das Wort nicht lesen können, bitte hier klicken. Kontakt tx_smb_pi1[submit] tx_smb_pi1[type] tx_smb_pi1[title] tx_smb_pi1[queue] no_cache Museum * Anrede Vorname * Nachname * E-Mail-Adresse * Ihre Nachricht * Zustimmung zur Speicherung Ihrer Daten * Bitte geben Sie hier das Wort ein, das im Bild angezeigt wird. Dies dient der Spam-Abwehr.",
+        "language": [
+          "de"
+        ],
+        "fields": [
+          {
+            "rawName": "tx_smb_pi1[submit]",
+            "label": "tx_smb_pi1[submit]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_smb_pi1[submit]\"]"
+          },
+          {
+            "rawName": "tx_smb_pi1[type]",
+            "label": "tx_smb_pi1[type]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_smb_pi1[type]\"]"
+          },
+          {
+            "rawName": "tx_smb_pi1[title]",
+            "label": "tx_smb_pi1[title]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_smb_pi1[title]\"]"
+          },
+          {
+            "rawName": "tx_smb_pi1[queue]",
+            "label": "tx_smb_pi1[queue]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_smb_pi1[queue]\"]"
+          },
+          {
+            "rawName": "no_cache",
+            "label": "no_cache",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"no_cache\"]"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_museum]",
+            "rawId": "contact_field_museum",
+            "label": "Museum *",
+            "control": "select",
+            "required": true,
+            "options": [
+              {
+                "value": "Alte Nationalgalerie",
+                "label": "Alte Nationalgalerie"
+              },
+              {
+                "value": "Altes Museum",
+                "label": "Altes Museum"
+              },
+              {
+                "value": "Bode-Museum",
+                "label": "Bode-Museum"
+              },
+              {
+                "value": "Museen Dahlem",
+                "label": "Dahlem"
+              },
+              {
+                "value": "Forschungscampus Dahlem",
+                "label": "Forschungscampus Dahlem"
+              },
+              {
+                "value": "Friedrichswerdersche Kirche",
+                "label": "Friedrichswerdersche Kirche"
+              },
+              {
+                "value": "Gemäldegalerie",
+                "label": "Gemäldegalerie"
+              },
+              {
+                "value": "Gipsformerei",
+                "label": "Gipsformerei"
+              },
+              {
+                "value": "Hamburger Bahnhof",
+                "label": "Hamburger Bahnhof – Nationalgalerie der Gegenwart"
+              },
+              {
+                "value": "Haus Bastian",
+                "label": "Haus Bastian"
+              },
+              {
+                "value": "James-Simon-Galerie",
+                "label": "James-Simon-Galerie"
+              },
+              {
+                "value": "Sonderausstellungshallen Kulturforum",
+                "label": "Kulturforum"
+              },
+              {
+                "value": "Kunstbibliothek",
+                "label": "Kunstbibliothek"
+              },
+              {
+                "value": "Kunstgewerbemuseum",
+                "label": "Kunstgewerbemuseum"
+              },
+              {
+                "value": "Kupferstichkabinett",
+                "label": "Kupferstichkabinett"
+              },
+              {
+                "value": "Museum Berggruen",
+                "label": "Museum Berggruen"
+              },
+              {
+                "value": "Museum Europäischer Kulturen",
+                "label": "Museum Europäischer Kulturen"
+              },
+              {
+                "value": "Museum für Fotografie",
+                "label": "Museum für Fotografie"
+              },
+              {
+                "value": "Museumsinsel",
+                "label": "Museumsinsel Berlin"
+              },
+              {
+                "value": "Neue Nationalgalerie",
+                "label": "Neue Nationalgalerie"
+              },
+              {
+                "value": "Neues Museum",
+                "label": "Neues Museum"
+              },
+              {
+                "value": "Pergamonmuseum",
+                "label": "Pergamonmuseum"
+              },
+              {
+                "value": "Das Panorama",
+                "label": "Pergamonmuseum. Das Panorama"
+              },
+              {
+                "value": "PETRI Berlin",
+                "label": "PETRI Berlin"
+              },
+              {
+                "value": "Sammlung Scharf-Gerstenberg",
+                "label": "Sammlung Scharf-Gerstenberg"
+              },
+              {
+                "value": "Schloss Köpenick",
+                "label": "Schloss Köpenick"
+              },
+              {
+                "value": "Staatliche Museen zu Berlin (allgemein)",
+                "label": "Staatliche Museen zu Berlin (allgemein)"
+              }
+            ],
+            "step": 1,
+            "semanticKey": "venue",
+            "semanticConfidence": 0.72,
+            "evidenceSelector": "#contact_field_museum"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_salutation]",
+            "rawId": "contact_field_salutation",
+            "label": "Anrede",
+            "control": "select",
+            "required": false,
+            "options": [
+              {
+                "value": "\n                        Frau\n                    ",
+                "label": "Frau"
+              },
+              {
+                "value": "\n                        Herr\n                    ",
+                "label": "Herr"
+              }
+            ],
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#contact_field_salutation"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_firstname]",
+            "rawId": "contact_field_firstname",
+            "label": "Vorname *",
+            "control": "text",
+            "required": true,
+            "step": 1,
+            "semanticKey": "firstName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#contact_field_firstname"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_lastname]",
+            "rawId": "contact_field_lastname",
+            "label": "Nachname *",
+            "control": "text",
+            "required": true,
+            "step": 1,
+            "semanticKey": "lastName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#contact_field_lastname"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_email]",
+            "rawId": "field_contact_email",
+            "label": "E-Mail-Adresse *",
+            "control": "text",
+            "required": true,
+            "step": 1,
+            "semanticKey": "email",
+            "semanticConfidence": 0.98,
+            "evidenceSelector": "#field_contact_email"
+          },
+          {
+            "rawName": "tx_smb_pi1[contact_your_message]",
+            "rawId": "field_contact_your_message",
+            "label": "Ihre Nachricht *",
+            "control": "textarea",
+            "required": true,
+            "step": 1,
+            "semanticKey": "messageBody",
+            "semanticConfidence": 0.9,
+            "evidenceSelector": "#field_contact_your_message"
+          },
+          {
+            "rawName": "tx_smb_pi1[privacy]",
+            "rawId": "privacy",
+            "label": "Zustimmung zur Speicherung Ihrer Daten *",
+            "control": "checkbox",
+            "required": true,
+            "step": 1,
+            "semanticKey": "privacyConsent",
+            "semanticConfidence": 0.96,
+            "evidenceSelector": "#privacy"
+          },
+          {
+            "rawName": "tx_smb_pi1[captchaResponse]",
+            "rawId": "sjbr-freecap-captcha-response",
+            "label": "Bitte geben Sie hier das Wort ein, das im Bild angezeigt wird. Dies dient der Spam-Abwehr.",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#sjbr-freecap-captcha-response"
+          }
+        ],
+        "captcha": true,
+        "loginRequired": false,
+        "contentHash": "c612a98f491252e477c30c27b3c54be32d08ab049aa12adfae0520b835f4d746"
+      },
+      "confidence": 30,
+      "reasons": [
+        "linked from the official seed site",
+        "page contains a form",
+        "CAPTCHA requires user interaction"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.smb.museum/",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.smb.museum/kontakt/",
+          "label": "Kontakt"
+        },
+        {
+          "url": "https://www.smb.museum/kontaktformular/fragen/",
+          "label": "Fragen"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.smb.museum/kontaktformular/fragen/",
+          "excerpt": "Service Facebook Instagram YouTubeService Suchen Staatliche Museen zu Berlin Staatliche Museen zu Berlin Facebook Instagram YouTubeService Suchen Tickets Shop KontaktFragen | Buchungen | FeedbackSie haben Fragen zu Ausstellungen oder Veranstaltungen der Staatlichen Museen zu Berlin? Wir freuen uns auf Ihre Nachricht!Bitte beachten Sie auch: Auf den Seiten der einzelnen Museen und Einrichtungen finden Sie die jeweiligen Kontaktmöglichkeiten für wissenschaftliche Anfragen. Museum *Alte Nationalgal",
+          "contentHash": "a8f7ad58267403c500e04f193b62bd44262ecd8ecd1a83fe83a836f91b7e5eaa",
+          "observedAt": "2026-07-24T00:37:19.573Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:37:19.573Z"
+    },
+    {
+      "id": "channel_0f6318a24ea3c94f",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "venueIds": [
+        "node/5723205465",
+        "node/9979815162",
+        "way/1089407347",
+        "way/11544256",
+        "way/180376359",
+        "way/186517395",
+        "way/22960067",
+        "way/24315051",
+        "way/24478438",
+        "way/25014562",
+        "way/26840054"
+      ],
+      "kind": "general_contact_form",
+      "pageUrl": "https://www.spsg.de/en/contact-us",
+      "form": {
+        "pageUrl": "https://www.spsg.de/en/contact-us",
+        "formAction": "https://www.spsg.de/en/contact-us?tx_powermail_pi1%5Baction%5D=checkCreate&tx_powermail_pi1%5Bcontroller%5D=Form#c1661",
+        "formMethod": "POST",
+        "title": "Contact us | SPSG",
+        "contextText": "Contact us formYour nameYour e-mailYour message Agreement*I agree that the data provided in this form will be used for this specific request. In particular, data will not be passed on to unauthorized third parties. I am aware that I can revoke my consent at any time with effect for the future. The privacy policy also contains further information about the possibilities of correcting, deleting or blocking my data. Don't fill this field! tx_powermail_pi1[__referrer][@extension] tx_powermail_pi1[__referrer][@controller] tx_powermail_pi1[__referrer][@action] tx_powermail_pi1[__referrer][arguments] tx_powermail_pi1[__referrer][@request] tx_powermail_pi1[__trustedProperties] Your name Your e-mail Your message tx_powermail_pi1[field][marker] I agree that the data provided in this form will be used for this specific request. In particular, data will not be passed on to unauthorized third parties. I am aware that I can revoke my consent at any time with effect for the future. The privacy policy also contains further information about the possibilities of correcting, deleting or blocking my data. tx_powermail_pi1[mail][form] Don't fill this field!",
+        "language": [
+          "en"
+        ],
+        "fields": [
+          {
+            "rawName": "tx_powermail_pi1[__referrer][@extension]",
+            "label": "tx_powermail_pi1[__referrer][@extension]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][@extension]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__referrer][@controller]",
+            "label": "tx_powermail_pi1[__referrer][@controller]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][@controller]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__referrer][@action]",
+            "label": "tx_powermail_pi1[__referrer][@action]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][@action]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__referrer][arguments]",
+            "label": "tx_powermail_pi1[__referrer][arguments]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][arguments]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__referrer][@request]",
+            "label": "tx_powermail_pi1[__referrer][@request]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][@request]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__trustedProperties]",
+            "label": "tx_powermail_pi1[__trustedProperties]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__trustedProperties]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][name]",
+            "rawId": "powermail_field_name",
+            "label": "Your name",
+            "control": "text",
+            "required": true,
+            "step": 1,
+            "semanticKey": "fullName",
+            "semanticConfidence": 0.88,
+            "evidenceSelector": "#powermail_field_name"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][email]",
+            "rawId": "powermail_field_email",
+            "label": "Your e-mail",
+            "control": "email",
+            "required": true,
+            "step": 1,
+            "semanticKey": "email",
+            "semanticConfidence": 0.99,
+            "evidenceSelector": "#powermail_field_email"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][empty_marker_01]",
+            "rawId": "powermail_field_empty_marker_01",
+            "label": "Your message",
+            "control": "textarea",
+            "required": true,
+            "step": 1,
+            "semanticKey": "messageBody",
+            "semanticConfidence": 0.9,
+            "evidenceSelector": "#powermail_field_empty_marker_01"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][marker]",
+            "label": "tx_powermail_pi1[field][marker]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[field][marker]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][marker][]",
+            "rawId": "powermail_field_marker_1",
+            "label": "I agree that the data provided in this form will be used for this specific request. In particular, data will not be passed on to unauthorized third parties. I am aware that I can revoke my consent at any time with effect for the future. The privacy policy also contains further information about the possibilities of correcting, deleting or blocking my data.",
+            "control": "checkbox",
+            "required": true,
+            "step": 1,
+            "semanticKey": "privacyConsent",
+            "semanticConfidence": 0.96,
+            "evidenceSelector": "#powermail_field_marker_1"
+          },
+          {
+            "rawName": "tx_powermail_pi1[mail][form]",
+            "label": "tx_powermail_pi1[mail][form]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[mail][form]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][__hp]",
+            "rawId": "powermail_hp_1",
+            "label": "Don't fill this field!",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#powermail_hp_1"
+          }
+        ],
+        "captcha": true,
+        "loginRequired": false,
+        "contentHash": "236daad962962e0aebf9d6a88629e7f232b57589726a6a428a61e27ec83f4d5f"
+      },
+      "confidence": 30,
+      "reasons": [
+        "linked from the official seed site",
+        "page contains a form",
+        "CAPTCHA requires user interaction"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.spsg.de/",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.spsg.de/kontakt",
+          "label": "Kontakt"
+        },
+        {
+          "url": "https://www.spsg.de/en/contact-us",
+          "label": "EN english"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.spsg.de/en/contact-us",
+          "excerpt": "Contact us Do you have questions, suggestions or criticism?You can contact us via the email form provided below.Are you looking for a specific contact person?An overview of the departments at the SPSG is available here. Contact us formYour nameYour e-mailYour message Agreement*I agree that the data provided in this form will be used for this specific request. In particular, data will not be passed on to unauthorized third parties. I am aware that I can revoke my consent at any time with effect f",
+          "contentHash": "7e40e4187065b8b12f69303ac72642509a5a113e46367adb1692c33b7100fee0",
+          "observedAt": "2026-07-24T00:37:15.767Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:37:15.767Z"
+    },
+    {
+      "id": "channel_ff01e7234325dd1d",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "venueIds": [
+        "node/5723205465",
+        "node/9979815162",
+        "way/1089407347",
+        "way/11544256",
+        "way/180376359",
+        "way/186517395",
+        "way/22960067",
+        "way/24315051",
+        "way/24478438",
+        "way/25014562",
+        "way/26840054"
+      ],
+      "kind": "general_contact_form",
+      "pageUrl": "https://www.spsg.de/kontakt",
+      "form": {
+        "pageUrl": "https://www.spsg.de/kontakt",
+        "formAction": "https://www.spsg.de/kontakt?tx_powermail_pi1%5Baction%5D=checkCreate&tx_powermail_pi1%5Bcontroller%5D=Form#c199",
+        "formMethod": "POST",
+        "title": "Kontakt | SPSG",
+        "contextText": "Sie haben Fragen, Anregungen oder Kritik?NameE-Mail-AdresseIhre Mitteilung an das Team der SPSG Datenschutz*Hiermit bestätige ich, dass ich die Datenschutzerklärung zur Kenntnis genommen habe. Bitte dieses Feld NICHT ausfüllen! tx_powermail_pi1[__referrer][@extension] tx_powermail_pi1[__referrer][@controller] tx_powermail_pi1[__referrer][@action] tx_powermail_pi1[__referrer][arguments] tx_powermail_pi1[__referrer][@request] tx_powermail_pi1[__trustedProperties] Name E-Mail-Adresse Ihre Mitteilung an das Team der SPSG tx_powermail_pi1[field][marker] Hiermit bestätige ich, dass ich die Datenschutzerklärung zur Kenntnis genommen habe. tx_powermail_pi1[mail][form] Bitte dieses Feld NICHT ausfüllen!",
+        "language": [
+          "de"
+        ],
+        "fields": [
+          {
+            "rawName": "tx_powermail_pi1[__referrer][@extension]",
+            "label": "tx_powermail_pi1[__referrer][@extension]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][@extension]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__referrer][@controller]",
+            "label": "tx_powermail_pi1[__referrer][@controller]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][@controller]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__referrer][@action]",
+            "label": "tx_powermail_pi1[__referrer][@action]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][@action]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__referrer][arguments]",
+            "label": "tx_powermail_pi1[__referrer][arguments]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][arguments]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__referrer][@request]",
+            "label": "tx_powermail_pi1[__referrer][@request]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__referrer][@request]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[__trustedProperties]",
+            "label": "tx_powermail_pi1[__trustedProperties]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[__trustedProperties]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][name]",
+            "rawId": "powermail_field_name",
+            "label": "Name",
+            "control": "text",
+            "required": true,
+            "step": 1,
+            "semanticKey": "fullName",
+            "semanticConfidence": 0.88,
+            "evidenceSelector": "#powermail_field_name"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][email]",
+            "rawId": "powermail_field_email",
+            "label": "E-Mail-Adresse",
+            "control": "email",
+            "required": true,
+            "step": 1,
+            "semanticKey": "email",
+            "semanticConfidence": 0.99,
+            "evidenceSelector": "#powermail_field_email"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][empty_marker_01]",
+            "rawId": "powermail_field_empty_marker_01",
+            "label": "Ihre Mitteilung an das Team der SPSG",
+            "control": "textarea",
+            "required": true,
+            "step": 1,
+            "semanticKey": "messageBody",
+            "semanticConfidence": 0.9,
+            "evidenceSelector": "#powermail_field_empty_marker_01"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][marker]",
+            "label": "tx_powermail_pi1[field][marker]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[field][marker]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][marker][]",
+            "rawId": "powermail_field_marker_1",
+            "label": "Hiermit bestätige ich, dass ich die Datenschutzerklärung zur Kenntnis genommen habe.",
+            "control": "checkbox",
+            "required": true,
+            "step": 1,
+            "semanticKey": "privacyConsent",
+            "semanticConfidence": 0.96,
+            "evidenceSelector": "#powermail_field_marker_1"
+          },
+          {
+            "rawName": "tx_powermail_pi1[mail][form]",
+            "label": "tx_powermail_pi1[mail][form]",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"tx_powermail_pi1[mail][form]\"]"
+          },
+          {
+            "rawName": "tx_powermail_pi1[field][__hp]",
+            "rawId": "powermail_hp_1",
+            "label": "Bitte dieses Feld NICHT ausfüllen!",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#powermail_hp_1"
+          }
+        ],
+        "captcha": true,
+        "loginRequired": false,
+        "contentHash": "1c79e661a2e15c232c2eea71130bebfa6416faf20ce7c860c08fcb10c79516bc"
+      },
+      "confidence": 30,
+      "reasons": [
+        "linked from the official seed site",
+        "page contains a form",
+        "CAPTCHA requires user interaction"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.spsg.de/",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.spsg.de/kontakt",
+          "label": "Kontakt"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.spsg.de/kontakt",
+          "excerpt": "Kontakt Sie haben Fragen, Anregungen oder Kritik?Hier können Sie sich über ein E-Mail-Formular mit uns in Verbindung setzen.Sie suchen einen bestimmten Ansprechpartner? Hier finden Sie eine Übersicht der Abteilungen der SPSG. Sie haben Fragen, Anregungen oder Kritik?NameE-Mail-AdresseIhre Mitteilung an das Team der SPSG Datenschutz*Hiermit bestätige ich, dass ich die Datenschutzerklärung zur Kenntnis genommen habe. Bitte dieses Feld NICHT ausfüllen! ZentraleStiftung Preußische Schlösser und Gärt",
+          "contentHash": "ce4f1bcc226740f017b4a27f0c72a3fd9ffc84897cfbdd7625b2047b5cc393ad",
+          "observedAt": "2026-07-24T00:37:15.351Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:37:15.351Z"
+    },
+    {
+      "id": "channel_8855ebf1d43575e9",
+      "operatorId": "operator_fb33de75a6d88844",
+      "venueIds": [
+        "relation/1652105",
+        "way/23813200",
+        "way/26382664",
+        "way/285972948"
+      ],
+      "kind": "general_contact_form",
+      "pageUrl": "https://www.stadtmuseum.de/en/contact",
+      "form": {
+        "pageUrl": "https://www.stadtmuseum.de/en/contact",
+        "formAction": "https://www.stadtmuseum.de/en/contact",
+        "formMethod": "POST",
+        "title": "Contact | Stadtmuseum Berlin",
+        "contextText": "First nameLast nameEmail *PhoneTopicGeneralCollectionPressMessage *Security test: 2+3 equals? *Send messagePlease do not fill in this field. First name Last name Email * Phone select-1 Message * Security test: 2+3 equals? * referer_url forminator_nonce _wp_http_referer form_id page_id form_type current_url render_id action Please do not fill in this field.",
+        "language": [
+          "en"
+        ],
+        "fields": [
+          {
+            "rawName": "name-1",
+            "rawId": "forminator-field-name-1",
+            "label": "First name",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "firstName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#forminator-field-name-1"
+          },
+          {
+            "rawName": "name-2",
+            "rawId": "forminator-field-name-2",
+            "label": "Last name",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "lastName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#forminator-field-name-2"
+          },
+          {
+            "rawName": "email-1",
+            "rawId": "forminator-field-email-1",
+            "label": "Email *",
+            "control": "email",
+            "required": true,
+            "step": 1,
+            "semanticKey": "email",
+            "semanticConfidence": 0.99,
+            "evidenceSelector": "#forminator-field-email-1"
+          },
+          {
+            "rawName": "phone-1",
+            "rawId": "forminator-field-phone-1",
+            "label": "Phone",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "phone",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#forminator-field-phone-1"
+          },
+          {
+            "rawName": "select-1",
+            "rawId": "forminator-form-13068__field--select-1_6a62b3bdb048c",
+            "label": "select-1",
+            "control": "select",
+            "required": false,
+            "options": [
+              {
+                "value": "General",
+                "label": "General"
+              },
+              {
+                "value": "Collection",
+                "label": "Collection"
+              },
+              {
+                "value": "Press",
+                "label": "Press"
+              }
+            ],
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#forminator-form-13068__field--select-1_6a62b3bdb048c"
+          },
+          {
+            "rawName": "textarea-1",
+            "rawId": "forminator-field-textarea-1",
+            "label": "Message *",
+            "control": "textarea",
+            "required": true,
+            "step": 1,
+            "semanticKey": "messageBody",
+            "semanticConfidence": 0.9,
+            "evidenceSelector": "#forminator-field-textarea-1"
+          },
+          {
+            "rawName": "number-1",
+            "rawId": "forminator-field-number-1",
+            "label": "Security test: 2+3 equals? *",
+            "control": "number",
+            "required": true,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#forminator-field-number-1"
+          },
+          {
+            "rawName": "referer_url",
+            "label": "referer_url",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"referer_url\"]"
+          },
+          {
+            "rawName": "forminator_nonce",
+            "rawId": "forminator_nonce",
+            "label": "forminator_nonce",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#forminator_nonce"
+          },
+          {
+            "rawName": "_wp_http_referer",
+            "label": "_wp_http_referer",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"_wp_http_referer\"]"
+          },
+          {
+            "rawName": "form_id",
+            "label": "form_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"form_id\"]"
+          },
+          {
+            "rawName": "page_id",
+            "label": "page_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"page_id\"]"
+          },
+          {
+            "rawName": "form_type",
+            "label": "form_type",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"form_type\"]"
+          },
+          {
+            "rawName": "current_url",
+            "label": "current_url",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"current_url\"]"
+          },
+          {
+            "rawName": "render_id",
+            "label": "render_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"render_id\"]"
+          },
+          {
+            "rawName": "action",
+            "label": "action",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"action\"]"
+          },
+          {
+            "rawName": "input_8",
+            "rawId": "input_8",
+            "label": "Please do not fill in this field.",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#input_8"
+          }
+        ],
+        "captcha": true,
+        "loginRequired": false,
+        "contentHash": "00427022cac0875930548f61fd86bec19d29f9648698077b84203a7987aefa7c"
+      },
+      "confidence": 30,
+      "reasons": [
+        "linked from the official seed site",
+        "page contains a form",
+        "CAPTCHA requires user interaction"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.stadtmuseum.de/",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.stadtmuseum.de/kontakt",
+          "label": "Kontakt"
+        },
+        {
+          "url": "https://www.stadtmuseum.de/en/contact",
+          "label": "EN"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.stadtmuseum.de/en/contact",
+          "excerpt": "Contact Your direct line to Stadtmuseum Berlin Do you have any questions about the Stiftung Stadtmuseum Berlin, its collections, museums or services? Would you like to send us your wishes, suggestions or criticism? Or do you have a press enquiry that we can help you with? Then write to us! Our staff will be happy to help you. First nameLast nameEmail *PhoneTopicGeneralCollectionPressMessage *Security test: 2+3 equals? *Send messagePlease do not fill in this field. Infoline Mo – Fr | 10 – 18 Uhr ",
+          "contentHash": "946f79ce46f3eeb7d6bec76048eb407c0847221d04952fb1b83314e23ff078c8",
+          "observedAt": "2026-07-24T00:37:17.788Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:37:17.788Z"
+    },
+    {
+      "id": "channel_d11fb4517271c13c",
+      "operatorId": "operator_fb33de75a6d88844",
+      "venueIds": [
+        "relation/1652105",
+        "way/23813200",
+        "way/26382664",
+        "way/285972948"
+      ],
+      "kind": "general_contact_form",
+      "pageUrl": "https://www.stadtmuseum.de/kontakt",
+      "form": {
+        "pageUrl": "https://www.stadtmuseum.de/kontakt",
+        "formAction": "https://www.stadtmuseum.de/kontakt",
+        "formMethod": "POST",
+        "title": "Kontakt | Stadtmuseum Berlin",
+        "contextText": "VornameNachnameEmailTelefonnummerThemaAllgemeinSammlungPresseNachricht *Sicherheitsprüfung: Was ergibt 2+3? *HTMLFüllen Sie alle Felder aus, die mit dem Asterisk (*) gekennzeichnet sind, um das Formular abzuschicken.Nachricht sendenBitte fülle dieses Feld nicht aus. Vorname Nachname Email Telefonnummer select-1 Nachricht * Sicherheitsprüfung: Was ergibt 2+3? * referer_url forminator_nonce _wp_http_referer form_id page_id form_type current_url render_id action Bitte fülle dieses Feld nicht aus.",
+        "language": [
+          "de"
+        ],
+        "fields": [
+          {
+            "rawName": "name-1",
+            "rawId": "forminator-field-name-1",
+            "label": "Vorname",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "firstName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#forminator-field-name-1"
+          },
+          {
+            "rawName": "name-2",
+            "rawId": "forminator-field-name-2",
+            "label": "Nachname",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "lastName",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#forminator-field-name-2"
+          },
+          {
+            "rawName": "email-1",
+            "rawId": "forminator-field-email-1",
+            "label": "Email",
+            "control": "email",
+            "required": false,
+            "step": 1,
+            "semanticKey": "email",
+            "semanticConfidence": 0.99,
+            "evidenceSelector": "#forminator-field-email-1"
+          },
+          {
+            "rawName": "phone-1",
+            "rawId": "forminator-field-phone-1",
+            "label": "Telefonnummer",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "phone",
+            "semanticConfidence": 0.97,
+            "evidenceSelector": "#forminator-field-phone-1"
+          },
+          {
+            "rawName": "select-1",
+            "rawId": "forminator-form-6713__field--select-1_6a62b3bcc0cf1",
+            "label": "select-1",
+            "control": "select",
+            "required": false,
+            "options": [
+              {
+                "value": "one",
+                "label": "Allgemein"
+              },
+              {
+                "value": "two",
+                "label": "Sammlung"
+              },
+              {
+                "value": "Presse",
+                "label": "Presse"
+              }
+            ],
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#forminator-form-6713__field--select-1_6a62b3bcc0cf1"
+          },
+          {
+            "rawName": "textarea-1",
+            "rawId": "forminator-field-textarea-1",
+            "label": "Nachricht *",
+            "control": "textarea",
+            "required": true,
+            "step": 1,
+            "semanticKey": "messageBody",
+            "semanticConfidence": 0.9,
+            "evidenceSelector": "#forminator-field-textarea-1"
+          },
+          {
+            "rawName": "number-1",
+            "rawId": "forminator-field-number-1",
+            "label": "Sicherheitsprüfung: Was ergibt 2+3? *",
+            "control": "number",
+            "required": true,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#forminator-field-number-1"
+          },
+          {
+            "rawName": "referer_url",
+            "label": "referer_url",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"referer_url\"]"
+          },
+          {
+            "rawName": "forminator_nonce",
+            "rawId": "forminator_nonce",
+            "label": "forminator_nonce",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#forminator_nonce"
+          },
+          {
+            "rawName": "_wp_http_referer",
+            "label": "_wp_http_referer",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"_wp_http_referer\"]"
+          },
+          {
+            "rawName": "form_id",
+            "label": "form_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"form_id\"]"
+          },
+          {
+            "rawName": "page_id",
+            "label": "page_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"page_id\"]"
+          },
+          {
+            "rawName": "form_type",
+            "label": "form_type",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"form_type\"]"
+          },
+          {
+            "rawName": "current_url",
+            "label": "current_url",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"current_url\"]"
+          },
+          {
+            "rawName": "render_id",
+            "label": "render_id",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"render_id\"]"
+          },
+          {
+            "rawName": "action",
+            "label": "action",
+            "control": "hidden",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "input[name=\"action\"]"
+          },
+          {
+            "rawName": "input_8",
+            "rawId": "input_8",
+            "label": "Bitte fülle dieses Feld nicht aus.",
+            "control": "text",
+            "required": false,
+            "step": 1,
+            "semanticKey": "other",
+            "semanticConfidence": 0.2,
+            "evidenceSelector": "#input_8"
+          }
+        ],
+        "captcha": true,
+        "loginRequired": false,
+        "contentHash": "d87881b010971e57f5e29ccae48913325b0ef84f6d95121fa9d4a7b68e78f25e"
+      },
+      "confidence": 30,
+      "reasons": [
+        "linked from the official seed site",
+        "page contains a form",
+        "CAPTCHA requires user interaction"
+      ],
+      "discoveryPath": [
+        {
+          "url": "https://www.stadtmuseum.de/",
+          "label": "official website"
+        },
+        {
+          "url": "https://www.stadtmuseum.de/kontakt",
+          "label": "Kontakt"
+        }
+      ],
+      "evidence": [
+        {
+          "sourceUrl": "https://www.stadtmuseum.de/kontakt",
+          "excerpt": "Kontakt Ihr direkter Draht zum Stadtmuseum Berlin Haben Sie Fragen zur Stiftung Stadtmuseum Berlin, ihren Sammlungen, Museen oder Service-Angeboten? Möchten Sie uns Ihre Wünsche, Anregungen oder Kritik mitteilen? Oder haben Sie eine Presse-Anfrage, bei der wir Sie unterstützen können? Dann schreiben Sie uns! Die Mitarbeiter:innen unserer Infoline sind gerne für Sie da. VornameNachnameEmailTelefonnummerThemaAllgemeinSammlungPresseNachricht *Sicherheitsprüfung: Was ergibt 2+3? *HTMLFüllen Sie alle",
+          "contentHash": "a995d280f86c60b6c458b3f9556f2dfa7b0a765e9eac809980b715a6fe2042a2",
+          "observedAt": "2026-07-24T00:37:16.931Z"
+        }
+      ],
+      "fetchStatus": "ok",
+      "reviewStatus": "candidate",
+      "discoveredAt": "2026-07-24T00:37:16.931Z"
     }
   ],
   "failures": []

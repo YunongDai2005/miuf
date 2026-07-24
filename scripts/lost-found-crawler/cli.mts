@@ -40,6 +40,9 @@ switch (command) {
       inputPath: pathFromRoot("public/berlin-attractions.json"),
       outputPath: pathFromRoot("data/lost-found-crawler/inventory.json"),
       sourceLabel: "public/berlin-attractions.json",
+      operatorOverridePath: pathFromRoot(
+        "data/lost-found-crawler/operator-overrides.json"
+      ),
     });
     console.log(JSON.stringify(result.summary, null, 2));
     break;

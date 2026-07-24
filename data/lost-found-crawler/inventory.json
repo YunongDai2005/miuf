@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-23T23:32:47.970Z",
+  "generatedAt": "2026-07-24T00:22:49.767Z",
   "sourceFile": "public/berlin-attractions.json",
   "operators": [
     {
@@ -10,6 +10,7 @@
         "relation/11516702"
       ],
       "confidence": 0.72,
+      "resolutionSource": "metadata_candidate",
       "evidenceUrls": [
         "https://www.openstreetmap.org/relation/11516702"
       ]
@@ -21,6 +22,7 @@
         "relation/910651"
       ],
       "confidence": 0.72,
+      "resolutionSource": "metadata_candidate",
       "evidenceUrls": [
         "https://www.openstreetmap.org/relation/910651"
       ]
@@ -32,6 +34,7 @@
         "relation/3349"
       ],
       "confidence": 0.72,
+      "resolutionSource": "metadata_candidate",
       "evidenceUrls": [
         "https://www.openstreetmap.org/relation/3349"
       ]
@@ -43,6 +46,7 @@
         "relation/2201742"
       ],
       "confidence": 0.72,
+      "resolutionSource": "metadata_candidate",
       "evidenceUrls": [
         "https://www.openstreetmap.org/relation/2201742",
         "https://www.wikidata.org/wiki/Q151897"
@@ -55,6 +59,7 @@
         "relation/19376753"
       ],
       "confidence": 0.72,
+      "resolutionSource": "metadata_candidate",
       "evidenceUrls": [
         "https://www.openstreetmap.org/relation/19376753"
       ]
@@ -66,8 +71,53 @@
         "relation/4211905"
       ],
       "confidence": 0.72,
+      "resolutionSource": "metadata_candidate",
       "evidenceUrls": [
         "https://www.openstreetmap.org/relation/4211905"
+      ]
+    },
+    {
+      "id": "operator_89cf7cec301d41a8",
+      "name": "Staatliche Museen zu Berlin",
+      "website": "https://www.smb.museum/",
+      "venueIds": [
+        "node/1860480265",
+        "node/3755207008",
+        "node/6848662229",
+        "node/7063453003",
+        "relation/28134",
+        "relation/3619",
+        "relation/3626233",
+        "relation/4211594",
+        "way/137219848",
+        "way/18578139",
+        "way/22990276",
+        "way/25652321",
+        "way/26247891",
+        "way/313659704",
+        "way/313670733",
+        "way/87646457"
+      ],
+      "confidence": 0.98,
+      "resolutionSource": "official_source_audit",
+      "evidenceUrls": [
+        "https://www.openstreetmap.org/relation/28134",
+        "https://www.openstreetmap.org/relation/3619",
+        "https://www.openstreetmap.org/relation/3626233",
+        "https://www.openstreetmap.org/relation/4211594",
+        "https://www.smb.museum/impressum/",
+        "https://www.wikidata.org/wiki/Q157298",
+        "https://www.wikidata.org/wiki/Q157316",
+        "https://www.wikidata.org/wiki/Q162111",
+        "https://www.wikidata.org/wiki/Q318174",
+        "https://www.wikidata.org/wiki/Q322010",
+        "https://www.wikidata.org/wiki/Q32659772",
+        "https://www.wikidata.org/wiki/Q555946",
+        "https://www.wikidata.org/wiki/Q563805",
+        "https://www.wikidata.org/wiki/Q564747",
+        "https://www.wikidata.org/wiki/Q584756",
+        "https://www.wikidata.org/wiki/Q62699853",
+        "https://www.wikidata.org/wiki/Q641630"
       ]
     },
     {
@@ -77,6 +127,7 @@
         "relation/14375945"
       ],
       "confidence": 0.72,
+      "resolutionSource": "metadata_candidate",
       "evidenceUrls": [
         "https://www.openstreetmap.org/relation/14375945"
       ]
@@ -88,8 +139,27 @@
         "relation/3007958"
       ],
       "confidence": 0.72,
+      "resolutionSource": "metadata_candidate",
       "evidenceUrls": [
         "https://www.openstreetmap.org/relation/3007958"
+      ]
+    },
+    {
+      "id": "operator_0fa1189548278b11",
+      "name": "Stiftung Planetarium Berlin",
+      "website": "https://www.planetarium.berlin/",
+      "venueIds": [
+        "relation/2309788",
+        "relation/2309795",
+        "relation/8102166"
+      ],
+      "confidence": 0.98,
+      "resolutionSource": "official_source_audit",
+      "evidenceUrls": [
+        "https://www.openstreetmap.org/relation/2309788",
+        "https://www.openstreetmap.org/relation/2309795",
+        "https://www.openstreetmap.org/relation/8102166",
+        "https://www.planetarium.berlin/impressum"
       ]
     },
     {
@@ -99,8 +169,61 @@
         "relation/3264297"
       ],
       "confidence": 0.72,
+      "resolutionSource": "metadata_candidate",
       "evidenceUrls": [
         "https://www.openstreetmap.org/relation/3264297"
+      ]
+    },
+    {
+      "id": "operator_3eee5be1e3f5e40a",
+      "name": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "website": "https://www.spsg.de/",
+      "venueIds": [
+        "node/5723205465",
+        "node/9979815162",
+        "way/1089407347",
+        "way/11544256",
+        "way/180376359",
+        "way/186517395",
+        "way/22960067",
+        "way/24315051",
+        "way/24478438",
+        "way/25014562",
+        "way/26840054"
+      ],
+      "confidence": 0.98,
+      "resolutionSource": "official_source_audit",
+      "evidenceUrls": [
+        "https://www.spsg.de/impressum",
+        "https://www.wikidata.org/wiki/Q1229920",
+        "https://www.wikidata.org/wiki/Q154996",
+        "https://www.wikidata.org/wiki/Q1732343",
+        "https://www.wikidata.org/wiki/Q1980210",
+        "https://www.wikidata.org/wiki/Q301684",
+        "https://www.wikidata.org/wiki/Q531032",
+        "https://www.wikidata.org/wiki/Q64978208",
+        "https://www.wikidata.org/wiki/Q681355",
+        "https://www.wikidata.org/wiki/Q702477"
+      ]
+    },
+    {
+      "id": "operator_fb33de75a6d88844",
+      "name": "Stiftung Stadtmuseum Berlin",
+      "website": "https://www.stadtmuseum.de/",
+      "venueIds": [
+        "relation/1652105",
+        "way/23813200",
+        "way/26382664",
+        "way/285972948"
+      ],
+      "confidence": 0.98,
+      "resolutionSource": "official_source_audit",
+      "evidenceUrls": [
+        "https://www.openstreetmap.org/relation/1652105",
+        "https://www.stadtmuseum.de/impressum",
+        "https://www.wikidata.org/wiki/Q1777246",
+        "https://www.wikidata.org/wiki/Q679052",
+        "https://www.wikidata.org/wiki/Q878325"
       ]
     }
   ],
@@ -18803,9 +18926,14 @@
       "entityGroupId": "venue_group_dcc795519bc40ceb",
       "canonicalVenueId": "way/313670733",
       "officialWebsite": "http://www.smb.museum/museen-und-einrichtungen/alte-nationalgalerie/home.html",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q162111"
       ]
     },
@@ -18892,9 +19020,14 @@
       "entityGroupId": "venue_group_39ec1e1374727649",
       "canonicalVenueId": "relation/3619",
       "officialWebsite": "https://www.smb.museum/museen-einrichtungen/altes-museum/home/",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.openstreetmap.org/relation/3619"
       ]
     },
@@ -19381,9 +19514,14 @@
       "entityGroupId": "venue_group_04cb4c30d5eab316",
       "canonicalVenueId": "relation/2309788",
       "officialWebsite": "https://www.planetarium.berlin/archenhold-sternwarte",
+      "operatorId": "operator_0fa1189548278b11",
+      "operatorName": "Stiftung Planetarium Berlin",
+      "operatorWebsite": "https://www.planetarium.berlin/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.planetarium.berlin/impressum",
         "https://www.openstreetmap.org/relation/2309788"
       ]
     },
@@ -20749,6 +20887,7 @@
       "officialWebsite": "https://www.bahnhof.de/en/berlin-hauptbahnhof",
       "operatorId": "operator_8c9f1a38aaf54b12",
       "operatorName": "DB InfraGO",
+      "operatorResolutionSource": "metadata_candidate",
       "resolutionStatus": "independent_candidate",
       "confidence": 0.72,
       "evidenceUrls": [
@@ -20983,6 +21122,7 @@
       "officialWebsite": "https://berliner-schloss.de/",
       "operatorId": "operator_08102aae15fd5928",
       "operatorName": "Stiftung Humboldt Forum im Berliner Schloss",
+      "operatorResolutionSource": "metadata_candidate",
       "resolutionStatus": "independent_candidate",
       "confidence": 0.72,
       "evidenceUrls": [
@@ -21547,9 +21687,14 @@
       "entityGroupId": "venue_group_91ce345c5d8f4b6b",
       "canonicalVenueId": "relation/4211594",
       "officialWebsite": "https://www.smb.museum/museen-und-einrichtungen/bode-museum/home.html",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.openstreetmap.org/relation/4211594"
       ]
     },
@@ -21933,6 +22078,7 @@
       "officialWebsite": "https://www.britzergarten.de/",
       "operatorId": "operator_5c0c37bcb0373862",
       "operatorName": "Grün Berlin GmbH",
+      "operatorResolutionSource": "metadata_candidate",
       "resolutionStatus": "independent_candidate",
       "confidence": 0.72,
       "evidenceUrls": [
@@ -26683,9 +26829,14 @@
       "entityGroupId": "venue_group_bdfd160eb6698788",
       "canonicalVenueId": "way/285972948",
       "officialWebsite": "https://www.stadtmuseum.de/ephraim-palais/",
+      "operatorId": "operator_fb33de75a6d88844",
+      "operatorName": "Stiftung Stadtmuseum Berlin",
+      "operatorWebsite": "https://www.stadtmuseum.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.stadtmuseum.de/impressum",
         "https://www.wikidata.org/wiki/Q878325"
       ]
     },
@@ -27630,9 +27781,14 @@
       "entityGroupId": "venue_group_0a9a3c8b7e10b94e",
       "canonicalVenueId": "way/180376359",
       "officialWebsite": "https://www.spsg.de/schloesser-gaerten/objekt/flatowturm-im-park-babelsberg/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q64978208"
       ]
     },
@@ -28223,9 +28379,14 @@
       "entityGroupId": "venue_group_45d12e79b9f19952",
       "canonicalVenueId": "relation/2309795",
       "officialWebsite": "https://www.planetarium.berlin/archenhold-sternwarte",
+      "operatorId": "operator_0fa1189548278b11",
+      "operatorName": "Stiftung Planetarium Berlin",
+      "operatorWebsite": "https://www.planetarium.berlin/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.planetarium.berlin/impressum",
         "https://www.openstreetmap.org/relation/2309795"
       ]
     },
@@ -29272,6 +29433,7 @@
       "officialWebsite": "https://www.stiftung-berliner-mauer.de/",
       "operatorId": "operator_0c1628684755cf0b",
       "operatorName": "Stiftung Berliner Mauer",
+      "operatorResolutionSource": "metadata_candidate",
       "resolutionStatus": "independent_candidate",
       "confidence": 0.72,
       "evidenceUrls": [
@@ -30114,9 +30276,14 @@
       "entityGroupId": "venue_group_3a8342c5c6a95ee6",
       "canonicalVenueId": "relation/3626233",
       "officialWebsite": "https://www.smb.museum/museen-einrichtungen/gemaeldegalerie/home/",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.openstreetmap.org/relation/3626233"
       ]
     },
@@ -30966,6 +31133,7 @@
       "officialWebsite": "https://www.gropiusbau.de/",
       "operatorId": "operator_3fdaff4668f480dc",
       "operatorName": "Berliner Festspiele",
+      "operatorResolutionSource": "metadata_candidate",
       "resolutionStatus": "independent_candidate",
       "confidence": 0.72,
       "evidenceUrls": [
@@ -31505,9 +31673,14 @@
       "entityGroupId": "venue_group_e3befebafb5118be",
       "canonicalVenueId": "node/1860480265",
       "officialWebsite": "http://www.smb.museum/museen-und-einrichtungen/hamburger-bahnhof/home.html",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q584756"
       ]
     },
@@ -33576,9 +33749,14 @@
       "entityGroupId": "venue_group_901466b365451800",
       "canonicalVenueId": "node/5723205465",
       "officialWebsite": "https://www.spsg.de/schloesser-gaerten/objekt/jagdschloss-grunewald/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q531032"
       ]
     },
@@ -33593,9 +33771,14 @@
       "entityGroupId": "venue_group_901466b365451800",
       "canonicalVenueId": "node/5723205465",
       "officialWebsite": "https://www.spsg.de/schloesser-gaerten/objekt/jagdschloss-grunewald/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q531032"
       ]
     },
@@ -35315,9 +35498,14 @@
       "entityGroupId": "venue_group_414562a9cfb4dae5",
       "canonicalVenueId": "way/26382664",
       "officialWebsite": "https://www.stadtmuseum.de/knoblauchhaus/",
+      "operatorId": "operator_fb33de75a6d88844",
+      "operatorName": "Stiftung Stadtmuseum Berlin",
+      "operatorWebsite": "https://www.stadtmuseum.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.stadtmuseum.de/impressum",
         "https://www.wikidata.org/wiki/Q1777246"
       ]
     },
@@ -35998,9 +36186,14 @@
       "entityGroupId": "venue_group_ece625b6fa372288",
       "canonicalVenueId": "relation/28134",
       "officialWebsite": "https://www.smb.museum/museen-einrichtungen/kunstgewerbemuseum/home/",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.openstreetmap.org/relation/28134"
       ]
     },
@@ -36130,9 +36323,14 @@
       "entityGroupId": "venue_group_e03c6e0a80a6e4c3",
       "canonicalVenueId": "way/22990276",
       "officialWebsite": "http://www.smb.museum/museen-und-einrichtungen/kupferstichkabinett/home.html",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q555946"
       ]
     },
@@ -37966,9 +38164,14 @@
       "entityGroupId": "venue_group_2c59b711a580871b",
       "canonicalVenueId": "relation/1652105",
       "officialWebsite": "http://www.stadtmuseum.de/maerkisches-museum",
+      "operatorId": "operator_fb33de75a6d88844",
+      "operatorName": "Stiftung Stadtmuseum Berlin",
+      "operatorWebsite": "https://www.stadtmuseum.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.stadtmuseum.de/impressum",
         "https://www.openstreetmap.org/relation/1652105"
       ]
     },
@@ -38231,9 +38434,14 @@
       "entityGroupId": "venue_group_12e095d49dae716a",
       "canonicalVenueId": "way/24478438",
       "officialWebsite": "https://www.spsg.de/schloesser-gaerten/objekt/mausoleum-charlottenburg",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q1732343"
       ]
     },
@@ -38903,9 +39111,14 @@
       "entityGroupId": "venue_group_839f95e9d400a871",
       "canonicalVenueId": "way/87646457",
       "officialWebsite": "https://www.smb.museum/mb",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q641630"
       ]
     },
@@ -39058,9 +39271,14 @@
       "entityGroupId": "venue_group_7f8ee134c4a6bc07",
       "canonicalVenueId": "node/3755207008",
       "officialWebsite": "http://www.smb.museum/museen-und-einrichtungen/museum-europaeischer-kulturen/home.html",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q318174"
       ]
     },
@@ -39092,9 +39310,14 @@
       "entityGroupId": "venue_group_0a67b542b347853b",
       "canonicalVenueId": "way/26247891",
       "officialWebsite": "https://www.smb.museum/en/museums-institutions/museum-fuer-fotografie/home/",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q564747"
       ]
     },
@@ -39858,9 +40081,14 @@
       "entityGroupId": "venue_group_479357cb57e24877",
       "canonicalVenueId": "way/25652321",
       "officialWebsite": "https://www.smb.museum/en/museums-institutions/neue-nationalgalerie/home/",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q32659772"
       ]
     },
@@ -39906,9 +40134,14 @@
       "entityGroupId": "venue_group_91a19d8a2b66be19",
       "canonicalVenueId": "way/11544256",
       "officialWebsite": "https://www.spsg.de/schloesser-gaerten/objekt/neuer-pavillon-im-schlossgarten-charlottenburg/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q1980210"
       ]
     },
@@ -39923,9 +40156,14 @@
       "entityGroupId": "venue_group_5026935cb2f0ddd4",
       "canonicalVenueId": "way/18578139",
       "officialWebsite": "https://www.smb.museum/museen-einrichtungen/neues-museum/home/",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q157316"
       ]
     },
@@ -40044,9 +40282,14 @@
       "entityGroupId": "venue_group_ad2d31741da5806b",
       "canonicalVenueId": "way/23813200",
       "officialWebsite": "https://www.stadtmuseum.de/museum/museum-nikolaikirche",
+      "operatorId": "operator_fb33de75a6d88844",
+      "operatorName": "Stiftung Stadtmuseum Berlin",
+      "operatorWebsite": "https://www.stadtmuseum.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.stadtmuseum.de/impressum",
         "https://www.wikidata.org/wiki/Q679052"
       ]
     },
@@ -40905,6 +41148,7 @@
       "canonicalVenueId": "relation/3264297",
       "operatorId": "operator_fcc63b535674b047",
       "operatorName": "Stiftung Preußische Schlösser und Gärten",
+      "operatorResolutionSource": "metadata_candidate",
       "resolutionStatus": "independent_candidate",
       "confidence": 0.72,
       "evidenceUrls": [
@@ -40998,6 +41242,7 @@
       "officialWebsite": "https://www.bundestag.de/besuche/architektur/loebehaus/",
       "operatorId": "operator_a8744c1c0bdf7a51",
       "operatorName": "Deutscher Bundestag",
+      "operatorResolutionSource": "metadata_candidate",
       "resolutionStatus": "independent_candidate",
       "confidence": 0.72,
       "evidenceUrls": [
@@ -41145,9 +41390,14 @@
       "entityGroupId": "venue_group_d501b3fc8dc58146",
       "canonicalVenueId": "node/6848662229",
       "officialWebsite": "https://www.smb.museum/museen-und-einrichtungen/pergamonmuseum-das-panorama/home.html",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q62699853"
       ]
     },
@@ -41176,9 +41426,14 @@
       "entityGroupId": "venue_group_a2c42e26eda5a13c",
       "canonicalVenueId": "way/313659704",
       "officialWebsite": "https://www.smb.museum/museen-einrichtungen/pergamonmuseum/",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q157298"
       ]
     },
@@ -41427,9 +41682,14 @@
       "entityGroupId": "venue_group_66de98a949e4c6f5",
       "canonicalVenueId": "relation/8102166",
       "officialWebsite": "https://www.planetarium.berlin/planetarium-am-insulaner-wilhelm-foerster-sternwarte",
+      "operatorId": "operator_0fa1189548278b11",
+      "operatorName": "Stiftung Planetarium Berlin",
+      "operatorWebsite": "https://www.planetarium.berlin/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.planetarium.berlin/impressum",
         "https://www.openstreetmap.org/relation/8102166"
       ]
     },
@@ -42487,6 +42747,7 @@
       "officialWebsite": "http://www.bundestag.de/",
       "operatorId": "operator_f89425695fdcdab6",
       "operatorName": "Deutscher Bundestag - Verfassungsorgan der Bundesrepublik Deutschland",
+      "operatorResolutionSource": "metadata_candidate",
       "resolutionStatus": "independent_candidate",
       "confidence": 0.72,
       "evidenceUrls": [
@@ -43284,6 +43545,7 @@
       "officialWebsite": "https://www.berlin.de/rbmskzl/",
       "operatorId": "operator_9ce72cac090069d3",
       "operatorName": "Regierender Senat Berlins",
+      "operatorResolutionSource": "metadata_candidate",
       "resolutionStatus": "independent_candidate",
       "confidence": 0.72,
       "evidenceUrls": [
@@ -43594,9 +43856,14 @@
       "entityGroupId": "venue_group_d188137d75cafe40",
       "canonicalVenueId": "node/7063453003",
       "officialWebsite": "https://www.smb.museum/museen-und-einrichtungen/sammlung-scharf-gerstenberg/home.html",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q322010"
       ]
     },
@@ -43928,9 +44195,14 @@
       "entityGroupId": "venue_group_c8bd4ed0d44bdd61",
       "canonicalVenueId": "way/22960067",
       "officialWebsite": "http://www.spsg.de/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q702477"
       ]
     },
@@ -44007,9 +44279,14 @@
       "entityGroupId": "venue_group_82835f7e90fed05f",
       "canonicalVenueId": "way/186517395",
       "officialWebsite": "https://www.spsg.de/schloesser-gaerten/objekt/schloss-charlottenburg-altes-schloss/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q154996"
       ]
     },
@@ -44024,9 +44301,15 @@
       "entityGroupId": "venue_group_82835f7e90fed05f",
       "canonicalVenueId": "way/186517395",
       "officialWebsite": "https://www.spsg.de/schloesser-gaerten/objekt/schloss-charlottenburg-altes-schloss/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
-      "evidenceUrls": []
+      "confidence": 0.98,
+      "evidenceUrls": [
+        "https://www.spsg.de/impressum"
+      ]
     },
     {
       "venueId": "way/215399625",
@@ -44084,9 +44367,14 @@
       "entityGroupId": "venue_group_0f3a0b11ae094737",
       "canonicalVenueId": "way/26840054",
       "officialWebsite": "https://www.spsg.de/en/palaces-gardens/object/glienicke-villa/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q301684"
       ]
     },
@@ -44115,9 +44403,14 @@
       "entityGroupId": "venue_group_ac906cf74969aa53",
       "canonicalVenueId": "way/137219848",
       "officialWebsite": "https://www.smb.museum/museen-einrichtungen/schloss-koepenick/home/",
+      "operatorId": "operator_89cf7cec301d41a8",
+      "operatorName": "Staatliche Museen zu Berlin",
+      "operatorWebsite": "https://www.smb.museum/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.smb.museum/impressum/",
         "https://www.wikidata.org/wiki/Q563805"
       ]
     },
@@ -44132,9 +44425,14 @@
       "entityGroupId": "venue_group_b53cae901e9ec06a",
       "canonicalVenueId": "way/25014562",
       "officialWebsite": "https://www.spsg.de/schloesser-gaerten/objekt/schloss-auf-der-pfaueninsel/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q1229920"
       ]
     },
@@ -44166,9 +44464,14 @@
       "entityGroupId": "venue_group_660b5c1b99b5b9e2",
       "canonicalVenueId": "way/24315051",
       "officialWebsite": "https://www.spsg.de/schloesser-gaerten/objekt/schloss-schoenhausen/",
+      "operatorId": "operator_3eee5be1e3f5e40a",
+      "operatorName": "Stiftung Preußische Schlösser und Gärten Berlin-Brandenburg",
+      "operatorWebsite": "https://www.spsg.de/",
+      "operatorResolutionSource": "official_source_audit",
       "resolutionStatus": "independent_candidate",
-      "confidence": 0.62,
+      "confidence": 0.98,
       "evidenceUrls": [
+        "https://www.spsg.de/impressum",
         "https://www.wikidata.org/wiki/Q681355"
       ]
     },
@@ -50974,7 +51277,7 @@
     "independentCandidates": 225,
     "parentVenueRequired": 1622,
     "insufficientSource": 409,
-    "explicitOperators": 9,
+    "explicitOperators": 13,
     "officialWebsites": 224,
     "duplicateGroups": 33,
     "parentCandidates": 410

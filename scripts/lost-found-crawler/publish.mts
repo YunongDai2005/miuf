@@ -12,6 +12,12 @@ import type {
   ReviewFile,
 } from "./schemas";
 
+const FORM_KINDS = new Set([
+  "dedicated_lost_found_form",
+  "operator_lost_found_form",
+  "general_contact_form",
+]);
+
 export async function publishReviewedChannels(options: {
   candidatePath: string;
   reviewPath: string;
@@ -71,6 +77,11 @@ export async function publishReviewedChannels(options: {
       throw new Error(`Accepted candidate ${candidate.id} has no valid venue assignment`);
     }
     const form = candidate.form;
+    if (FORM_KINDS.has(kind) && (!form || form.fields.length === 0)) {
+      throw new Error(
+        `Candidate ${candidate.id} cannot publish a form kind without an extracted form`
+      );
+    }
     if (
       kind === "email" &&
       !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(candidate.contactValue ?? "")
@@ -93,6 +104,15 @@ export async function publishReviewedChannels(options: {
     ) {
       throw new Error(
         `Candidate ${candidate.id} cannot enable assisted filling without extracted form fields`
+      );
+    }
+    if (
+      (decision.submissionMode === "assisted_fill" ||
+        decision.submissionMode === "adapter") &&
+      decision.reviewedContentHash !== form?.contentHash
+    ) {
+      throw new Error(
+        `Candidate ${candidate.id} form changed after its field review`
       );
     }
     const adapter = decision.adapterId
