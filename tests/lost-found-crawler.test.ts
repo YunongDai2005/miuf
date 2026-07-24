@@ -15,6 +15,7 @@ import {
 import {
   candidateReviewVersion,
   createReviewDecision,
+  reviewEventIsNewer,
 } from "../lib/channel-review";
 import {
   nextSubmissionRecord,
@@ -45,6 +46,8 @@ import {
   publishReviewedChannels,
 } from "../scripts/lost-found-crawler/publish.mjs";
 import { isUnexpectedVerificationRedirect } from "../scripts/lost-found-crawler/verify.mjs";
+import { selectRefreshedForm } from "../scripts/lost-found-crawler/refresh.mjs";
+import { verifiedDateLabel } from "../app/lost-found/ui";
 
 test("extracts a dedicated German form without retaining current values", async () => {
   const html = await readFile(
@@ -102,6 +105,102 @@ test("treats an ordinary contact form as a reviewable fallback, not a lost form"
     form.fields.find((field) => field.control === "textarea")?.semanticKey,
     "messageBody"
   );
+});
+
+test("hides bot-trap fields without claiming that the user must solve a CAPTCHA", () => {
+  const [form] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact",
+    html: `
+      <html lang="en"><body><form>
+        <label for="name">Your name</label><input id="name" name="name" required>
+        <label for="message">Your message</label><textarea id="message" name="message" required></textarea>
+        <label for="trap">Don't fill this field!</label>
+        <input id="trap" name="tx_powermail_pi1[field][__hp]">
+      </form></body></html>
+    `,
+  });
+  assert.ok(form);
+  const trap = form.fields.find((field) => field.rawId === "trap");
+  assert.equal(trap?.control, "hidden");
+  assert.equal(form.captcha, false);
+});
+
+test("hides a German bot-trap whose negation follows the verb", () => {
+  const [form] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/kontakt",
+    html: `<form>
+      <textarea name="message" aria-label="Nachricht"></textarea>
+      <label for="trap">Bitte fülle dieses Feld nicht aus.</label>
+      <input id="trap" name="input_8">
+    </form>`,
+  });
+  assert.equal(
+    form.fields.find((field) => field.rawId === "trap")?.control,
+    "hidden"
+  );
+});
+
+test("keeps a visible security question as a manual CAPTCHA", () => {
+  const [form] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact",
+    html: `
+      <html lang="en"><body><form>
+        <label for="message">Message</label><textarea id="message"></textarea>
+        <label for="check">Security test: 2+3 equals? *</label>
+        <input id="check" name="number-1" type="number" required>
+        <label for="trap">Please do not fill in this field.</label>
+        <input id="trap" name="input_8">
+      </form></body></html>
+    `,
+  });
+  assert.ok(form);
+  assert.equal(form.captcha, true);
+  assert.equal(
+    form.fields.find((field) => field.rawId === "trap")?.control,
+    "hidden"
+  );
+  assert.equal(
+    form.fields.find((field) => field.rawId === "check")?.control,
+    "number"
+  );
+});
+
+test("recognises Friendly Captcha but ignores invisible reCAPTCHA v3", () => {
+  const [friendly] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact",
+    html: `<form>
+      <input name="name" aria-label="Your name">
+      <textarea name="message" aria-label="Message"></textarea>
+      <div class="frc-captcha"><iframe src="https://global.frcapi.com/api/v2/captcha/widget"></iframe></div>
+    </form>`,
+  });
+  const [invisible] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact",
+    html: `<form>
+      <input name="name" aria-label="Your name">
+      <textarea name="message" aria-label="Message"></textarea>
+      <div class="elementor-field-type-recaptcha_v3 recaptcha_v3-bottomright"></div>
+      <div class="elementor-g-recaptcha" data-size="invisible"></div>
+    </form>`,
+  });
+  assert.equal(friendly.captcha, true);
+  assert.equal(invisible.captcha, false);
+});
+
+test("refresh matches the reviewed form by fields when several forms share an action", () => {
+  const [newsletter, contact] = extractFormsFromHtml({
+    pageUrl: "https://museum.example/contact",
+    html: `
+      <form action="/contact"><input name="email" type="email"></form>
+      <form action="/contact">
+        <input name="email" type="email">
+        <textarea name="message" aria-label="Message"></textarea>
+      </form>
+    `,
+  });
+  assert.ok(newsletter);
+  assert.ok(contact);
+  assert.equal(selectRefreshedForm(contact, [newsletter, contact]), contact);
 });
 
 test("does not claim a general contact form exists when only a contact page was found", () => {
@@ -182,6 +281,76 @@ test("runtime registry validation rejects malformed adapter channels and review 
   assert.equal(
     isChannelReviewCurrent(channel, new Date("2026-10-22T00:00:00Z")),
     false
+  );
+});
+
+test("bundled reviewed registry covers 33 venues without publishing bot traps", async () => {
+  const registry = JSON.parse(
+    await readFile(
+      new URL("../public/berlin-lost-found-channels.json", import.meta.url),
+      "utf8"
+    )
+  );
+  assert.equal(isPublishedChannelRegistry(registry), true);
+  assert.equal(registry.channels.length, 6);
+  assert.equal(
+    new Set(registry.channels.flatMap((channel: { venueIds: string[] }) => channel.venueIds))
+      .size,
+    33
+  );
+  assert.equal(
+    registry.channels.some((channel: { fields: Array<{ rawName?: string; label: string }> }) =>
+      channel.fields.some((field) =>
+        /__hp|do not fill|nicht ausfüllen|nicht ausfuellen/i.test(
+          `${field.rawName ?? ""} ${field.label}`
+        )
+      )
+    ),
+    false
+  );
+  assert.equal(
+    registry.channels.filter(
+      (channel: { submissionMode: string }) =>
+        channel.submissionMode === "assisted_fill"
+    ).length,
+    4
+  );
+  assert.equal(
+    registry.channels.some(
+      (channel: { submissionMode: string }) =>
+        channel.submissionMode === "adapter"
+    ),
+    false
+  );
+});
+
+test("verification badges accept both date-only and reviewed timestamps", () => {
+  assert.equal(
+    verifiedDateLabel("2026-07-24"),
+    "source checked · 24 Jul 2026"
+  );
+  assert.equal(
+    verifiedDateLabel("2026-07-24T09:30:00.000Z"),
+    "source checked · 24 Jul 2026"
+  );
+  assert.equal(verifiedDateLabel("not-a-date"), "source checked");
+});
+
+test("older database review events cannot override a newer bundled review", () => {
+  const current = {
+    candidateId: "channel",
+    decision: "accept" as const,
+    reviewedAt: "2026-07-24T09:31:23.016Z",
+    reviewedBy: "Reviewer",
+    reviewedCandidateVersion: "version",
+  };
+  assert.equal(
+    reviewEventIsNewer(current, "2026-07-24 09:30:00"),
+    false
+  );
+  assert.equal(
+    reviewEventIsNewer(current, "2026-07-24 09:32:00"),
+    true
   );
 });
 
@@ -678,6 +847,104 @@ test("builds a field-by-field guide but leaves consent to the traveller", () => 
     ["Datenschutz"]
   );
   assert.equal(autofill.expiresAt, "2026-07-23T14:00:00.000Z");
+});
+
+test("maps one venue to an official select option and leaves ambiguous choices manual", () => {
+  const lostCase = emptyCase();
+  const baseResolved = {
+    party: {
+      id: "channel_smb",
+      name: "SMB",
+      operatorName: "SMB",
+      scope: "Museum",
+      website: "https://museum.example",
+      formUrl: "https://museum.example/contact",
+      nextStep: "Open the form",
+      followUpAfterDays: 2,
+      verified: true,
+      lastVerifiedAt: "2026-07-24",
+      fieldSources: {
+        website: "https://museum.example/contact",
+        formUrl: "https://museum.example/contact",
+      },
+      formFields: [
+        {
+          label: "Museum *",
+          control: "select" as const,
+          required: true,
+          options: [
+            { value: "Gemäldegalerie", label: "Gemäldegalerie" },
+            { value: "Kulturforum", label: "Kulturforum" },
+            { value: "Pergamonmuseum", label: "Pergamonmuseum" },
+            { value: "Das Panorama", label: "Pergamonmuseum. Das Panorama" },
+          ],
+          step: 1,
+          semanticKey: "venue" as const,
+          semanticConfidence: 0.9,
+          evidenceSelector: "#museum",
+        },
+      ],
+      submissionMode: "assisted_fill" as const,
+    },
+    entries: [],
+    lines: [],
+    modes: [],
+    reasons: [],
+  };
+  const matched = buildFormGuide(lostCase, {
+    ...baseResolved,
+    venues: ["Gemäldegalerie am Kulturforum"],
+  } as ResolvedParty);
+  assert.equal(matched[0].autofillValue, "Gemäldegalerie");
+  assert.equal(matched[0].needsUserInput, false);
+
+  const ambiguous = buildFormGuide(lostCase, {
+    ...baseResolved,
+    venues: ["Pergamon"],
+  } as ResolvedParty);
+  assert.equal(ambiguous[0].autofillValue, undefined);
+  assert.equal(ambiguous[0].needsUserInput, true);
+});
+
+test("uses the reviewed form language for its suggested message", () => {
+  const lostCase = emptyCase();
+  lostCase.item.description = "Black backpack";
+  const resolved = {
+    party: {
+      id: "channel_en",
+      name: "Museum",
+      operatorName: "Museum",
+      scope: "Museum",
+      website: "https://museum.example",
+      formUrl: "https://museum.example/en/contact",
+      nextStep: "Open the form",
+      followUpAfterDays: 2,
+      verified: true,
+      lastVerifiedAt: "2026-07-24",
+      fieldSources: {},
+      languages: ["en"],
+      formFields: [
+        {
+          label: "Message",
+          control: "textarea" as const,
+          required: true,
+          step: 1,
+          semanticKey: "messageBody" as const,
+          semanticConfidence: 0.9,
+          evidenceSelector: "#message",
+        },
+      ],
+      submissionMode: "assisted_fill" as const,
+    },
+    entries: [],
+    lines: [],
+    venues: ["Museum"],
+    reasons: [],
+  } satisfies ResolvedParty;
+  assert.match(
+    buildFormGuide(lostCase, resolved)[0].suggestedValue ?? "",
+    /^Dear Sir or Madam,/
+  );
 });
 
 test("fingerprints exact reports and records local receipt evidence", () => {

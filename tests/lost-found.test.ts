@@ -231,6 +231,48 @@ test("uses the reviewed contact value for an email-only venue channel", () => {
   assert.equal(resolved.party.channelId, "gallery-email");
 });
 
+test("venue guidance mentions only the manual checks present on the form", () => {
+  const [resolved] = resolveParties([
+    {
+      uid: "tower",
+      kind: "venue",
+      refId: "node/tower",
+      label: "Example Tower",
+      category: "viewpoint",
+      lostFoundChannels: [
+        {
+          id: "tower-contact",
+          venueIds: ["node/tower"],
+          kind: "general_contact_form",
+          scope: "venue",
+          pageUrl: "https://tower.example/contact",
+          language: ["en"],
+          fields: [
+            {
+              label: "Terms",
+              control: "checkbox",
+              required: true,
+              step: 1,
+              semanticKey: "privacyConsent",
+              semanticConfidence: 0.9,
+              evidenceSelector: "#terms",
+            },
+          ],
+          captcha: false,
+          loginRequired: false,
+          submissionMode: "assisted_fill",
+          verifiedAt: "2026-07-24",
+          verifiedBy: "Reviewer",
+          evidence: [],
+          contentHash: "contact",
+        },
+      ],
+    },
+  ]);
+  assert.match(resolved.party.nextStep ?? "", /Complete consent yourself/);
+  assert.doesNotMatch(resolved.party.nextStep ?? "", /CAPTCHA/);
+});
+
 test("quick-add chooses Berlin's central Siegessäule rather than a distant same-name monument", () => {
   const index = buildIndex([], {
     source: "test",

@@ -622,8 +622,10 @@ function ContactPrompt({
         Where should the offices reply?
       </p>
       <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-        Add an email address or phone number. One is enough, and it is used only
-        inside the reports you choose to send.
+        Add an email address or phone number. One is enough to prepare the
+        reports; if an official form requires a specific contact field, its
+        filling guide will point that out. These details are used only inside
+        the reports you choose to send.
       </p>
       <div className="mt-3 grid gap-3 sm:grid-cols-2">
         <Field label="Email">

@@ -1,5 +1,8 @@
 import { sql } from "drizzle-orm";
-import { candidateReviewVersion } from "../lib/channel-review";
+import {
+  candidateReviewVersion,
+  reviewEventIsNewer,
+} from "../lib/channel-review";
 import type {
   ChannelCandidate,
   ReviewDecision,
@@ -59,6 +62,14 @@ export async function readCurrentReviewDecisions(
     if (
       !candidate ||
       row.candidateVersion !== candidateReviewVersion(candidate)
+    ) {
+      continue;
+    }
+    if (
+      !reviewEventIsNewer(
+        decisions.get(candidate.id),
+        row.updatedAt
+      )
     ) {
       continue;
     }

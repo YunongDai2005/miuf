@@ -13,6 +13,7 @@ import {
   exportReviewReport,
   recordReviewDecision,
 } from "./review.mjs";
+import { refreshCandidateForms } from "./refresh.mjs";
 import { safeFetchText } from "./safe-fetch.mjs";
 import { verifyPublishedChannels } from "./verify.mjs";
 
@@ -125,6 +126,23 @@ switch (command) {
     console.log(`Exported a review report for ${count} candidates.`);
     break;
   }
+  case "refresh": {
+    const candidateIds = option("candidate")?.split(",").filter(Boolean) ?? [];
+    if (!candidateIds.length) {
+      throw new Error("refresh requires --candidate=id[,id]");
+    }
+    const refreshed = await refreshCandidateForms({
+      candidatePath: pathFromRoot(
+        "data/lost-found-crawler/channels.candidates.json"
+      ),
+      candidateIds,
+      renderDynamic: args.includes("--browser"),
+    });
+    console.log(
+      `Refreshed ${refreshed.length} candidate form snapshots without submitting them.`
+    );
+    break;
+  }
   case "review": {
     const candidateId = option("candidate");
     const decision = option("decision");
@@ -168,6 +186,6 @@ switch (command) {
   }
   default:
     throw new Error(
-      "Usage: cli.mts <inventory|discover|extract|merge|review|review-export|verify|publish> [--option=value]"
+      "Usage: cli.mts <inventory|discover|extract|merge|refresh|review|review-export|verify|publish> [--option=value]"
     );
 }

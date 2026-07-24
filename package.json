@@ -19,6 +19,7 @@
     "data:lost-found:discover": "node --import tsx scripts/lost-found-crawler/cli.mts discover",
     "data:lost-found:extract": "node --import tsx scripts/lost-found-crawler/cli.mts extract",
     "data:lost-found:merge": "node --import tsx scripts/lost-found-crawler/cli.mts merge",
+    "data:lost-found:refresh": "node --import tsx scripts/lost-found-crawler/cli.mts refresh",
     "data:lost-found:review": "node --import tsx scripts/lost-found-crawler/cli.mts review",
     "data:lost-found:review-export": "node --import tsx scripts/lost-found-crawler/cli.mts review-export",
     "data:lost-found:browser-install": "playwright install chromium",

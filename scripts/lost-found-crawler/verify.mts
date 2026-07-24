@@ -10,6 +10,7 @@ import {
   pageEvidenceFromHtml,
   pageEvidenceHash,
 } from "./page-evidence.mjs";
+import { selectRefreshedForm } from "./refresh.mjs";
 import { safeFetchText } from "./safe-fetch.mjs";
 
 export interface VerificationReport {
@@ -176,10 +177,7 @@ export async function verifyPublishedChannels(options: {
           html: response.body,
           pageUrl: response.url,
         });
-        let matchingForm =
-          forms.find((form) => form.formAction === channel.formAction) ??
-          forms.find((form) => form.contentHash === channel.contentHash) ??
-          forms[0];
+        let matchingForm = selectRefreshedForm(channel, forms);
         method = "static_form";
         if (
           options.renderDynamic &&
@@ -190,10 +188,7 @@ export async function verifyPublishedChannels(options: {
             maxStates: 8,
           });
           forms = rendered.forms;
-          matchingForm =
-            forms.find((form) => form.formAction === channel.formAction) ??
-            forms.find((form) => form.contentHash === channel.contentHash) ??
-            forms[0];
+          matchingForm = selectRefreshedForm(channel, forms);
           method = "rendered_form";
         }
         currentHash = matchingForm?.contentHash;

@@ -1,4 +1,4 @@
-import { buildReportDrafts } from "./report";
+import { buildReportDrafts, reportBodyForParty } from "./report";
 import type { ResolvedParty } from "./parties";
 import type {
   LostCase,
@@ -25,7 +25,7 @@ export function submissionFingerprint(
     partyId: resolved.party.id,
     destination: resolved.party.formUrl ?? resolved.party.email ?? resolved.party.website,
     subject: drafts.subject,
-    body: drafts.de,
+    body: reportBodyForParty(drafts, resolved),
   });
   return `${fnv1a(canonical, 0x811c9dc5)}${fnv1a(canonical, 0x9e3779b9)}`;
 }

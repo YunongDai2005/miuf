@@ -50,7 +50,9 @@ export function buildAutofillPackage(
   const fields = guide
     .filter(
       (entry) =>
-        entry.suggestedValue &&
+        (entry.field.control === "select"
+          ? entry.autofillValue
+          : entry.suggestedValue) &&
         entry.field.semanticKey !== "privacyConsent" &&
         entry.field.semanticKey !== "attachment" &&
         entry.field.control !== "hidden" &&

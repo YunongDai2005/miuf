@@ -1,4 +1,69 @@
 {
   "version": 1,
-  "decisions": []
+  "decisions": [
+    {
+      "candidateId": "channel_c8e9a5da8e10b345",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T09:30:53.241Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_c8e9a5da8e10b345\",\"operatorId\":null,\"venueIds\":[\"way/142801571\"],\"kind\":\"email\",\"pageUrl\":\"https://www.schoeneiche.de/fundbuero\",\"contactValue\":\"ordnungsamt@schoeneiche.de\",\"formContentHash\":null,\"evidenceHashes\":[\"ca896c5fcf0196c743f9df05ac1fe672e66fc497be2293588864719c8e5f2d9c\"]}",
+      "notes": "Official municipal Fundbüro page explicitly lists this address for lost bicycles, phones, keys and other objects. Preferred written destination for this venue scope.",
+      "kindOverride": "email",
+      "submissionMode": "open_only"
+    },
+    {
+      "candidateId": "channel_e4607a01042a4561",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T09:30:58.326Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_e4607a01042a4561\",\"operatorId\":null,\"venueIds\":[\"way/142801571\"],\"kind\":\"phone\",\"pageUrl\":\"https://www.schoeneiche.de/fundbuero\",\"contactValue\":\"030 643304-138\",\"formContentHash\":null,\"evidenceHashes\":[\"ca896c5fcf0196c743f9df05ac1fe672e66fc497be2293588864719c8e5f2d9c\"]}",
+      "notes": "Official municipal Fundbüro page explicitly lists this number for lost bicycles, phones, keys and other objects. Published as a backup to the written channel, not as a second report destination.",
+      "kindOverride": "phone",
+      "submissionMode": "open_only"
+    },
+    {
+      "candidateId": "channel_ba353bf8a92f6988",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T09:31:04.399Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_ba353bf8a92f6988\",\"operatorId\":null,\"venueIds\":[\"way/556435241\"],\"kind\":\"general_contact_form\",\"pageUrl\":\"https://tv-turm.de/en/contact-us/\",\"contactValue\":null,\"formContentHash\":\"af15b8cc711ac46ec638c2f9f5d2ec21287082b9d17909ac2715d86463086781\",\"evidenceHashes\":[\"d908abf70fedece491078cb8bf07c6b2b9379b489678a5deff17a95a52d79e17\"]}",
+      "notes": "Official TV Tower general contact form; not a dedicated lost-property service. Checked name, surname, email, required telephone, message and terms fields in the live page. Invisible reCAPTCHA v3 is not represented as a manual field. User must review consent and submit.",
+      "kindOverride": "general_contact_form",
+      "submissionMode": "assisted_fill",
+      "reviewedContentHash": "af15b8cc711ac46ec638c2f9f5d2ec21287082b9d17909ac2715d86463086781"
+    },
+    {
+      "candidateId": "channel_d04f75b9416ac3cc",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T09:31:11.188Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_d04f75b9416ac3cc\",\"operatorId\":\"operator_89cf7cec301d41a8\",\"venueIds\":[\"node/1860480265\",\"node/3755207008\",\"node/6848662229\",\"node/7063453003\",\"relation/28134\",\"relation/3619\",\"relation/3626233\",\"relation/4211594\",\"way/137219848\",\"way/18578139\",\"way/22990276\",\"way/25652321\",\"way/26247891\",\"way/313659704\",\"way/313670733\",\"way/87646457\"],\"kind\":\"general_contact_form\",\"pageUrl\":\"https://www.smb.museum/en/contact/questions/\",\"contactValue\":null,\"formContentHash\":\"7bd344451ab5398603235802bce33e19fb450e14777aa338037443840f54c056\",\"evidenceHashes\":[\"02f1cdeabddbfbe810c278b9067fd795e40782b6468061372fda46ebadc58175\"]}",
+      "notes": "Official SMB general questions form; not a dedicated lost-property service. Checked museum selector, name, email, message, privacy consent and visible image CAPTCHA in the live page. Ambiguous museum matches remain manual. User must complete consent, CAPTCHA and submit.",
+      "kindOverride": "general_contact_form",
+      "submissionMode": "assisted_fill",
+      "reviewedContentHash": "7bd344451ab5398603235802bce33e19fb450e14777aa338037443840f54c056"
+    },
+    {
+      "candidateId": "channel_0f6318a24ea3c94f",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T09:31:16.380Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_0f6318a24ea3c94f\",\"operatorId\":\"operator_3eee5be1e3f5e40a\",\"venueIds\":[\"node/5723205465\",\"node/9979815162\",\"way/1089407347\",\"way/11544256\",\"way/180376359\",\"way/186517395\",\"way/22960067\",\"way/24315051\",\"way/24478438\",\"way/25014562\",\"way/26840054\"],\"kind\":\"general_contact_form\",\"pageUrl\":\"https://www.spsg.de/en/contact-us\",\"contactValue\":null,\"formContentHash\":\"5e2ef918c7049796633a075d147428b14658a40dd849befbea363810e9e16293\",\"evidenceHashes\":[\"9638507d0d543c8fce4dba7cc152f06929b95fe3be5fa8a82abbf9a8be7829d9\"]}",
+      "notes": "Official SPSG general contact form; not a dedicated lost-property service. Checked name, email, message, privacy consent, Friendly Captcha and hidden honeypot in the live page. Honeypot is excluded from user guidance. User must complete consent, CAPTCHA and submit.",
+      "kindOverride": "general_contact_form",
+      "submissionMode": "assisted_fill",
+      "reviewedContentHash": "5e2ef918c7049796633a075d147428b14658a40dd849befbea363810e9e16293"
+    },
+    {
+      "candidateId": "channel_8855ebf1d43575e9",
+      "decision": "accept",
+      "reviewedAt": "2026-07-24T09:31:23.016Z",
+      "reviewedBy": "Codex official-page audit",
+      "reviewedCandidateVersion": "{\"id\":\"channel_8855ebf1d43575e9\",\"operatorId\":\"operator_fb33de75a6d88844\",\"venueIds\":[\"relation/1652105\",\"way/23813200\",\"way/26382664\",\"way/285972948\"],\"kind\":\"general_contact_form\",\"pageUrl\":\"https://www.stadtmuseum.de/en/contact\",\"contactValue\":null,\"formContentHash\":\"955a4433ac53b6ab94210c2a2e5898ba726be6cc4f5fd62c233ead378ea6e080\",\"evidenceHashes\":[\"59410b5cd87fac8b485261ad1056d124ecddd97bf3a1ed5293cebde6a320e5ea\"]}",
+      "notes": "Official Stadtmuseum general contact form; not a dedicated lost-property service. Checked name, email, optional phone and topic, message, visible arithmetic security test and hidden honeypot in the live page. Honeypot is excluded; user must answer the security test and submit.",
+      "kindOverride": "general_contact_form",
+      "submissionMode": "assisted_fill",
+      "reviewedContentHash": "955a4433ac53b6ab94210c2a2e5898ba726be6cc4f5fd62c233ead378ea6e080"
+    }
+  ]
 }

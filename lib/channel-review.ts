@@ -27,6 +27,26 @@ export function candidateReviewVersion(candidate: ChannelCandidate): string {
   });
 }
 
+function reviewTimestamp(value: string): number {
+  const normalized = /^\d{4}-\d{2}-\d{2} \d{2}:\d{2}:\d{2}$/.test(value)
+    ? `${value.replace(" ", "T")}Z`
+    : value;
+  return Date.parse(normalized);
+}
+
+export function reviewEventIsNewer(
+  current: ReviewDecision | undefined,
+  eventUpdatedAt: string
+): boolean {
+  if (!current) return true;
+  const eventTime = reviewTimestamp(eventUpdatedAt);
+  const currentTime = reviewTimestamp(current.reviewedAt);
+  return (
+    Number.isFinite(eventTime) &&
+    (!Number.isFinite(currentTime) || eventTime >= currentTime)
+  );
+}
+
 export function createReviewDecision(input: {
   candidate: ChannelCandidate;
   decision: Exclude<ReviewAction, "clear">;

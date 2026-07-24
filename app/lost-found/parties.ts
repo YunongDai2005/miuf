@@ -78,6 +78,8 @@ export interface Party {
   loginRequired?: boolean;
   adapterId?: string;
   formContentHash?: string;
+  /** Languages supported by the reviewed destination form. */
+  languages?: string[];
 }
 
 const VERIFIED_AT = "2026-07-23";
@@ -419,6 +421,17 @@ function venueParty(entry: ItineraryEntry): Party | null {
     channel?.kind === "email" ? channel.contactValue : undefined;
   const channelPhone =
     channel?.kind === "phone" ? channel.contactValue : undefined;
+  const manualFormSteps = [
+    channel?.fields.some((field) => field.semanticKey === "privacyConsent")
+      ? "consent"
+      : null,
+    channel?.captcha ? "the CAPTCHA or security check" : null,
+  ].filter((step): step is string => Boolean(step));
+  const formFinish = manualFormSteps.length
+    ? `Complete ${manualFormSteps.join(
+        " and "
+      )} yourself, then submit the form.`
+    : "Submit the form yourself.";
   return {
     id: channel ? `channel:${channel.id}` : `venue:${entry.refId}`,
     channelId: channel?.id,
@@ -447,7 +460,7 @@ function venueParty(entry: ItineraryEntry): Party | null {
         ? "Send one report to the reviewed official email address. Keep the sent message or any case number as your receipt."
         : channel.kind === "phone"
           ? "Call the reviewed official number and note any case number. Use a written backup only if the office asks you to."
-          : "Review the suggested field values below, then open the verified official page. Complete consent, CAPTCHA and the final submission yourself."
+          : `Review the suggested field values below, then open the verified official page. ${formFinish}`
       : entry.lostFoundUrl
       ? "Use the venue’s lost-property page first and include the visit time and a precise item description."
       : "Open the official website and contact reception or visitor service. This contact was found from public venue data and should be checked before sending personal details.",
@@ -481,6 +494,7 @@ function venueParty(entry: ItineraryEntry): Party | null {
     loginRequired: channel?.loginRequired,
     adapterId: channelReviewCurrent ? channel?.adapterId : undefined,
     formContentHash: channelReviewCurrent ? channel?.contentHash : undefined,
+    languages: channel?.language,
   };
 }
 

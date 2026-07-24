@@ -8,6 +8,20 @@ export interface ReportDrafts {
   subject: string;
 }
 
+export function preferredReportLanguage(
+  resolved: ResolvedParty
+): "de" | "en" {
+  const languages = resolved.party.languages ?? [];
+  return languages.includes("en") && !languages.includes("de") ? "en" : "de";
+}
+
+export function reportBodyForParty(
+  drafts: ReportDrafts,
+  resolved: ResolvedParty
+): string {
+  return preferredReportLanguage(resolved) === "en" ? drafts.en : drafts.de;
+}
+
 function timeRange(item: LostCase["item"]): string {
   const from = item.timeFrom?.trim();
   const to = item.timeTo?.trim();

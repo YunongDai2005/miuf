@@ -1,6 +1,6 @@
 {
   "version": 1,
-  "generatedAt": "2026-07-24T00:37:54.539Z",
+  "generatedAt": "2026-07-24T09:29:25.718Z",
   "candidates": [
     {
       "id": "channel_c8e9a5da8e10b345",
@@ -371,15 +371,14 @@
             "evidenceSelector": "#form-field-field_32181c1"
           }
         ],
-        "captcha": true,
+        "captcha": false,
         "loginRequired": false,
-        "contentHash": "f71941234a2b65028e6733d365c3c8aa3f36943b412789371364f993009aca43"
+        "contentHash": "af15b8cc711ac46ec638c2f9f5d2ec21287082b9d17909ac2715d86463086781"
       },
       "confidence": 30,
       "reasons": [
         "linked from the official seed site",
-        "page contains a form",
-        "CAPTCHA requires user interaction"
+        "page contains a form"
       ],
       "discoveryPath": [
         {
@@ -399,8 +398,8 @@
         {
           "sourceUrl": "https://tv-turm.de/en/contact-us/",
           "excerpt": "CONTACT US I have a question regarding: FAQ buttons All FAQs On-site visit Purchase of voucher Restaurant Sphere Tim Raue Tickets Your visit on site Can I also purchase the giftcard at the cash desk onsite? No, the giftcard can only be purchased online here. How long is the giftcard valid? Our giftcards are valid for 3 years – so you have full flexibility for your time together. Can I print out the giftcard immediately? Yes, you will receive a PDF by e-mail immediately after your purchase. Perfe",
-          "contentHash": "445730d57bc2a1241390ab2befb05b656acb5425aaaff0580bb9e08136ac86b6",
-          "observedAt": "2026-07-24T00:37:45.408Z"
+          "contentHash": "d908abf70fedece491078cb8bf07c6b2b9379b489678a5deff17a95a52d79e17",
+          "observedAt": "2026-07-24T09:26:39.135Z"
         }
       ],
       "fetchStatus": "ok",
@@ -535,15 +534,14 @@
             "evidenceSelector": "#form-field-field_32181c1"
           }
         ],
-        "captcha": true,
+        "captcha": false,
         "loginRequired": false,
-        "contentHash": "47785291414cb9e93102b45fa59a043c1f2f1cfa9ddac64464ca9b7488fc852f"
+        "contentHash": "8952d19f00bc5c4bb507ef4b6cecd6d1c8e70b161d583b6d02f3e1c84f45eb15"
       },
       "confidence": 30,
       "reasons": [
         "linked from the official seed site",
-        "page contains a form",
-        "CAPTCHA requires user interaction"
+        "page contains a form"
       ],
       "discoveryPath": [
         {
@@ -559,8 +557,8 @@
         {
           "sourceUrl": "https://tv-turm.de/kontakt/",
           "excerpt": "Kontakt Ich habe eine Frage zu: FAQ buttons Alle FAQs Aufzug Besuch vor Ort Ermäßigungen und Rabatte Gutscheinkauf Restaurant Sphere Tim Raue Tickets Kann ich den Gutschein auch vor Ort an der Kasse kaufen? Nein, der Gutschein kann nur hier online erworben werden. Wie lange ist der Gutschein gültig? Unsere Gutscheine haben eine Gültigkeit von 3 Jahren – so habt ihr volle Flexibilität für eure gemeinsame Zeit. Kann ich den Gutschein sofort ausdrucken? Ja! Unmittelbar nach dem Kauf erhältst du ein",
-          "contentHash": "a10793f7ddd2b5bcecafc004f1ea302600f366707aba50c717f5f74542da56d0",
-          "observedAt": "2026-07-24T00:37:44.827Z"
+          "contentHash": "070e20c96aed8b5a3c89ed8e77bb0834ae3e84154a0b81be96360a7d32b64133",
+          "observedAt": "2026-07-24T09:26:39.565Z"
         }
       ],
       "fetchStatus": "ok",
@@ -892,7 +890,7 @@
           "sourceUrl": "https://www.smb.museum/en/contact/questions/",
           "excerpt": "Service Facebook Instagram YouTubeService Search Staatliche Museen zu Berlin Staatliche Museen zu Berlin Facebook Instagram YouTubeService Search Tickets Shop ContactQuestions | Booking | FeedbackGot a question relating to exhibitions or events at the Staatliche Museen zu Berlin? Then get in touch now!Please note: For research, conservation, and curatorial inquiries, please contact the respective museum or institution directly. The contact details are listed on each institution’s page. Museum *A",
           "contentHash": "02f1cdeabddbfbe810c278b9067fd795e40782b6468061372fda46ebadc58175",
-          "observedAt": "2026-07-24T00:37:23.038Z"
+          "observedAt": "2026-07-24T09:26:40.338Z"
         }
       ],
       "fetchStatus": "ok",
@@ -1220,7 +1218,7 @@
           "sourceUrl": "https://www.smb.museum/kontaktformular/fragen/",
           "excerpt": "Service Facebook Instagram YouTubeService Suchen Staatliche Museen zu Berlin Staatliche Museen zu Berlin Facebook Instagram YouTubeService Suchen Tickets Shop KontaktFragen | Buchungen | FeedbackSie haben Fragen zu Ausstellungen oder Veranstaltungen der Staatlichen Museen zu Berlin? Wir freuen uns auf Ihre Nachricht!Bitte beachten Sie auch: Auf den Seiten der einzelnen Museen und Einrichtungen finden Sie die jeweiligen Kontaktmöglichkeiten für wissenschaftliche Anfragen. Museum *Alte Nationalgal",
           "contentHash": "a8f7ad58267403c500e04f193b62bd44262ecd8ecd1a83fe83a836f91b7e5eaa",
-          "observedAt": "2026-07-24T00:37:19.573Z"
+          "observedAt": "2026-07-24T09:26:40.700Z"
         }
       ],
       "fetchStatus": "ok",
@@ -1383,7 +1381,7 @@
             "rawName": "tx_powermail_pi1[field][__hp]",
             "rawId": "powermail_hp_1",
             "label": "Don't fill this field!",
-            "control": "text",
+            "control": "hidden",
             "required": false,
             "step": 1,
             "semanticKey": "other",
@@ -1393,7 +1391,7 @@
         ],
         "captcha": true,
         "loginRequired": false,
-        "contentHash": "236daad962962e0aebf9d6a88629e7f232b57589726a6a428a61e27ec83f4d5f"
+        "contentHash": "5e2ef918c7049796633a075d147428b14658a40dd849befbea363810e9e16293"
       },
       "confidence": 30,
       "reasons": [
@@ -1419,8 +1417,8 @@
         {
           "sourceUrl": "https://www.spsg.de/en/contact-us",
           "excerpt": "Contact us Do you have questions, suggestions or criticism?You can contact us via the email form provided below.Are you looking for a specific contact person?An overview of the departments at the SPSG is available here. Contact us formYour nameYour e-mailYour message Agreement*I agree that the data provided in this form will be used for this specific request. In particular, data will not be passed on to unauthorized third parties. I am aware that I can revoke my consent at any time with effect f",
-          "contentHash": "7e40e4187065b8b12f69303ac72642509a5a113e46367adb1692c33b7100fee0",
-          "observedAt": "2026-07-24T00:37:15.767Z"
+          "contentHash": "9638507d0d543c8fce4dba7cc152f06929b95fe3be5fa8a82abbf9a8be7829d9",
+          "observedAt": "2026-07-24T09:26:40.990Z"
         }
       ],
       "fetchStatus": "ok",
@@ -1583,7 +1581,7 @@
             "rawName": "tx_powermail_pi1[field][__hp]",
             "rawId": "powermail_hp_1",
             "label": "Bitte dieses Feld NICHT ausfüllen!",
-            "control": "text",
+            "control": "hidden",
             "required": false,
             "step": 1,
             "semanticKey": "other",
@@ -1593,7 +1591,7 @@
         ],
         "captcha": true,
         "loginRequired": false,
-        "contentHash": "1c79e661a2e15c232c2eea71130bebfa6416faf20ce7c860c08fcb10c79516bc"
+        "contentHash": "2f245033f524733a714548234fc03bdbafc2820531db10cc563ba47bc982d2dc"
       },
       "confidence": 30,
       "reasons": [
@@ -1615,8 +1613,8 @@
         {
           "sourceUrl": "https://www.spsg.de/kontakt",
           "excerpt": "Kontakt Sie haben Fragen, Anregungen oder Kritik?Hier können Sie sich über ein E-Mail-Formular mit uns in Verbindung setzen.Sie suchen einen bestimmten Ansprechpartner? Hier finden Sie eine Übersicht der Abteilungen der SPSG. Sie haben Fragen, Anregungen oder Kritik?NameE-Mail-AdresseIhre Mitteilung an das Team der SPSG Datenschutz*Hiermit bestätige ich, dass ich die Datenschutzerklärung zur Kenntnis genommen habe. Bitte dieses Feld NICHT ausfüllen! ZentraleStiftung Preußische Schlösser und Gärt",
-          "contentHash": "ce4f1bcc226740f017b4a27f0c72a3fd9ffc84897cfbdd7625b2047b5cc393ad",
-          "observedAt": "2026-07-24T00:37:15.351Z"
+          "contentHash": "0b4aacb53f9b1135065be9a28afda7e687827c751f5180d995582fe6c073155f",
+          "observedAt": "2026-07-24T09:26:41.180Z"
         }
       ],
       "fetchStatus": "ok",
@@ -1690,7 +1688,7 @@
           },
           {
             "rawName": "select-1",
-            "rawId": "forminator-form-13068__field--select-1_6a62b3bdb048c",
+            "rawId": "forminator-form-13068__field--select-1_6a632fd1e0609",
             "label": "select-1",
             "control": "select",
             "required": false,
@@ -1711,7 +1709,7 @@
             "step": 1,
             "semanticKey": "other",
             "semanticConfidence": 0.2,
-            "evidenceSelector": "#forminator-form-13068__field--select-1_6a62b3bdb048c"
+            "evidenceSelector": "#forminator-form-13068__field--select-1_6a632fd1e0609"
           },
           {
             "rawName": "textarea-1",
@@ -1830,7 +1828,7 @@
             "rawName": "input_8",
             "rawId": "input_8",
             "label": "Please do not fill in this field.",
-            "control": "text",
+            "control": "hidden",
             "required": false,
             "step": 1,
             "semanticKey": "other",
@@ -1840,7 +1838,7 @@
         ],
         "captcha": true,
         "loginRequired": false,
-        "contentHash": "00427022cac0875930548f61fd86bec19d29f9648698077b84203a7987aefa7c"
+        "contentHash": "955a4433ac53b6ab94210c2a2e5898ba726be6cc4f5fd62c233ead378ea6e080"
       },
       "confidence": 30,
       "reasons": [
@@ -1866,8 +1864,8 @@
         {
           "sourceUrl": "https://www.stadtmuseum.de/en/contact",
           "excerpt": "Contact Your direct line to Stadtmuseum Berlin Do you have any questions about the Stiftung Stadtmuseum Berlin, its collections, museums or services? Would you like to send us your wishes, suggestions or criticism? Or do you have a press enquiry that we can help you with? Then write to us! Our staff will be happy to help you. First nameLast nameEmail *PhoneTopicGeneralCollectionPressMessage *Security test: 2+3 equals? *Send messagePlease do not fill in this field. Infoline Mo – Fr | 10 – 18 Uhr ",
-          "contentHash": "946f79ce46f3eeb7d6bec76048eb407c0847221d04952fb1b83314e23ff078c8",
-          "observedAt": "2026-07-24T00:37:17.788Z"
+          "contentHash": "59410b5cd87fac8b485261ad1056d124ecddd97bf3a1ed5293cebde6a320e5ea",
+          "observedAt": "2026-07-24T09:26:42.178Z"
         }
       ],
       "fetchStatus": "ok",
@@ -1941,7 +1939,7 @@
           },
           {
             "rawName": "select-1",
-            "rawId": "forminator-form-6713__field--select-1_6a62b3bcc0cf1",
+            "rawId": "forminator-form-6713__field--select-1_6a633075706fc",
             "label": "select-1",
             "control": "select",
             "required": false,
@@ -1962,7 +1960,7 @@
             "step": 1,
             "semanticKey": "other",
             "semanticConfidence": 0.2,
-            "evidenceSelector": "#forminator-form-6713__field--select-1_6a62b3bcc0cf1"
+            "evidenceSelector": "#forminator-form-6713__field--select-1_6a633075706fc"
           },
           {
             "rawName": "textarea-1",
@@ -2081,7 +2079,7 @@
             "rawName": "input_8",
             "rawId": "input_8",
             "label": "Bitte fülle dieses Feld nicht aus.",
-            "control": "text",
+            "control": "hidden",
             "required": false,
             "step": 1,
             "semanticKey": "other",
@@ -2091,7 +2089,7 @@
         ],
         "captcha": true,
         "loginRequired": false,
-        "contentHash": "d87881b010971e57f5e29ccae48913325b0ef84f6d95121fa9d4a7b68e78f25e"
+        "contentHash": "9e7136dc74bd71a5f533b22e76f726b2bd77d0e36adf4f60ed385fb17b4a3eeb"
       },
       "confidence": 30,
       "reasons": [
@@ -2113,8 +2111,8 @@
         {
           "sourceUrl": "https://www.stadtmuseum.de/kontakt",
           "excerpt": "Kontakt Ihr direkter Draht zum Stadtmuseum Berlin Haben Sie Fragen zur Stiftung Stadtmuseum Berlin, ihren Sammlungen, Museen oder Service-Angeboten? Möchten Sie uns Ihre Wünsche, Anregungen oder Kritik mitteilen? Oder haben Sie eine Presse-Anfrage, bei der wir Sie unterstützen können? Dann schreiben Sie uns! Die Mitarbeiter:innen unserer Infoline sind gerne für Sie da. VornameNachnameEmailTelefonnummerThemaAllgemeinSammlungPresseNachricht *Sicherheitsprüfung: Was ergibt 2+3? *HTMLFüllen Sie alle",
-          "contentHash": "a995d280f86c60b6c458b3f9556f2dfa7b0a765e9eac809980b715a6fe2042a2",
-          "observedAt": "2026-07-24T00:37:16.931Z"
+          "contentHash": "5342771a8a250dffbfd7a0375e4604a47883e343646ed1c76644630d1d0e76f6",
+          "observedAt": "2026-07-24T09:29:25.717Z"
         }
       ],
       "fetchStatus": "ok",

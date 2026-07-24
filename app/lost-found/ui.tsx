@@ -97,15 +97,22 @@ export function VerifyBadge() {
   );
 }
 
+export function verifiedDateLabel(date?: string): string {
+  if (!date) return "source checked";
+  const parsed = new Date(
+    /^\d{4}-\d{2}-\d{2}$/.test(date) ? `${date}T00:00:00Z` : date
+  );
+  if (!Number.isFinite(parsed.getTime())) return "source checked";
+  return `source checked · ${new Intl.DateTimeFormat("en-GB", {
+    day: "numeric",
+    month: "short",
+    year: "numeric",
+    timeZone: "UTC",
+  }).format(parsed)}`;
+}
+
 export function VerifiedBadge({ date }: { date?: string }) {
-  const label = date
-    ? `source checked · ${new Intl.DateTimeFormat("en-GB", {
-        day: "numeric",
-        month: "short",
-        year: "numeric",
-        timeZone: "UTC",
-      }).format(new Date(`${date}T00:00:00Z`))}`
-    : "source checked";
+  const label = verifiedDateLabel(date);
   return (
     <span className="inline-flex items-center rounded-full bg-emerald-100 px-2 py-0.5 text-[10px] font-semibold text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300">
       {label}

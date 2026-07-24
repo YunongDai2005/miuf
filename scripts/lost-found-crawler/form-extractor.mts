@@ -99,6 +99,77 @@ function helpTextFor($: cheerio.CheerioAPI, element: AnyNode): string | undefine
   return described || nearby || undefined;
 }
 
+function isHoneypotField(input: {
+  node: cheerio.Cheerio<AnyNode>;
+  label: string;
+  helpText?: string;
+  placeholder?: string;
+}): boolean {
+  const rawName = compactText(input.node.attr("name"));
+  const signature = [
+    rawName,
+    compactText(input.node.attr("id")),
+    compactText(input.node.attr("class")),
+    input.label,
+    input.helpText,
+    input.placeholder,
+  ]
+    .filter(Boolean)
+    .join(" ");
+  return (
+    /(?:^|[\[_.-])__?hp(?:[\]_.-]|$)|honeypot|spam[-_ ]?(?:trap|shield)/i.test(
+      signature
+    ) ||
+    /(?:do not|don'?t|please do not).{0,45}(?:fill|complete)|(?:leave|keep).{0,30}(?:blank|empty)/i.test(
+      signature
+    ) ||
+    /(?:nicht|bitte nicht).{0,45}(?:ausfüllen|ausfuellen|füllen|fuellen)|(?:füll|fuell).{0,35}nicht.{0,20}aus|(?:leer|frei).{0,25}lassen/i.test(
+      signature
+    )
+  );
+}
+
+function hasHumanCaptcha(
+  $: cheerio.CheerioAPI,
+  form: cheerio.Cheerio<AnyNode>,
+  fields: ChannelField[]
+): boolean {
+  const hasChallengeField = fields.some(
+    (field) =>
+      field.control !== "hidden" &&
+      /captcha|recaptcha|hcaptcha|security test|security question|sicherheits(?:test|prüfung)|word.{0,30}(?:picture|image)|wort.{0,30}bild/i.test(
+        [field.rawName, field.rawId, field.label, field.helpText]
+          .filter(Boolean)
+          .join(" ")
+      )
+  );
+  if (hasChallengeField) return true;
+
+  return (
+    form
+      .find(
+        'iframe[src*="recaptcha"], iframe[src*="hcaptcha"], iframe[src*="frcapi"], .g-recaptcha, .h-captcha, .frc-captcha, .cf-turnstile, [class*="captcha"], [id*="captcha"]'
+      )
+      .filter((_, element) => {
+        const node = $(element);
+        const signature = [
+          node.attr("id"),
+          node.attr("class"),
+          node.attr("src"),
+          node.attr("title"),
+        ]
+          .filter(Boolean)
+          .join(" ");
+        return (
+          node.attr("type")?.toLowerCase() !== "hidden" &&
+          node.attr("aria-hidden")?.toLowerCase() !== "true" &&
+          node.attr("data-size")?.toLowerCase() !== "invisible" &&
+          !/recaptcha[_ -]?v3|invisible/i.test(signature)
+        );
+      }).length > 0
+  );
+}
+
 function numberAttribute(
   node: cheerio.Cheerio<AnyNode>,
   name: string
@@ -130,13 +201,19 @@ function extractFields(
       return;
     }
     if (node.attr("name") === "Tenant Identifier") return;
-    const control = controlFor(element.name, node.attr("type"));
+    let control = controlFor(element.name, node.attr("type"));
     const selector = selectorFor($, element, index);
     const label = labelFor($, element, selector);
     const helpText = helpTextFor($, element);
     const placeholder = compactText(node.attr("placeholder")) || undefined;
     const rawName = compactText(node.attr("name")) || undefined;
     const rawId = compactText(node.attr("id")) || undefined;
+    if (
+      control !== "hidden" &&
+      isHoneypotField({ node, label, helpText, placeholder })
+    ) {
+      control = "hidden";
+    }
     const semantic = inferSemanticField({
       control,
       label,
@@ -244,12 +321,6 @@ export function extractFormsFromHtml(input: {
   const title = compactText($("title").first().text() || $("h1").first().text());
   const documentLanguage = compactText($("html").attr("lang")).split("-")[0];
   const pageText = compactText($("body").text()).toLowerCase();
-  const captcha =
-    /captcha|recaptcha|hcaptcha|turnstile|ich bin kein roboter|not a robot/i.test(
-      pageText
-    ) ||
-    $("[class*='captcha'], [id*='captcha'], iframe[src*='recaptcha'], iframe[src*='hcaptcha']")
-      .length > 0;
   const loginRequired =
     /\b(anmelden|einloggen|login required|sign in)\b/i.test(pageText) &&
     $("input[type='password']").length > 0;
@@ -260,6 +331,7 @@ export function extractFormsFromHtml(input: {
   ): void => {
     const fields = extractFields($, form, synthetic);
     if (!fields.length) return;
+    const captcha = hasHumanCaptcha($, form, fields);
     if (synthetic) {
       const lostSpecificFields = new Set(
         fields
