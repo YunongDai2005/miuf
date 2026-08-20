@@ -44,9 +44,13 @@ function valueFor(
   const splitName = names(contact.name);
   switch (key) {
     case "lossDate":
-      return item.lostDate;
+      // A single-date control cannot faithfully represent an uncertain range.
+      // Keep it manual and carry the full range in the generated message body.
+      return item.dateCertainty === "range" ? "" : item.lostDate;
     case "lossTime":
-      return [item.timeFrom, item.timeTo].filter(Boolean).join("–");
+      return item.dateCertainty === "range"
+        ? ""
+        : [item.timeFrom, item.timeTo].filter(Boolean).join("–");
     case "lossLocation":
     case "venue":
       return resolved.venues.join(", ");
@@ -217,7 +221,9 @@ export function buildFormGuide(
         needsUserInput:
           field.required && (needsSelectChoice || !suggestedValue),
         note:
-          needsSelectChoice
+          field.semanticKey === "lossDate" && lostCase.item.dateCertainty === "range"
+            ? "The date is uncertain. Choose the closest permitted date yourself and include the full trip range in the message."
+            : needsSelectChoice
             ? "Choose the matching option on the official website."
             : field.semanticKey === "other"
             ? "This site-specific field must be completed on the official website."

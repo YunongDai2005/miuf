@@ -1,8 +1,13 @@
 import candidateData from "../../../data/lost-found-crawler/channels.candidates.json";
 import adapterData from "../../../data/lost-found-crawler/adapters.json";
 import reviewData from "../../../data/lost-found-crawler/reviews.json";
+import bundledChannelData from "../../../public/berlin-lost-found-channels.json";
 import { readCurrentReviewDecisions } from "../../../db/channel-reviews";
-import { buildPublishedChannelRegistry } from "../../../lib/lost-found-channel-publish";
+import {
+  buildPublishedChannelRegistry,
+  mergePublishedChannelRegistries,
+} from "../../../lib/lost-found-channel-publish";
+import type { PublishedChannelRegistry } from "../../../lib/lost-found-channel-schema";
 import type {
   AdapterFile,
   CandidateFile,
@@ -19,16 +24,18 @@ export async function GET() {
       candidates.candidates,
       (reviewData as unknown as ReviewFile).decisions
     );
-    const registry = buildPublishedChannelRegistry({
+    const bundled = bundledChannelData as unknown as PublishedChannelRegistry;
+    const reviewed = buildPublishedChannelRegistry({
       candidates,
       reviews: { version: 1, decisions },
       adapters,
       generatedAt: decisions.reduce(
         (latest, decision) =>
           decision.reviewedAt > latest ? decision.reviewedAt : latest,
-        candidates.generatedAt
+        bundled.generatedAt
       ),
     });
+    const registry = mergePublishedChannelRegistries(bundled, reviewed);
     return Response.json(registry, {
       headers: {
         "Cache-Control": "public, max-age=60, stale-if-error=300",

@@ -1,0 +1,95 @@
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { width: 1400px; padding: 44px 48px 40px; background: #fff;
+         font-family: "Helvetica Neue", Arial, sans-serif; color: #16181d; }
+  .cols { display: grid; grid-template-columns: 250px 268px 250px 250px; gap: 26px; }
+  .col-head { font-size: 13px; letter-spacing: .14em; font-weight: 700; margin-bottom: 14px; }
+  .c1 { color: #6b7280; } .c2 { color: #a8410f; } .c3 { color: #b3261e; } .c4 { color: #1b3a63; }
+  .box { border: 1.6px dashed #b7bcc6; border-radius: 9px; padding: 13px 15px; background: #f7f8fa; margin-bottom: 15px; }
+  .box.solid { border-style: solid; }
+  .box.model { border-color: #d98324; background: #fdf6ed; }
+  .box.gate  { border-color: #b3261e; background: #fdf0ef; border-style: solid; }
+  .box.pub   { border-color: #1b3a63; background: #eef3f9; border-width: 2.2px; border-style: solid; }
+  .box.rej   { border-color: #b7bcc6; background: #fff; border-style: solid; }
+  h3 { font-size: 17px; margin-bottom: 6px; }
+  h3.on-model { color: #a8410f; } h3.on-gate { color: #b3261e; } h3.on-pub { color: #1b3a63; }
+  li, p.small { font-size: 12.6px; color: #4b5563; line-height: 1.62; }
+  ul { list-style: none; }
+  .arrow { text-align: center; color: #6b7280; font-size: 17px; margin: -7px 0 8px; }
+  .human { margin-top: 24px; border: 2.2px solid #b3261e; border-radius: 9px; padding: 15px 17px; background: #fdf0ef; }
+  .human h3 { color: #b3261e; }
+  .back { margin-top: 22px; border: 1.6px solid #d4d8df; border-radius: 9px; padding: 15px 17px; background: #f7f8fa; }
+  .foot { margin-top: 26px; border-top: 1.4px solid #d4d8df; padding-top: 15px; }
+  .foot strong { font-size: 16.5px; }
+  .foot p { font-size: 13px; color: #4b5563; margin-top: 5px; line-height: 1.6; }
+  .tag { display: inline-block; font-size: 11px; letter-spacing: .07em; font-weight: 700;
+         color: #fff; background: #b3261e; border-radius: 4px; padding: 2px 7px; margin-bottom: 8px; }
+</style>
+
+<div class="cols">
+  <div>
+    <div class="col-head c1">AUTOMATIC</div>
+    <div class="box"><h3>Discovered</h3><ul>
+      <li>robots rules honoured</li><li>≤ 3 sitemaps</li>
+      <li>bounded pages per domain</li><li>900 ms between requests</li></ul></div>
+    <div class="arrow">↓</div>
+    <div class="box"><h3>Extracted</h3><ul>
+      <li>static parser preferred</li><li>browser ≤ 8 states, GET only</li>
+      <li>PDF ≤ 8 MB</li><li>never clicks submit</li></ul></div>
+    <div class="arrow">↓</div>
+    <div class="box"><h3>Scored</h3><ul>
+      <li>fields mapped to fixed slots</li>
+      <li>bonus: official seed, explicit lost-property wording</li>
+      <li>penalty: login required</li></ul></div>
+  </div>
+
+  <div>
+    <div class="col-head c2">MODEL DECISION</div>
+    <div class="box model solid"><h3 class="on-model">Classified</h3><ul>
+      <li>the page is fetched again through the same request guard</li>
+      <li>scripts, event handlers and pre-filled values are stripped</li>
+      <li>the model returns a class, a confidence and a quote of the evidence it used</li></ul></div>
+    <div class="arrow">↓</div>
+    <div class="box gate">
+      <span class="tag">EVERY CHECK MUST PASS</span>
+      <h3 class="on-gate">Deterministic checks</h3><ul>
+      <li>the quote exists in the page just fetched</li>
+      <li>the contact value appears inside that quote</li>
+      <li>the candidate has official provenance</li>
+      <li>the destination is on the same official site</li>
+      <li>the class is one the traveller opens themselves</li></ul></div>
+  </div>
+
+  <div>
+    <div class="col-head c3">OUTCOME</div>
+    <div class="box solid" style="border-color:#1b3a63;background:#eef3f9"><h3 class="on-pub">Accepted</h3><ul>
+      <li>audit record stored: policy version, model, source hash, quote hash, final URL</li>
+      <li>publication refuses an automated acceptance without one</li></ul></div>
+    <div class="box rej"><h3>Rejected</h3><ul><li>reason recorded and kept</li></ul></div>
+    <div class="box rej"><h3>Left for a person</h3><ul>
+      <li>any failed check returns the candidate to the queue</li></ul></div>
+  </div>
+
+  <div>
+    <div class="col-head c4">PUBLISHED</div>
+    <div class="box pub"><h3 class="on-pub">Published</h3><ul>
+      <li>public schema validated</li><li>byte length + SHA-256 per resource</li>
+      <li>versioned public feed</li>
+      <li>coverage may not fall without an explicit override</li></ul></div>
+    <div class="human">
+      <h3>Only a person can grant</h3>
+      <ul><li>an assisted-fill adapter — 5 published, all fill-only</li>
+      <li>a submission adapter — none published</li>
+      <li>the model may grant neither, at any confidence</li></ul>
+    </div>
+    <div class="back"><h3 style="font-size:15px">Three ways back into the queue</h3>
+      <ul><li>the page's stable content hash changes</li>
+      <li>ninety days pass since the decision</li>
+      <li>weekly verification finds a redirect, a dead URL or a changed form</li></ul></div>
+  </div>
+</div>
+
+<div class="foot">
+  <strong>A model decision reaches Published only through checks that do not involve the model.</strong>
+  <p>The quote it relies on must still be present in the page the pipeline just fetched, and the contact must sit inside that quote. Assisted filling and submission stay outside this path entirely: a wrong contact detail costs part of a short recovery window, and a wrongly filled form costs the traveller their own statement.</p>
+</div>

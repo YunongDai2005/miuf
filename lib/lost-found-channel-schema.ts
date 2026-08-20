@@ -76,6 +76,10 @@ export type ChannelKind =
   | "phone"
   | "central_office_fallback";
 
+export type ChannelPurpose =
+  | "lost_property"
+  | "general_contact_fallback";
+
 export interface ClaimEvidence {
   sourceUrl: string;
   selector?: string;
@@ -89,6 +93,15 @@ export interface PublishedLostFoundChannel {
   operatorId?: string;
   venueIds: string[];
   kind: ChannelKind;
+  /**
+   * Whether the official source explicitly binds this destination to lost
+   * property. A general contact remains useful when no dedicated route exists,
+   * but the client must label and rank it as a fallback.
+   *
+   * Older version-1 registries omit this field; `publishedChannelPurpose`
+   * provides the backwards-compatible interpretation.
+   */
+  purpose?: ChannelPurpose;
   scope: "venue" | "operator" | "city";
   pageUrl: string;
   /** Reviewed public address for email/phone channels. */
@@ -109,17 +122,31 @@ export interface PublishedLostFoundChannel {
   contentHash: string;
 }
 
-export interface SubmissionAdapter {
+export type FormAdapterCapability = "fill_only" | "reviewed_submit";
+
+/**
+ * A version-pinned adapter for one reviewed official form.
+ *
+ * `fill_only` adapters may populate reviewed fields but can never submit.
+ * `reviewed_submit` additionally requires an end-to-end reviewed submit button
+ * and success state. Keeping the capability explicit prevents a field-mapping
+ * review from silently enabling submission.
+ */
+export interface FormAdapter {
   id: string;
   channelId: string;
+  capability: FormAdapterCapability;
   origin: string;
   pathPattern: string;
   testedContentHash: string;
-  submitSelector: string;
+  submitSelector?: string;
   successSelector?: string;
   successText?: string;
   receiptSelector?: string;
 }
+
+/** @deprecated Use FormAdapter; retained for downstream type compatibility. */
+export type SubmissionAdapter = FormAdapter;
 
 export interface PublishedChannelRegistry {
   version: typeof CHANNEL_REGISTRY_VERSION;
@@ -134,6 +161,10 @@ const CHANNEL_KINDS = new Set<ChannelKind>([
   "email",
   "phone",
   "central_office_fallback",
+]);
+const CHANNEL_PURPOSES = new Set<ChannelPurpose>([
+  "lost_property",
+  "general_contact_fallback",
 ]);
 const SUBMISSION_MODES = new Set<PublishedLostFoundChannel["submissionMode"]>([
   "open_only",
@@ -237,6 +268,16 @@ export function isChannelReviewCurrent(
   return Number.isFinite(due) && now.getTime() <= due;
 }
 
+export function publishedChannelPurpose(
+  channel: Pick<PublishedLostFoundChannel, "kind" | "purpose">
+): ChannelPurpose {
+  if (channel.purpose) return channel.purpose;
+  return channel.kind === "general_contact_form" ||
+    channel.kind === "central_office_fallback"
+    ? "general_contact_fallback"
+    : "lost_property";
+}
+
 export function isPublishedLostFoundChannel(
   value: unknown
 ): value is PublishedLostFoundChannel {
@@ -248,6 +289,8 @@ export function isPublishedLostFoundChannel(
     Array.isArray(candidate.venueIds) &&
     candidate.venueIds.every((id) => typeof id === "string") &&
     CHANNEL_KINDS.has(candidate.kind as ChannelKind) &&
+    (candidate.purpose === undefined ||
+      CHANNEL_PURPOSES.has(candidate.purpose as ChannelPurpose)) &&
     (candidate.scope === "venue" ||
       candidate.scope === "operator" ||
       candidate.scope === "city") &&
@@ -289,6 +332,7 @@ export function isPublishedChannelRegistry(
   if (
     registry.version !== CHANNEL_REGISTRY_VERSION ||
     typeof registry.generatedAt !== "string" ||
+    !Number.isFinite(Date.parse(registry.generatedAt)) ||
     !Array.isArray(registry.channels)
   ) {
     return false;

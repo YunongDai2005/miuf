@@ -1,11 +1,19 @@
 import type { Metadata } from "next";
-import { Geist } from "next/font/google";
+import { Fira_Mono, Fira_Sans } from "next/font/google";
 import { headers } from "next/headers";
+import "leaflet/dist/leaflet.css";
 import "./globals.css";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const firaSans = Fira_Sans({
+  variable: "--font-fira-sans",
   subsets: ["latin"],
+  weight: ["400", "500", "600", "700"],
+});
+
+const firaMono = Fira_Mono({
+  variable: "--font-fira-mono",
+  subsets: ["latin"],
+  weight: ["400", "500"],
 });
 
 export async function generateMetadata(): Promise<Metadata> {
@@ -25,6 +33,10 @@ export async function generateMetadata(): Promise<Metadata> {
     metadataBase,
     title,
     description,
+    icons: {
+      icon: [{ url: "/app-icon.svg", type: "image/svg+xml" }],
+      apple: "/apple-touch-icon.png",
+    },
     openGraph: {
       type: "website",
       locale: "en_US",
@@ -55,7 +67,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <body className={`${geistSans.variable} antialiased`}>{children}</body>
+      <body className={`${firaSans.variable} ${firaMono.variable} antialiased`}>
+        {children}
+      </body>
     </html>
   );
 }

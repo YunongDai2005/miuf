@@ -26,7 +26,13 @@ export function loadCase(): LostCase {
     return {
       ...base,
       ...parsed,
-      item: { ...base.item, ...parsed.item },
+      item: {
+        ...base.item,
+        ...parsed.item,
+        // Cases created before date ranges existed always represented one day.
+        dateCertainty:
+          parsed.item?.dateCertainty === "range" ? "range" : "exact",
+      },
       contact: { ...base.contact, ...parsed.contact },
       itinerary: sanitizeItinerary(parsed.itinerary),
       reported: sanitizeReported(parsed.reported),

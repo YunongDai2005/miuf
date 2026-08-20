@@ -1,6 +1,10 @@
 import assert from "node:assert/strict";
 import test from "node:test";
 import {
+  berlinDayKey,
+  dedupeByTime,
+  filterPhotoPointsByDateWindow,
+  groupPhotoDays,
   reconstructPhotoAnchors,
   type PhotoPoint,
 } from "../app/lost-found/photos";
@@ -112,4 +116,70 @@ test("allows a smaller merge radius when distinct nearby stops must be kept", ()
   ];
   assert.equal(reconstructPhotoAnchors(points, [], 220, 100).length, 2);
   assert.equal(reconstructPhotoAnchors(points, [], 220, 300).length, 1);
+});
+
+test("de-dupes photos taken within a minute, keeping the first and all untimed", () => {
+  const at = (time: number | null): PhotoPoint => ({ lat: 52.5, lng: 13.4, time });
+  const points = [
+    at(0),
+    at(30_000), // within 60s of 0 → skip
+    at(59_999), // within 60s of 0 → skip
+    at(60_000), // exactly 60s later → kept
+    at(90_000), // within 60s of 60_000 → skip
+    at(120_001), // > 60s after 60_000 → kept
+    at(null), // untimed → always kept
+  ];
+  assert.deepEqual(
+    dedupeByTime(points).map((p) => p.time),
+    [0, 60_000, 120_001, null]
+  );
+  // A wider window collapses more of the same burst.
+  assert.equal(
+    dedupeByTime(points, 5 * 60_000).filter((p) => p.time != null).length,
+    1
+  );
+});
+
+test("keys photos by Berlin calendar day and groups them, unknown day last", () => {
+  const evening = Date.UTC(2026, 6, 20, 21, 30); // 23:30 Berlin → 20 Jul
+  const pastMidnight = Date.UTC(2026, 6, 20, 22, 30); // 00:30 Berlin → 21 Jul
+  assert.equal(berlinDayKey(evening), "2026-07-20");
+  assert.equal(berlinDayKey(pastMidnight), "2026-07-21");
+  assert.equal(berlinDayKey(null), null);
+
+  const p = (time: number | null): PhotoPoint => ({ lat: 52.5, lng: 13.4, time });
+  const days = groupPhotoDays([p(pastMidnight), p(evening), p(evening), p(null)]);
+  assert.deepEqual(
+    days.map((day) => [day.day, day.count]),
+    [
+      ["2026-07-20", 2],
+      ["2026-07-21", 1],
+      [null, 1],
+    ]
+  );
+});
+
+test("filters photo metadata to an inclusive Berlin travel-date window", () => {
+  const at = (iso: string | null): PhotoPoint => ({
+    lat: 52.5,
+    lng: 13.4,
+    time: iso == null ? null : new Date(iso).getTime(),
+  });
+  const points = [
+    at("2026-07-19T12:00:00Z"),
+    at("2026-07-20T12:00:00Z"),
+    at("2026-07-22T12:00:00Z"),
+    at("2026-07-23T12:00:00Z"),
+    at(null),
+  ];
+  assert.deepEqual(
+    filterPhotoPointsByDateWindow(points, "2026-07-20", "2026-07-22").map(
+      (point) => berlinDayKey(point.time)
+    ),
+    ["2026-07-20", "2026-07-22"]
+  );
+  assert.equal(
+    filterPhotoPointsByDateWindow(points, "2026-07-22", "2026-07-20").length,
+    2
+  );
 });

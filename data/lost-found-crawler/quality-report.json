@@ -1,0 +1,91 @@
+{
+  "generatedAt": "2026-08-20T15:44:17.950Z",
+  "inventory": {
+    "venues": 4850,
+    "officialWebsiteSeeds": 2048,
+    "operatorSeeds": 440
+  },
+  "discovery": {
+    "candidates": 2095,
+    "uniquePages": 1378,
+    "uniqueEndpoints": 2095,
+    "duplicateEndpointRows": 0,
+    "completedScopes": 3295,
+    "currentScopeGroups": 1959,
+    "currentCompletedScopes": 1387,
+    "effectiveCompletionRate": 0.708,
+    "noisyPages": [
+      {
+        "pageUrl": "https://www.falkensee.de/seite/552977/faq-h%C3%A4ufig-gestellte-fragen.html",
+        "candidates": 121
+      },
+      {
+        "pageUrl": "https://www.hdg.de/stiftung/kontakt",
+        "candidates": 64
+      },
+      {
+        "pageUrl": "https://www.fu-berlin.de/en/sites/philbib/05Ueber-uns/kontakt/bibliotheksteam/index.html",
+        "candidates": 30
+      },
+      {
+        "pageUrl": "https://www.hdg.de/traenenpalast/kontakt",
+        "candidates": 30
+      },
+      {
+        "pageUrl": "https://www.hdg.de/museum-in-der-kulturbrauerei/kontakt",
+        "candidates": 29
+      },
+      {
+        "pageUrl": "https://service.berlin.de/dienstleistung/121543",
+        "candidates": 23
+      },
+      {
+        "pageUrl": "https://sbahn.berlin/kontakt",
+        "candidates": 22
+      },
+      {
+        "pageUrl": "https://www.berliner-philharmoniker.de/kontakt",
+        "candidates": 20
+      },
+      {
+        "pageUrl": "https://service.berlin.de/dienstleistung/324328",
+        "candidates": 18
+      },
+      {
+        "pageUrl": "https://www.zitadelle-berlin.de/ihr-besuch/kontakt",
+        "candidates": 18
+      },
+      {
+        "pageUrl": "https://www.zitadelle-berlin.de/en/your-visit/contact",
+        "candidates": 17
+      }
+    ],
+    "pendingCanonicalization": 199,
+    "contactCandidates": 1406,
+    "purposeBoundContactCandidates": 70
+  },
+  "review": {
+    "decisions": 582,
+    "decisionsJoiningCurrentCandidates": 582,
+    "orphanDecisions": 0,
+    "accepted": 352,
+    "publishableAcceptances": 352,
+    "quarantinableAcceptances": 0,
+    "rejected": 230
+  },
+  "published": {
+    "channels": 362,
+    "coveredVenues": 539,
+    "uniqueEndpoints": 362,
+    "expiredChannels": 0
+  },
+  "health": {
+    "ok": true,
+    "errors": [],
+    "warnings": [
+      "1908 crawl checkpoint(s) no longer match the current inventory.",
+      "11 page(s) generated more than 10 candidates and need directory-noise review.",
+      "Only 70/1406 contact candidate(s) have locally bound lost-property evidence; regenerate candidates with the current extractor before bulk review."
+    ]
+  }
+}

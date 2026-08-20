@@ -1,4 +1,9 @@
-import { ITEM_CATEGORY_META, type LostCase } from "./types";
+import {
+  ITEM_CATEGORY_META,
+  lossDateValue,
+  lossDateWindow,
+  type LostCase,
+} from "./types";
 import type { ResolvedParty } from "./parties";
 import { addCalendarDays, berlinDateKey, berlinTimeLabel } from "./time";
 
@@ -23,6 +28,7 @@ export function reportBodyForParty(
 }
 
 function timeRange(item: LostCase["item"]): string {
+  if (item.dateCertainty === "range") return "";
   const from = item.timeFrom?.trim();
   const to = item.timeTo?.trim();
   if (from && to) return `${from}–${to}`;
@@ -100,13 +106,14 @@ export function buildReportDrafts(lostCase: LostCase, resolved: ResolvedParty): 
   const nounDe = [catDe, desc].filter(Boolean).join(" — ") || "verlorener Gegenstand";
   const nounEn = [catEn, desc].filter(Boolean).join(" — ") || "lost item";
   const range = timeRange(item);
+  const dateValue = lossDateValue(item);
   const ctx = contextParts(resolved);
 
   const subjectItem = truncateAtWord(
     [catEn, desc].filter(Boolean).join(" — ") || "Gegenstand",
     72
   );
-  const subject = `Verlustmeldung – ${subjectItem} (${item.lostDate})`;
+  const subject = `Verlustmeldung – ${subjectItem} (${dateValue})`;
 
   const name = contact.name.trim();
   const email = contact.email.trim();
@@ -135,7 +142,9 @@ export function buildReportDrafts(lostCase: LostCase, resolved: ResolvedParty): 
     "",
     `Gegenstand: ${nounDe}`,
     ...itemDetailsDe,
-    `Verlustdatum: ${item.lostDate}${range ? ` (${range} Uhr)` : ""}`,
+    item.dateCertainty === "range"
+      ? `Möglicher Verlustzeitraum: ${dateValue}`
+      : `Verlustdatum: ${dateValue}${range ? ` (${range} Uhr)` : ""}`,
     `Vermuteter Ort: ${ctx.de}`,
     "",
     "Bitte benachrichtigen Sie mich, falls der Gegenstand gefunden wurde oder abgegeben wird.",
@@ -162,7 +171,9 @@ export function buildReportDrafts(lostCase: LostCase, resolved: ResolvedParty): 
     "",
     `Item: ${nounEn}`,
     ...itemDetailsEn,
-    `Date lost: ${item.lostDate}${range ? ` (${range})` : ""}`,
+    item.dateCertainty === "range"
+      ? `Possible loss period: ${dateValue}`
+      : `Date lost: ${dateValue}${range ? ` (${range})` : ""}`,
     `Likely location: ${ctx.en}`,
     "",
     "Please let me know if the item has been found or handed in.",
@@ -209,8 +220,8 @@ export function calendarReminderHref(
   const days = resolved.party.followUpAfterDays;
   if (!days) return null;
   const today = berlinDateKey(now);
-  const baseDate =
-    lostCase.item.lostDate > today ? lostCase.item.lostDate : today;
+  const { end: lossWindowEnd } = lossDateWindow(lostCase.item);
+  const baseDate = lossWindowEnd > today ? lossWindowEnd : today;
   const date = addCalendarDays(baseDate, days);
   const dateCompact = date.replaceAll("-", "");
   const title = `Follow up: ${resolved.party.name}`;
@@ -236,7 +247,7 @@ export function calendarReminderHref(
     "PRODID:-//Berlin Lost and Found//EN",
     "CALSCALE:GREGORIAN",
     "BEGIN:VEVENT",
-    `UID:${resolved.party.id}-${lostCase.item.lostDate}@berlin-lost-found.local`,
+    `UID:${resolved.party.id}-${lossDateValue(lostCase.item)}@berlin-lost-found.local`,
     `DTSTART;VALUE=DATE:${dateCompact}`,
     `DTEND;VALUE=DATE:${addCalendarDays(date, 1).replaceAll("-", "")}`,
     `SUMMARY:${escapeIcs(title)}`,

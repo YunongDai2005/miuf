@@ -1,1 +1,42 @@
-globalThis.BERLIN_LOST_FOUND_ADAPTERS = Object.freeze([]);
+globalThis.BERLIN_LOST_FOUND_ADAPTERS = Object.freeze([
+  {
+    "id": "fill-spsg-contact-v1",
+    "channelId": "channel_0f6318a24ea3c94f",
+    "capability": "fill_only",
+    "origin": "https://www.spsg.de",
+    "pathPattern": "^/en/contact-us/?$",
+    "testedContentHash": "5e2ef918c7049796633a075d147428b14658a40dd849befbea363810e9e16293"
+  },
+  {
+    "id": "fill-stiftung-denkmal-contact-v1",
+    "channelId": "channel_867c1ba831252871",
+    "capability": "fill_only",
+    "origin": "https://www.stiftung-denkmal.de",
+    "pathPattern": "^/en/service/contact/?$",
+    "testedContentHash": "a01274009588d82195908152b71f659ca182caaf293aa324c013716188da99b0"
+  },
+  {
+    "id": "fill-stadtmuseum-contact-v1",
+    "channelId": "channel_8855ebf1d43575e9",
+    "capability": "fill_only",
+    "origin": "https://www.stadtmuseum.de",
+    "pathPattern": "^/en/contact/?$",
+    "testedContentHash": "955a4433ac53b6ab94210c2a2e5898ba726be6cc4f5fd62c233ead378ea6e080"
+  },
+  {
+    "id": "fill-tv-turm-contact-v1",
+    "channelId": "channel_ba353bf8a92f6988",
+    "capability": "fill_only",
+    "origin": "https://tv-turm.de",
+    "pathPattern": "^/en/contact-us/?$",
+    "testedContentHash": "af15b8cc711ac46ec638c2f9f5d2ec21287082b9d17909ac2715d86463086781"
+  },
+  {
+    "id": "fill-smb-contact-v1",
+    "channelId": "channel_d04f75b9416ac3cc",
+    "capability": "fill_only",
+    "origin": "https://www.smb.museum",
+    "pathPattern": "^/en/contact/questions/?$",
+    "testedContentHash": "7bd344451ab5398603235802bce33e19fb450e14777aa338037443840f54c056"
+  }
+]);

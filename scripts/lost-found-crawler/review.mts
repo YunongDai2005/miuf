@@ -65,11 +65,23 @@ export async function recordReviewDecision(options: {
   if (options.submissionMode === "adapter" && !options.adapterId) {
     throw new Error("Adapter submission mode requires --adapter=...");
   }
+  if (
+    options.decision === "accept" &&
+    (candidate.canonicalizationStatus === "pending" ||
+      candidate.venueIds.length === 0) &&
+    !options.venueIdsOverride?.length
+  ) {
+    throw new Error(
+      "Pending Google candidates require --venues=<open venue id> before acceptance"
+    );
+  }
   const decision: ReviewDecision = {
     candidateId: options.candidateId,
     decision: options.decision,
     reviewedAt: options.reviewedAt ?? new Date().toISOString(),
     reviewedBy: options.reviewedBy.trim(),
+    // This command is the manual path; the automated audit records "automated".
+    reviewerKind: "human",
     reviewedCandidateVersion: candidateReviewVersion(candidate),
     notes: options.notes?.trim() || undefined,
     kindOverride: options.kindOverride as ChannelKind | undefined,
@@ -171,6 +183,8 @@ export async function exportReviewReport(options: {
       const acceptCommand =
         candidate.kind === "manual_review"
           ? "No safe accept shortcut: this is evidence only. Accept a separately extracted form, email or phone candidate; otherwise reject this lead."
+          : candidate.canonicalizationStatus === "pending"
+            ? `Map this Place ID to OSM/Wikidata first, then add --venues=&lt;open venue id&gt;: npm run data:lost-found:review -- --candidate=${candidate.id} --decision=accept --reviewer=&quot;YOUR NAME&quot; --kind=${candidate.kind} --submission-mode=open_only --venues=&lt;open venue id&gt;`
           : `npm run data:lost-found:review -- --candidate=${candidate.id} --decision=accept --reviewer=&quot;YOUR NAME&quot; --kind=${candidate.kind} --submission-mode=open_only`;
       const rejectCommand = `npm run data:lost-found:review -- --candidate=${candidate.id} --decision=reject --reviewer=&quot;YOUR NAME&quot; --notes=&quot;REASON&quot;`;
       return `
@@ -191,6 +205,15 @@ export async function exportReviewReport(options: {
               : ""
           }
           <p><b>Venues:</b> ${venueLabels.join(", ")}</p>
+          ${
+            candidate.sourcePlaceIds?.length
+              ? `<p><b>Google source Place IDs:</b> ${candidate.sourcePlaceIds
+                  .map(escapeHtml)
+                  .join(", ")} (${escapeHtml(
+                  candidate.canonicalizationStatus ?? "mapped"
+                )})</p>`
+              : ""
+          }
           ${
             candidate.operatorId
               ? `<p><b>Operator:</b> ${escapeHtml(

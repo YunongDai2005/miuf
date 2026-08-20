@@ -25,6 +25,9 @@ function visibleFields(candidate: ChannelCandidate) {
 }
 
 function candidateWarning(candidate: ChannelCandidate): string {
+  if (candidate.canonicalizationStatus === "pending") {
+    return "Google found and the crawler verified this website, but the place still needs an OSM/Wikidata venue assignment before publication.";
+  }
   if (candidate.kind === "manual_review") {
     return "Evidence only: no safe publishable channel was extracted from this page.";
   }
@@ -240,6 +243,12 @@ export default function ReviewWorkbench({
         >
           ← Traveller app
         </Link>
+        <Link
+          href="/ops"
+          className="ml-4 text-sm font-medium text-[#16385c] hover:underline dark:text-sky-300"
+        >
+          Pipeline operations
+        </Link>
         <div className="mt-4 flex flex-wrap items-end justify-between gap-4">
           <div>
             <p className="text-xs font-semibold uppercase tracking-[0.18em] text-orange-700 dark:text-orange-300">
@@ -331,6 +340,9 @@ export default function ReviewWorkbench({
               fields.every((field, index) =>
                 checked.has(`${field.evidenceSelector}|${index}`)
               );
+            const cannotAccept =
+              candidate.canonicalizationStatus === "pending" ||
+              candidate.venueIds.length === 0;
             return (
               <article
                 key={candidate.id}
@@ -375,9 +387,11 @@ export default function ReviewWorkbench({
                     <p className="mt-1">
                       {candidate.operatorId
                         ? operatorNames[candidate.operatorId] ?? candidate.operatorId
-                        : candidate.venueIds
-                            .map((id) => venueNames[id] ?? id)
-                            .join(", ")}
+                        : candidate.venueIds.length
+                          ? candidate.venueIds
+                              .map((id) => venueNames[id] ?? id)
+                              .join(", ")
+                          : `Pending open-data match (${candidate.sourcePlaceIds?.length ?? 0} Google Place ID)`}
                     </p>
                     {candidate.operatorId && (
                       <p className="mt-1 text-xs text-stone-500">
@@ -491,7 +505,8 @@ export default function ReviewWorkbench({
                       type="button"
                       disabled={
                         syncStatus === "loading" ||
-                        savingCandidateId === candidate.id
+                        savingCandidateId === candidate.id ||
+                        cannotAccept
                       }
                       onClick={() =>
                         void writeReview(candidate, "accept", "open_only")
@@ -507,6 +522,7 @@ export default function ReviewWorkbench({
                       disabled={
                         syncStatus === "loading" ||
                         savingCandidateId === candidate.id ||
+                        cannotAccept ||
                         !allFieldsChecked
                       }
                       onClick={() =>

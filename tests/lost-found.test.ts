@@ -6,7 +6,10 @@ import {
   partyIdForOperator,
   resolveParties,
 } from "../app/lost-found/parties";
-import { buildIndex } from "../app/lost-found/data";
+import {
+  buildIndex,
+  registryCoverageDoesNotRegress,
+} from "../app/lost-found/data";
 import {
   buildReportDrafts,
   calendarReminderHref,
@@ -358,7 +361,32 @@ test("quick-add chooses Berlin's central Siegessäule rather than a distant same
   );
 });
 
-test("prefers the exact memorial reception phone and keeps the general form as backup", async () => {
+test("refuses a newer channel registry that silently drops reviewed venues", () => {
+  const baseline = {
+    version: 1 as const,
+    generatedAt: "2026-07-27T00:00:00.000Z",
+    channels: [
+      {
+        id: "baseline",
+        venueIds: ["venue-a"],
+      },
+    ],
+  };
+  const empty = {
+    version: 1 as const,
+    generatedAt: "2026-07-28T00:00:00.000Z",
+    channels: [],
+  };
+  assert.equal(
+    registryCoverageDoesNotRegress(
+      empty as Parameters<typeof registryCoverageDoesNotRegress>[0],
+      baseline as Parameters<typeof registryCoverageDoesNotRegress>[1]
+    ),
+    false
+  );
+});
+
+test("keeps the exact memorial reception phone and removes unrelated general forms", async () => {
   const attractions = JSON.parse(
     await readFile(
       new URL("../public/berlin-attractions.json", import.meta.url),
@@ -377,15 +405,19 @@ test("prefers the exact memorial reception phone and keeps the general form as b
   );
   assert.deepEqual(
     memorial?.lostFoundChannels?.map((channel) => channel.kind),
-    ["phone", "general_contact_form"]
+    ["phone"]
   );
 
+  // Both memorials are run by Stiftung Denkmal, so its reception number now
+  // reaches either of them. Under the earlier policy only the site with a
+  // visitor centre carried a channel; a traveller who left something at the
+  // outdoor memorial was given nothing, although the same office answers.
   const separateMemorial = index.items.find(
     (item) => item.refId === "node/13951345000"
   );
   assert.deepEqual(
     separateMemorial?.lostFoundChannels?.map((channel) => channel.kind),
-    ["general_contact_form"]
+    ["phone"]
   );
 });
 
@@ -493,6 +525,7 @@ test("migrates a valid old line entry that is missing its mode", () => {
   });
   try {
     const loaded = loadCase();
+    assert.equal(loaded.item.dateCertainty, "exact");
     assert.equal(loaded.itinerary.length, 1);
     assert.equal(loaded.itinerary[0].mode, "subway");
     assert.equal(loaded.submissions.bvg.length, 1);
@@ -506,6 +539,27 @@ test("migrates a valid old line entry that is missing its mode", () => {
       value: previousWindow,
     });
   }
+});
+
+test("describes an uncertain trip range honestly instead of inventing a loss day", () => {
+  const lostCase = emptyCase();
+  lostCase.item.description = "black backpack";
+  lostCase.item.dateCertainty = "range";
+  lostCase.item.travelStartDate = "2026-07-18";
+  lostCase.item.travelEndDate = "2026-07-23";
+  lostCase.item.lostDate = "2026-07-23";
+  lostCase.item.timeFrom = "09:00";
+  lostCase.item.timeTo = "12:00";
+  lostCase.item.includeCentralOffice = true;
+  const central = resolveParties([], "bag", true).find(
+    (resolved) => resolved.party.id === "zentral"
+  );
+  assert.ok(central);
+  const drafts = buildReportDrafts(lostCase, central);
+  assert.match(drafts.en, /Possible loss period: 2026-07-18–2026-07-23/);
+  assert.match(drafts.de, /Möglicher Verlustzeitraum: 2026-07-18–2026-07-23/);
+  assert.doesNotMatch(drafts.en, /Date lost:/);
+  assert.doesNotMatch(drafts.en, /09:00/);
 });
 
 test("every published party detail has a verification date and official source", () => {

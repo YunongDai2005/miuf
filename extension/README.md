@@ -10,10 +10,10 @@ Safety rules:
 - packages expire after two hours;
 - consent, checkbox and file fields are never filled;
 - required consent, file and other manual fields are checked before submission;
-- experimental adapters are excluded from the built extension;
-- without a separately reviewed, hash-matched adapter it never shows a submit
-  action;
-- with such an adapter, submission still requires a second click and an
+- only reviewed, hash-matched form adapters are included in the built
+  extension;
+- `fill_only` adapters can fill reviewed fields but never show a submit action;
+- a `reviewed_submit` adapter still requires a second click and an
   in-page confirmation, checks the filled values again, clicks once, and only
   records success when the official page shows the reviewed success state;
 - after a confirmed or uncertain attempt, it can copy a result package back to

@@ -1,15 +1,21 @@
 import {
   CHANNEL_REGISTRY_VERSION,
+  isPublishedChannelRegistry,
   isPublishedLostFoundChannel,
+  publishedChannelPurpose,
   type PublishedChannelRegistry,
   type PublishedLostFoundChannel,
 } from "./lost-found-channel-schema";
 import type {
   AdapterFile,
   CandidateFile,
+  ResponsibilityGraph,
   ReviewFile,
 } from "../scripts/lost-found-crawler/schemas";
-import { candidateReviewVersion } from "./channel-review";
+import {
+  automatedReviewAttestationIsCurrent,
+  candidateReviewVersion,
+} from "./channel-review";
 
 const FORM_KINDS = new Set([
   "dedicated_lost_found_form",
@@ -17,13 +23,109 @@ const FORM_KINDS = new Set([
   "general_contact_form",
 ]);
 
+function canonicalPublicUrl(value: string): string {
+  try {
+    const url = new URL(value);
+    url.hash = "";
+    for (const key of [...url.searchParams.keys()]) {
+      if (key.toLowerCase().startsWith("utm_")) url.searchParams.delete(key);
+    }
+    return url.toString().replace(/\/$/, "");
+  } catch {
+    return value.trim().toLowerCase();
+  }
+}
+
+function publishedChannelIdentity(channel: PublishedLostFoundChannel): string {
+  const contact = channel.contactValue
+    ? channel.kind === "phone"
+      ? channel.contactValue.replace(/\D/g, "")
+      : channel.contactValue.trim().toLowerCase()
+    : channel.formAction
+      ? canonicalPublicUrl(channel.formAction)
+      : canonicalPublicUrl(channel.pageUrl);
+  return [
+    channel.kind,
+    canonicalPublicUrl(channel.pageUrl),
+    contact,
+  ].join("\0");
+}
+
+/**
+ * Add newly reviewed channels to the last published registry without making an
+ * unrelated candidate refresh delete the audited baseline. Explicit removals
+ * still use the publisher's coverage-regression override.
+ */
+export function mergePublishedChannelRegistries(
+  baseline: PublishedChannelRegistry,
+  incoming: PublishedChannelRegistry
+): PublishedChannelRegistry {
+  const merged = new Map<string, PublishedLostFoundChannel>();
+  const identityById = new Map<string, string>();
+  const add = (channel: PublishedLostFoundChannel) => {
+    const identity = publishedChannelIdentity(channel);
+    const previousIdentity = identityById.get(channel.id);
+    if (previousIdentity && previousIdentity !== identity) {
+      merged.delete(previousIdentity);
+    }
+    const existing = merged.get(identity);
+    if (!existing) {
+      merged.set(identity, {
+        ...channel,
+        venueIds: [...new Set(channel.venueIds)].sort(),
+        fields: [...channel.fields],
+        evidence: [...channel.evidence],
+      });
+      identityById.set(channel.id, identity);
+      return;
+    }
+    const existingPurpose = publishedChannelPurpose(existing);
+    const incomingPurpose = publishedChannelPurpose(channel);
+    const preferred =
+      existingPurpose !== incomingPurpose
+        ? incomingPurpose === "lost_property"
+          ? channel
+          : existing
+        : channel.verifiedAt >= existing.verifiedAt
+          ? channel
+          : existing;
+    const combined = {
+      ...preferred,
+      venueIds: [...new Set([...existing.venueIds, ...channel.venueIds])].sort(),
+      fields: [...preferred.fields],
+      evidence: [...preferred.evidence],
+    };
+    merged.set(identity, combined);
+    identityById.set(existing.id, identity);
+    identityById.set(channel.id, identity);
+  };
+  baseline.channels.forEach(add);
+  incoming.channels.forEach(add);
+  const registry: PublishedChannelRegistry = {
+    version: CHANNEL_REGISTRY_VERSION,
+    generatedAt:
+      incoming.channels.length > 0 &&
+      incoming.generatedAt > baseline.generatedAt
+        ? incoming.generatedAt
+        : baseline.generatedAt,
+    channels: [...merged.values()].sort((left, right) =>
+      left.id.localeCompare(right.id)
+    ),
+  };
+  if (!isPublishedChannelRegistry(registry)) {
+    throw new Error("Merged channel registry is invalid");
+  }
+  return registry;
+}
+
 export function buildPublishedChannelRegistry(input: {
   candidates: CandidateFile;
   reviews: ReviewFile;
   adapters: AdapterFile;
+  responsibilities?: ResponsibilityGraph;
   generatedAt?: string;
 }): PublishedChannelRegistry {
-  const { candidates, reviews, adapters } = input;
+  const { candidates, reviews, adapters, responsibilities } = input;
   if (
     candidates.version !== 1 ||
     reviews.version !== 1 ||
@@ -72,7 +174,49 @@ export function buildPublishedChannelRegistry(input: {
         `Accepted candidate ${candidate.id} has incomplete reviewer metadata`
       );
     }
-    const venueIds = decision.venueIdsOverride ?? candidate.venueIds;
+    if (decision.reviewerKind === "automated") {
+      if (!automatedReviewAttestationIsCurrent(decision)) {
+        throw new Error(
+          `Automated acceptance ${candidate.id} has no current source-grounded audit attestation`
+        );
+      }
+    } else if (decision.reviewerKind !== "human") {
+      throw new Error(
+        `Accepted candidate ${candidate.id} requires a human review or a source-grounded automated audit`
+      );
+    }
+    const venueIds = (() => {
+      if (decision.venueIdsOverride) return decision.venueIdsOverride;
+      const directVenueIds = new Set(candidate.venueIds);
+      if (!candidate.operatorId || responsibilities?.version !== 1) {
+        return [...directVenueIds];
+      }
+      const responsibility = responsibilities.responsibilities.find(
+        (entry) =>
+          entry.kind === "operator" &&
+          entry.operatorId === candidate.operatorId &&
+          entry.audited
+      );
+      if (!responsibility) return [...directVenueIds];
+      for (const assignment of responsibilities.assignments) {
+        if (
+          assignment.responsibilityId === responsibility.id &&
+          (assignment.resolution === "reviewed_channel" ||
+            assignment.resolution === "audited_operator")
+        ) {
+          directVenueIds.add(assignment.venueId);
+        }
+      }
+      return [...directVenueIds];
+    })();
+    if (
+      candidate.canonicalizationStatus === "pending" &&
+      !decision.venueIdsOverride?.length
+    ) {
+      throw new Error(
+        `Accepted Google candidate ${candidate.id} still needs an open venue assignment`
+      );
+    }
     if (
       venueIds.length === 0 ||
       venueIds.some((venueId) => !venueId.trim())
@@ -126,7 +270,7 @@ export function buildPublishedChannelRegistry(input: {
     const adapter = decision.adapterId
       ? adapters.adapters.find((entry) => entry.id === decision.adapterId)
       : undefined;
-    if (decision.submissionMode === "adapter") {
+    if (decision.adapterId) {
       if (
         !adapter ||
         adapter.channelId !== candidate.id ||
@@ -134,15 +278,7 @@ export function buildPublishedChannelRegistry(input: {
         new URL(candidate.pageUrl).origin !== adapter.origin
       ) {
         throw new Error(
-          `Candidate ${candidate.id} cannot publish adapter mode without a matching tested adapter`
-        );
-      }
-      if (
-        !adapter.submitSelector.trim() ||
-        (!adapter.successSelector?.trim() && !adapter.successText?.trim())
-      ) {
-        throw new Error(
-          `Candidate ${candidate.id} adapter needs a submit selector and a reviewed success state`
+          `Candidate ${candidate.id} cannot publish a form adapter without an exact channel, origin and content-hash match`
         );
       }
       try {
@@ -153,12 +289,44 @@ export function buildPublishedChannelRegistry(input: {
         );
       }
     }
+    if (decision.submissionMode === "adapter") {
+      if (
+        !adapter ||
+        adapter.capability !== "reviewed_submit"
+      ) {
+        throw new Error(
+          `Candidate ${candidate.id} cannot publish adapter mode without a matching tested submission adapter`
+        );
+      }
+      if (
+        !adapter.submitSelector?.trim() ||
+        (!adapter.successSelector?.trim() && !adapter.successText?.trim())
+      ) {
+        throw new Error(
+          `Candidate ${candidate.id} adapter needs a submit selector and a reviewed success state`
+        );
+      }
+    } else if (
+      decision.submissionMode === "assisted_fill" &&
+      adapter &&
+      adapter.capability !== "fill_only" &&
+      adapter.capability !== "reviewed_submit"
+    ) {
+      throw new Error(
+        `Candidate ${candidate.id} has an unsupported filling adapter capability`
+      );
+    }
 
     const publishedChannel: PublishedLostFoundChannel = {
       id: candidate.id,
       operatorId: candidate.operatorId,
       venueIds: [...new Set(venueIds)].sort(),
       kind,
+      purpose:
+        decision.purposeOverride ??
+        (kind === "general_contact_form" || kind === "central_office_fallback"
+          ? "general_contact_fallback"
+          : "lost_property"),
       scope: candidate.operatorId ? "operator" : "venue",
       pageUrl: candidate.pageUrl,
       contactValue: candidate.contactValue,
@@ -170,12 +338,21 @@ export function buildPublishedChannelRegistry(input: {
       loginRequired: form?.loginRequired ?? false,
       submissionMode: decision.submissionMode ?? defaultSubmissionMode,
       adapterId:
-        decision.submissionMode === "adapter" ? decision.adapterId : undefined,
+        decision.submissionMode === "assisted_fill" ||
+        decision.submissionMode === "adapter"
+          ? decision.adapterId
+          : undefined,
       verifiedAt: decision.reviewedAt,
       reviewDueAt: new Date(
         reviewedTimestamp + 90 * 24 * 60 * 60 * 1000
       ).toISOString(),
-      verifiedBy: decision.reviewedBy,
+      // Section 4.5: a reviewer's identity stays in the private review file, so
+      // the registry records how the decision was reached rather than by whom.
+      // An automated acceptance says so, and the client can label it.
+      verifiedBy:
+        decision.reviewerKind === "automated"
+          ? "automated source audit"
+          : "authenticated reviewer",
       evidence: candidate.evidence,
       contentHash:
         form?.contentHash ?? candidate.evidence[0]?.contentHash ?? "",
@@ -189,10 +366,88 @@ export function buildPublishedChannelRegistry(input: {
     acceptedIds.add(decision.candidateId);
   }
 
-  channels.sort((left, right) => left.id.localeCompare(right.id));
+  // Extraction can yield the same address or number twice from one page — a
+  // German and an English rendering, or two passes over the same PDF. They are
+  // distinct candidates but one fact, and a traveller shown the same number
+  // twice reasonably concludes the list is unreliable. Collapse them, keeping
+  // the earliest reviewed entry and the union of the venues they resolved to.
+  const merged = new Map<string, PublishedLostFoundChannel>();
+  for (const channel of channels) {
+    const key = [
+      channel.kind,
+      channel.contactValue ?? channel.formAction ?? channel.pageUrl,
+      channel.pageUrl,
+    ].join("\0");
+    const existing = merged.get(key);
+    if (!existing) {
+      merged.set(key, channel);
+      continue;
+    }
+    existing.venueIds = [
+      ...new Set([...existing.venueIds, ...channel.venueIds]),
+    ].sort();
+    if (channel.verifiedAt < existing.verifiedAt) {
+      existing.verifiedAt = channel.verifiedAt;
+      existing.reviewDueAt = channel.reviewDueAt;
+      existing.verifiedBy = channel.verifiedBy;
+    }
+  }
+
+  // A page that publishes dozens of contacts is a staff or department
+  // directory, not a way to reach the venue about a lost item: one municipal
+  // FAQ contributed 137 numbers to a single memorial. Keeping every one of them
+  // buries the useful entry, so each page contributes a few at most, preferring
+  // anything that names lost property and then the organisation's general
+  // mailbox over an individual's line.
+  // Mailboxes that belong to the organisation but answer a different question.
+  // A press office or a data protection officer will not help somebody who left
+  // a coat behind, and listing them alongside the reception number makes the
+  // whole list look untrusted.
+  const WRONG_DEPARTMENT =
+    /^(presse|press|media|datenschutz|privacy|webmaster|jobs?|bewerbung|karriere|career|spenden|donation|abo|newsletter|marketing|sponsor|redaktion)[.\-_]?[a-z]*@/i;
+  const PER_PAGE_LIMIT = 3;
+  const lostProperty = /fundb(?:ü|u)ro|fundsache|fundstelle|verlust|lost/i;
+  const generalMailbox = /^(info|kontakt|contact|service|mail|office|post)@/i;
+  const rank = (channel: PublishedLostFoundChannel): number => {
+    if (lostProperty.test(`${channel.pageUrl} ${channel.contactValue ?? ""}`)) return 0;
+    if (FORM_KINDS.has(channel.kind)) return 1;
+    if (generalMailbox.test(channel.contactValue ?? "")) return 2;
+    return 3;
+  };
+  const perPage = new Map<string, PublishedLostFoundChannel[]>();
+  for (const channel of merged.values()) {
+    if (
+      !lostProperty.test(channel.contactValue ?? "") &&
+      WRONG_DEPARTMENT.test(channel.contactValue ?? "")
+    ) {
+      continue;
+    }
+    perPage.set(channel.pageUrl, [
+      ...(perPage.get(channel.pageUrl) ?? []),
+      channel,
+    ]);
+  }
+  const kept: PublishedLostFoundChannel[] = [];
+  for (const pageChannels of perPage.values()) {
+    if (pageChannels.length <= PER_PAGE_LIMIT) {
+      kept.push(...pageChannels);
+      continue;
+    }
+    kept.push(
+      ...pageChannels
+        .sort(
+          (left, right) => rank(left) - rank(right) || left.id.localeCompare(right.id)
+        )
+        .slice(0, PER_PAGE_LIMIT)
+    );
+  }
+
+  const deduplicated = kept.sort((left, right) =>
+    left.id.localeCompare(right.id)
+  );
   return {
     version: CHANNEL_REGISTRY_VERSION,
     generatedAt: input.generatedAt ?? new Date().toISOString(),
-    channels,
+    channels: deduplicated,
   };
 }

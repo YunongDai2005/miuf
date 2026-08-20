@@ -5,21 +5,15 @@ import { modeLabel } from "../berlin-transit/transit";
 import type { LiveJourneyCandidate, LiveJourneyLeg } from "../berlin-transit/vbb";
 import type { OfflineRoutePlan, PrioritizedLine, SearchPriority } from "./offlineRoute";
 import type { PhotoAnchor } from "./photos";
-import { cx } from "./ui";
+import { Badge, PrimaryButton } from "./ui";
 
-const PRIORITY_META: Record<SearchPriority, { label: string; className: string }> = {
-  high: {
-    label: "High priority",
-    className: "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/15 dark:text-emerald-300",
-  },
-  medium: {
-    label: "Medium",
-    className: "bg-amber-100 text-amber-700 dark:bg-amber-500/15 dark:text-amber-300",
-  },
-  low: {
-    label: "Low",
-    className: "bg-stone-100 text-stone-500 dark:bg-stone-800 dark:text-stone-400",
-  },
+const PRIORITY_META: Record<
+  SearchPriority,
+  { label: string; tone: "success" | "warning" | "neutral" }
+> = {
+  high: { label: "High priority", tone: "success" },
+  medium: { label: "Medium", tone: "warning" },
+  low: { label: "Low", tone: "neutral" },
 };
 
 function PriorityRow({
@@ -33,24 +27,19 @@ function PriorityRow({
 }) {
   const meta = PRIORITY_META[line.priority];
   return (
-    <li className="flex items-center gap-3 rounded-xl bg-stone-50 p-2.5 dark:bg-stone-800/70">
+    <li className="lf-priority-row">
       <span
-        className="inline-flex h-8 min-w-10 flex-none items-center justify-center rounded-lg px-1.5 text-[10px] font-extrabold shadow-sm"
+        className="lf-transit-badge"
         style={{ backgroundColor: line.color, color: line.textColor }}
       >
         {line.ref}
       </span>
-      <span className="min-w-0 flex-1">
-        <span className="flex flex-wrap items-center gap-2">
-          <span className={cx("rounded-full px-2 py-0.5 text-[9px] font-semibold", meta.className)}>
-            {meta.label}
-          </span>
-          <span className="text-[9px] tabular-nums text-stone-400">
-            {line.routeMatch}% confidence
-          </span>
-          <span className="text-[9px] text-stone-400">{modeLabel(line.mode)}</span>
+      <span className="lf-priority-copy">
+        <span className="lf-priority-meta">
+          <Badge tone={meta.tone}>{meta.label}</Badge>
+          <small>{modeLabel(line.mode)}</small>
         </span>
-        <span className="mt-0.5 block truncate text-[10px] text-stone-400">
+        <span className="lf-priority-detail">
           {line.from && line.to
             ? `${line.from} → ${line.to}`
             : `≈ ${line.matchedLengthKm.toFixed(1)} km along your photo path`}
@@ -63,12 +52,7 @@ function PriorityRow({
           disabled={added}
           onClick={() => onAdd(line.lineId)}
           aria-label={added ? `${line.ref} added` : `Add ${line.ref}`}
-          className={cx(
-            "flex h-7 w-7 flex-none items-center justify-center rounded-full text-sm font-bold transition",
-            added
-              ? "bg-emerald-100 text-emerald-600 dark:bg-emerald-500/15 dark:text-emerald-300"
-              : "bg-stone-200 text-stone-500 hover:bg-orange-600 hover:text-white dark:bg-stone-700"
-          )}
+          className={`lf-inline-add${added ? " is-added" : ""}`}
         >
           {added ? "✓" : "+"}
         </button>
@@ -81,7 +65,7 @@ type Projection = (point: LL) => [number, number];
 
 function formatTime(value: string | number | null) {
   if (!value) return "time unknown";
-  const date = typeof value === "number" ? new Date(value) : new Date(value);
+  const date = new Date(value);
   if (Number.isNaN(date.getTime())) return "time unknown";
   return new Intl.DateTimeFormat("en-GB", {
     timeZone: "Europe/Berlin",
@@ -131,7 +115,10 @@ function buildProjection(points: LL[]): Projection {
   const lngScale = Math.max(0.25, Math.cos((meanLat * Math.PI) / 180));
   const spanX = Math.max((maxLng - minLng) * lngScale, 0.0005);
   const spanY = Math.max(maxLat - minLat, 0.0005);
-  const scale = Math.min((width - padding * 2) / spanX, (height - padding * 2) / spanY);
+  const scale = Math.min(
+    (width - padding * 2) / spanX,
+    (height - padding * 2) / spanY
+  );
   const usedWidth = spanX * scale;
   const usedHeight = spanY * scale;
   const offsetX = (width - usedWidth) / 2;
@@ -166,13 +153,15 @@ function RouteSketch({
   const offlineLines = offlinePlan
     ? [...offlinePlan.alternatives, ...offlinePlan.segments]
     : [];
-  const offlinePoints = offlineLines.flatMap((line) => line.matchedPolylines.flat());
+  const offlinePoints = offlineLines.flatMap((line) =>
+    line.matchedPolylines.flat()
+  );
   const allPoints = [...routePoints, ...offlinePoints, ...anchorPoints];
   if (allPoints.length < 2) return null;
   const project = buildProjection(allPoints);
 
   return (
-    <div className="relative mt-4 overflow-hidden rounded-2xl border border-stone-200 bg-stone-100 dark:border-stone-700 dark:bg-stone-900">
+    <div className="lf-journey-sketch">
       <svg
         viewBox="0 0 320 142"
         role="img"
@@ -181,7 +170,6 @@ function RouteSketch({
             ? "Search corridor showing the primary inferred route, alternative lines, and photo anchors"
             : "Schematic map of the inferred route and photo anchors"
         }
-        className="block h-36 w-full"
       >
         <defs>
           <pattern id="route-grid" width="24" height="24" patternUnits="userSpaceOnUse">
@@ -194,7 +182,7 @@ function RouteSketch({
             />
           </pattern>
         </defs>
-        <rect width="320" height="142" fill="url(#route-grid)" className="text-stone-500" />
+        <rect width="320" height="142" fill="url(#route-grid)" />
         <path
           d={pathData(routePoints, project)}
           fill="none"
@@ -224,7 +212,7 @@ function RouteSketch({
             <path
               d={pathData(anchorPoints, project)}
               fill="none"
-              stroke="#f97316"
+              stroke="var(--lf-red)"
               strokeOpacity="0.7"
               strokeWidth="3"
               strokeDasharray="5 5"
@@ -268,7 +256,7 @@ function RouteSketch({
           <path
             d={pathData(routePoints, project)}
             fill="none"
-            stroke="#f97316"
+            stroke="var(--lf-red)"
             strokeWidth="4"
             strokeDasharray="5 5"
             strokeLinecap="round"
@@ -278,14 +266,14 @@ function RouteSketch({
           const [x, y] = project(anchor.point);
           return (
             <g key={anchor.id} transform={`translate(${x} ${y})`}>
-              <circle r="9" fill="white" stroke="#ea580c" strokeWidth="2.5" />
+              <circle r="9" fill="white" stroke="var(--lf-red)" strokeWidth="2.5" />
               <text
                 x="0"
                 y="3"
                 textAnchor="middle"
                 fontSize="8"
                 fontWeight="800"
-                fill="#c2410c"
+                fill="var(--lf-red)"
               >
                 {index + 1}
               </text>
@@ -293,10 +281,10 @@ function RouteSketch({
           );
         })}
       </svg>
-      <div className="absolute bottom-2 left-2 rounded-full bg-white/90 px-2 py-1 text-[9px] font-semibold text-stone-500 shadow-sm backdrop-blur dark:bg-stone-950/85 dark:text-stone-300">
+      <div className="lf-journey-sketch-caption">
         {offlinePlan
           ? "Possible route · solid primary · faded alternatives"
-          : "Schematic"}{" "}
+          : "Route diagram"}{" "}
         · {anchors.length} photo {anchors.length === 1 ? "location" : "locations"}
       </div>
     </div>
@@ -305,30 +293,21 @@ function RouteSketch({
 
 function AnchorList({ anchors }: { anchors: PhotoAnchor[] }) {
   return (
-    <ol className="mt-4 grid gap-2 sm:grid-cols-2" aria-label="Photo location anchors">
+    <ol className="lf-anchor-list lf-stagger" aria-label="Photo location anchors">
       {anchors.map((anchor, index) => (
-        <li
-          key={anchor.id}
-          className="flex min-w-0 items-center gap-2.5 rounded-xl bg-stone-50 px-3 py-2 dark:bg-stone-800/70"
-        >
-          <span className="flex h-6 w-6 flex-none items-center justify-center rounded-full bg-orange-100 text-[10px] font-bold text-orange-700 dark:bg-orange-500/15 dark:text-orange-300">
-            {index + 1}
-          </span>
-          <span className="min-w-0 flex-1">
-            <span className="flex items-center justify-between gap-2">
-              <span className="truncate text-[11px] font-semibold text-stone-700 dark:text-stone-200">
-                {anchor.venue?.label ?? "Photo location"}
-              </span>
-              <span className="flex-none text-[10px] tabular-nums text-stone-400">
-                {formatTime(anchor.time)}
-              </span>
+        <li key={anchor.id}>
+          <span className="lf-anchor-index">{index + 1}</span>
+          <span className="lf-anchor-copy">
+            <span>
+              <strong>{anchor.venue?.label ?? "Photo location"}</strong>
+              <time>{formatTime(anchor.time)}</time>
             </span>
-            <span className="mt-0.5 block truncate text-[9px] text-stone-400">
+            <small>
               {anchor.venue && anchor.distanceM != null
                 ? `${Math.round(anchor.distanceM)} m from this sight`
                 : `${anchor.point[0].toFixed(4)}, ${anchor.point[1].toFixed(4)}`}
               {anchor.photoCount > 1 ? ` · ${anchor.photoCount} photos` : ""}
-            </span>
+            </small>
           </span>
         </li>
       ))}
@@ -349,8 +328,6 @@ export default function JourneyInference({
   onSelect,
   onUse,
   onAddLine,
-  canCompare,
-  onCompare,
 }: {
   anchors: PhotoAnchor[];
   busy: boolean;
@@ -364,60 +341,42 @@ export default function JourneyInference({
   onSelect: (index: number) => void;
   onUse: () => void;
   onAddLine?: (lineId: string) => void;
-  canCompare?: boolean;
-  onCompare?: () => void;
 }) {
   const journey = candidates[selectedIndex] ?? null;
   if (!busy && anchors.length === 0) return null;
 
-  const confidence = journey
-    ? Math.round(journey.similarity)
-    : offlinePlan
-      ? Math.round(offlinePlan.confidence * 100)
-      : null;
   const canUse =
     anchors.some((anchor) => anchor.venue) ||
     Boolean(journey) ||
     Boolean(offlinePlan?.segments.some((segment) => segment.priority === "high"));
 
   return (
-    <section className="rounded-2xl border border-stone-200 bg-white p-4 shadow-sm dark:border-stone-700 dark:bg-stone-900">
+    <section className="lf-journey">
       {busy ? (
-        <div className="flex items-center gap-3 py-3" role="status">
-          <span className="relative h-3 w-3 rounded-full bg-orange-500 after:absolute after:inset-[-5px] after:animate-ping after:rounded-full after:bg-orange-400/30" />
+        <div className="lf-journey-busy" role="status">
+          <span className="lf-journey-pulse" />
           <span>
-            <span className="block text-sm font-semibold text-stone-800 dark:text-stone-100">
-              Rebuilding your day…
-            </span>
-            <span className="mt-0.5 block text-[11px] text-stone-400">
+            <strong>Rebuilding your day…</strong>
+            <small>
               {busyMessage ?? "Ordering photo anchors and comparing likely journeys."}
-            </span>
+            </small>
           </span>
         </div>
       ) : (
         <>
-          <div className="flex items-start justify-between gap-4">
-            <div className="min-w-0">
-              <div className="flex flex-wrap items-center gap-2">
-                <p className="text-[10px] font-bold uppercase tracking-[0.14em] text-orange-700 dark:text-orange-400">
-                  Suggested route
-                </p>
-                <span
-                  className={cx(
-                    "rounded-full px-2 py-0.5 text-[9px] font-semibold",
-                    journey
-                      ? "bg-emerald-50 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-                      : "bg-amber-50 text-amber-700 dark:bg-amber-500/10 dark:text-amber-300"
-                  )}
-                >
+          <header className="lf-journey-header">
+            <div>
+              <div className="lf-journey-kicker">
+                <span>Suggested route</span>
+                <Badge tone={journey ? "success" : "warning"}>
                   {journey
                     ? "Matches the timetable"
                     : offlinePlan
                       ? "Best estimate"
                       : "Photo locations only"}
-                </span>
+                </Badge>
               </div>
-              <h3 className="mt-1 truncate text-base font-bold text-stone-900 dark:text-stone-50">
+              <h3>
                 {journey
                   ? lineSummary(journey)
                   : offlinePlan
@@ -426,39 +385,22 @@ export default function JourneyInference({
                       ? `${anchors.length} places in time order`
                       : "One location found"}
               </h3>
-              <p className="mt-1 text-[11px] text-stone-400">
-                Check this before adding it to the search plan.
-              </p>
+              <p>Check this before adding it to the search plan.</p>
             </div>
-            {confidence != null && (
-              <div className="flex-none text-right">
-                <div className="text-base font-bold tabular-nums text-orange-600">{confidence}%</div>
-                <div className="text-[9px] text-stone-400">route confidence</div>
-              </div>
-            )}
-          </div>
+          </header>
 
           {candidates.length > 1 && (
-            <div className="mt-3 flex gap-2 overflow-x-auto pb-1" aria-label="Journey alternatives">
+            <div className="lf-route-options" aria-label="Journey alternatives">
               {candidates.slice(0, 4).map((candidate, index) => (
                 <button
                   key={candidate.id}
                   type="button"
                   aria-pressed={selectedIndex === index}
                   onClick={() => onSelect(index)}
-                  className={cx(
-                    "flex-none rounded-xl border px-3 py-2 text-left transition",
-                    selectedIndex === index
-                      ? "border-orange-400 bg-orange-50 dark:border-orange-500/70 dark:bg-orange-500/10"
-                      : "border-stone-200 hover:border-stone-300 dark:border-stone-700 dark:hover:border-stone-600"
-                  )}
+                  className={selectedIndex === index ? "is-active" : undefined}
                 >
-                  <span className="block text-[10px] font-semibold text-stone-700 dark:text-stone-200">
-                    Option {index + 1} · {Math.round(candidate.similarity)}%
-                  </span>
-                  <span className="mt-0.5 block max-w-36 truncate text-[9px] text-stone-400">
-                    {formatTime(candidate.departure)} · {lineSummary(candidate)}
-                  </span>
+                  <strong>Option {index + 1} · {Math.round(candidate.similarity)}%</strong>
+                  <small>{formatTime(candidate.departure)} · {lineSummary(candidate)}</small>
                 </button>
               ))}
             </div>
@@ -469,50 +411,29 @@ export default function JourneyInference({
 
           {journey && (
             <>
-              <div className="mt-4 grid grid-cols-3 divide-x divide-stone-200 rounded-xl border border-stone-200 bg-stone-50 py-2.5 text-center dark:divide-stone-700 dark:border-stone-700 dark:bg-stone-800/70">
-                <div>
-                  <div className="text-xs font-semibold tabular-nums">{journey.durationMinutes} min</div>
-                  <div className="text-[9px] text-stone-400">travel time</div>
-                </div>
-                <div>
-                  <div className="text-xs font-semibold tabular-nums">{journey.transfers}</div>
-                  <div className="text-[9px] text-stone-400">transfers</div>
-                </div>
-                <div>
-                  <div className="text-xs font-semibold tabular-nums">
-                    {Math.round(journey.coverage * 100)}%
-                  </div>
-                  <div className="text-[9px] text-stone-400">photo stops matched</div>
-                </div>
+              <div className="lf-journey-stats">
+                <div><strong>{journey.durationMinutes} min</strong><small>travel time</small></div>
+                <div><strong>{journey.transfers}</strong><small>transfers</small></div>
+                <div><strong>{Math.round(journey.coverage * 100)}%</strong><small>photo stops matched</small></div>
               </div>
 
-              <h4 className="mt-4 text-[11px] font-bold text-stone-700 dark:text-stone-200">
-                Likely movements
-              </h4>
-              <ol className="relative mt-1 space-y-1 before:absolute before:bottom-4 before:left-[21px] before:top-4 before:w-px before:bg-stone-200 dark:before:bg-stone-700">
+              <h4 className="lf-journey-section-title">Likely movements</h4>
+              <ol className="lf-journey-movements lf-stagger">
                 {visibleLegs(journey).map((leg) => (
-                  <li key={leg.id} className="relative flex items-start gap-3 rounded-xl px-2 py-2.5">
+                  <li key={leg.id}>
                     <span
-                      className="relative z-10 inline-flex h-8 min-w-10 flex-none items-center justify-center rounded-lg border-2 border-white px-1.5 text-[10px] font-extrabold shadow-sm dark:border-stone-900"
+                      className="lf-transit-badge"
                       style={{ backgroundColor: leg.color, color: leg.textColor }}
                     >
                       {leg.walking ? "Walk" : leg.lineRef}
                     </span>
-                    <span className="min-w-0 flex-1">
-                      <span className="flex items-center justify-between gap-2">
-                        <span className="text-[11px] font-semibold tabular-nums text-stone-700 dark:text-stone-200">
-                          {formatTime(leg.departure)} → {formatTime(leg.arrival)}
-                        </span>
-                        <span className="text-[9px] text-stone-400">{durationLabel(leg)}</span>
+                    <span className="lf-journey-leg-copy">
+                      <span>
+                        <strong>{formatTime(leg.departure)} → {formatTime(leg.arrival)}</strong>
+                        <small>{durationLabel(leg)}</small>
                       </span>
-                      <span className="mt-0.5 block text-[10px] text-stone-500 dark:text-stone-400">
-                        {leg.originName} → {leg.destinationName}
-                      </span>
-                      {!leg.walking && leg.direction && (
-                        <span className="mt-0.5 block truncate text-[9px] text-stone-400">
-                          Direction: {leg.direction}
-                        </span>
-                      )}
+                      <span>{leg.originName} → {leg.destinationName}</span>
+                      {!leg.walking && leg.direction && <small>Direction: {leg.direction}</small>}
                     </span>
                   </li>
                 ))}
@@ -521,15 +442,10 @@ export default function JourneyInference({
           )}
 
           {offlinePlan && !journey && (
-            <div className="mt-4 space-y-3">
-              <div>
-                <h4 className="text-[11px] font-bold text-stone-700 dark:text-stone-200">
-                  Possible route{" "}
-                  <span className="font-normal text-stone-400">
-                    · ranked by search priority
-                  </span>
-                </h4>
-                <ol className="mt-1 space-y-1" aria-label="Offline route estimate">
+            <div className="lf-priority-sections">
+              <section>
+                <h4>Possible route <small>· ranked by search priority</small></h4>
+                <ol className="lf-stagger" aria-label="Offline route estimate">
                   {offlinePlan.segments.map((line, index) => (
                     <PriorityRow
                       key={`${line.lineId}-seg-${index}`}
@@ -539,13 +455,11 @@ export default function JourneyInference({
                     />
                   ))}
                 </ol>
-              </div>
+              </section>
               {offlinePlan.alternatives.length > 0 && (
-                <div>
-                  <h4 className="text-[11px] font-bold text-stone-700 dark:text-stone-200">
-                    Other lines in the corridor
-                  </h4>
-                  <ol className="mt-1 space-y-1" aria-label="Alternative lines in the search corridor">
+                <section>
+                  <h4>Other lines in the corridor</h4>
+                  <ol className="lf-stagger" aria-label="Alternative lines in the search corridor">
                     {offlinePlan.alternatives.map((line, index) => (
                       <PriorityRow
                         key={`${line.lineId}-alt-${index}`}
@@ -555,59 +469,21 @@ export default function JourneyInference({
                       />
                     ))}
                   </ol>
-                </div>
+                </section>
               )}
             </div>
           )}
 
-          {notice && (
-            <p className="mt-3 rounded-xl bg-amber-50 px-3 py-2 text-[10px] leading-relaxed text-amber-800 dark:bg-amber-500/10 dark:text-amber-300">
-              {notice}
-            </p>
-          )}
-
-          {canCompare && onCompare && (
-            <div className="mt-4 rounded-xl border border-sky-200 bg-sky-50 p-3 dark:border-sky-500/30 dark:bg-sky-500/10">
-              <p className="text-[11px] font-semibold text-sky-900 dark:text-sky-200">
-                Optional third-party route comparison
-              </p>
-              <p className="mt-1 text-[10px] leading-relaxed text-sky-800 dark:text-sky-300">
-                If you continue, the photo route’s start, intermediate and end GPS coordinates,
-                plus a departure timestamp, are sent to the community-run{" "}
-                <a
-                  href="https://v6.vbb.transport.rest/"
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  className="underline underline-offset-2"
-                >
-                  v6.vbb.transport.rest
-                </a>{" "}
-                API. Your photos and their image contents are not sent.
-              </p>
-              <button
-                type="button"
-                onClick={onCompare}
-                className="mt-2.5 inline-flex items-center justify-center rounded-lg bg-sky-700 px-3.5 py-2 text-xs font-semibold text-white transition hover:bg-sky-600"
-              >
-                Compare this route with VBB
-              </button>
-            </div>
-          )}
+          {notice && <p className="lf-journey-notice">{notice}</p>}
 
           {canUse && (
-            <button
-              type="button"
+            <PrimaryButton
               onClick={onUse}
               disabled={used}
-              className={cx(
-                "mt-4 flex w-full items-center justify-center rounded-xl px-4 py-2.5 text-sm font-semibold transition",
-                used
-                  ? "bg-emerald-100 text-emerald-700 dark:bg-emerald-500/10 dark:text-emerald-300"
-                  : "bg-stone-900 text-white hover:bg-stone-700 dark:bg-orange-600 dark:hover:bg-orange-500"
-              )}
+              className={`lf-journey-use${used ? " is-complete" : ""}`}
             >
               {used ? "✓ Added to your search plan" : "Use this itinerary"}
-            </button>
+            </PrimaryButton>
           )}
         </>
       )}

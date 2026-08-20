@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 import { CATEGORY_META } from "../../berlin-transit/attractions";
 import { polylineLength } from "../../berlin-transit/geo";
 import { inferJourney } from "../../berlin-transit/transit";
@@ -18,13 +18,26 @@ import {
   type SourceIndex,
 } from "../data";
 import JourneyInference from "../JourneyInference";
+import DayReplay from "../DayReplay";
+import DateWindowPicker from "../DateWindowPicker";
 import {
+  dedupeByTime,
   extractPhotoPoints,
+  filterPhotoPointsByDateWindow,
+  formatBerlinDay,
+  groupPhotoDays,
   reconstructPhotoAnchors,
   type PhotoAnchor,
+  type PhotoDay,
+  type PhotoPoint,
 } from "../photos";
-import type { ItineraryEntry } from "../types";
-import { cx } from "../ui";
+import {
+  hasNativePhotoLibrary,
+  importNativePhotoPoints,
+  requestPhotoAuthorization,
+} from "../photoLibrary";
+import { lossDateWindow, type ItineraryEntry, type LostItem } from "../types";
+import type { RoutePreview } from "../routePreview";
 
 const ALL_MODES: ModeFilter = {
   subway: true,
@@ -38,7 +51,7 @@ const ALL_MODES: ModeFilter = {
 function LineSwatch({ item }: { item: SearchItem }) {
   return (
     <span
-      className="inline-flex min-w-[2.4rem] items-center justify-center rounded-md px-1.5 py-0.5 text-xs font-bold text-white shadow-sm"
+      className="lf-line-swatch"
       style={{ backgroundColor: item.color || "#57534e" }}
     >
       {item.label}
@@ -59,69 +72,93 @@ function ItemRow({
     <button
       type="button"
       onClick={onToggle}
-      className={cx(
-        "flex w-full items-center gap-3 rounded-xl border px-3 py-2.5 text-left transition",
-        added
-          ? "border-orange-300 bg-orange-50 dark:border-orange-500/50 dark:bg-orange-500/10"
-          : "border-stone-200 hover:border-stone-300 hover:bg-stone-50 dark:border-stone-700 dark:hover:border-stone-600 dark:hover:bg-stone-800/60"
-      )}
+      className={`lf-search-result${added ? " is-added" : ""}`}
     >
       {item.kind === "line" ? (
         <LineSwatch item={item} />
       ) : (
-        <span className="text-lg leading-none">
+        <span className="lf-place-symbol">
           {item.category ? CATEGORY_META[item.category].emoji : "📍"}
         </span>
       )}
-      <span className="min-w-0 flex-1">
-        <span className="block truncate text-sm font-medium text-stone-800 dark:text-stone-100">
-          {item.label}
-        </span>
-        <span className="block truncate text-xs text-stone-400">{item.sublabel}</span>
+      <span className="lf-search-result-copy">
+        <strong>{item.label}</strong>
+        <small>{item.sublabel}</small>
       </span>
-      <span
-        className={cx(
-          "flex h-6 w-6 flex-none items-center justify-center rounded-full text-sm font-bold",
-          added ? "bg-orange-600 text-white" : "bg-stone-100 text-stone-400 dark:bg-stone-700"
-        )}
-      >
-        {added ? "✓" : "+"}
-      </span>
+      <span className="lf-search-result-action">{added ? "✓" : "+"}</span>
     </button>
   );
 }
 
 export default function StepRetrace({
+  view,
   index,
   loading,
   sourceError,
   itinerary,
-  lostDate,
-  timeFrom,
+  item,
+  onItem,
   onAdd,
   onRemove,
   onRetrySources,
+  initialRoutePreview,
+  onRoutePreview,
 }: {
+  view: "search" | "photos";
   index: SourceIndex | null;
   loading: boolean;
   sourceError: string | null;
   itinerary: ItineraryEntry[];
-  lostDate: string;
-  timeFrom?: string;
+  item: LostItem;
+  onItem: (patch: Partial<LostItem>) => void;
   onAdd: (item: SearchItem) => void;
   onRemove: (uid: string) => void;
   onRetrySources: () => void;
+  initialRoutePreview?: RoutePreview | null;
+  onRoutePreview?: (preview: RoutePreview) => void;
 }) {
   const [query, setQuery] = useState("");
+  const [nativePhotos] = useState(hasNativePhotoLibrary);
   const [photoBusy, setPhotoBusy] = useState(false);
   const [inferenceBusy, setInferenceBusy] = useState(false);
   const [photoMsg, setPhotoMsg] = useState<string | null>(null);
-  const [anchors, setAnchors] = useState<PhotoAnchor[]>([]);
-  const [candidates, setCandidates] = useState<LiveJourneyCandidate[]>([]);
+  const [photoProgress, setPhotoProgress] = useState<{ done: number; total: number } | null>(null);
+  const [datePickerOpen, setDatePickerOpen] = useState(false);
+  const [photoDays, setPhotoDays] = useState<PhotoDay[]>([]);
+  const [selectedDayKey, setSelectedDayKey] = useState<string | null>(
+    initialRoutePreview?.dayKey ?? null
+  );
+  const [anchors, setAnchors] = useState<PhotoAnchor[]>(
+    initialRoutePreview?.anchors ?? []
+  );
+  const [candidates, setCandidates] = useState<LiveJourneyCandidate[]>(
+    initialRoutePreview?.journey ? [initialRoutePreview.journey] : []
+  );
   const [selectedCandidate, setSelectedCandidate] = useState(0);
-  const [offlinePlan, setOfflinePlan] = useState<OfflineRoutePlan | null>(null);
+  const [offlinePlan, setOfflinePlan] = useState<OfflineRoutePlan | null>(
+    initialRoutePreview?.offlinePlan ?? null
+  );
   const [routeNotice, setRouteNotice] = useState<string | null>(null);
+  const inferenceRequest = useRef(0);
+  const webPhotoInput = useRef<HTMLInputElement>(null);
+  const selectedPhotoWindow = useRef(item);
   const addedRefs = useMemo(() => new Set(itinerary.map((e) => e.refId)), [itinerary]);
+  const lostDate = item.lostDate;
+  const timeFrom = item.timeFrom;
+  const currentWindow = lossDateWindow(item);
+  const currentWindowLabel =
+    currentWindow.start === currentWindow.end
+      ? formatBerlinDay(currentWindow.start)
+      : `${formatBerlinDay(currentWindow.start)} – ${formatBerlinDay(currentWindow.end)}`;
+
+  useEffect(() => {
+    onRoutePreview?.({
+      anchors,
+      journey: candidates[selectedCandidate] ?? null,
+      offlinePlan,
+      dayKey: selectedDayKey,
+    });
+  }, [anchors, candidates, offlinePlan, onRoutePreview, selectedCandidate, selectedDayKey]);
 
   const results = useMemo(
     () => (index ? searchItems(index, query) : []),
@@ -261,44 +298,105 @@ export default function StepRetrace({
     }
   };
 
-  const handlePhotos = async (input: HTMLInputElement) => {
-    const files = input.files ? Array.from(input.files) : [];
-    input.value = ""; // allow re-picking the same photos
-    if (!files.length || !index) return;
-    setPhotoBusy(true);
+  const dayKeyOf = (group: PhotoDay) => group.day ?? "unknown";
+
+  // Narrow to a single day's photos, drop near-duplicate bursts, and rebuild
+  // the route anchors. Called after extraction and whenever a day chip is tapped.
+  const applyPhotoDay = (group: PhotoDay) => {
+    if (!index) return;
+    inferenceRequest.current += 1;
+    setInferenceBusy(false);
+    setSelectedDayKey(dayKeyOf(group));
+    // A different day means any previously computed route no longer applies.
+    setCandidates([]);
+    setSelectedCandidate(0);
+    setOfflinePlan(null);
+
+    const deduped = dedupeByTime(group.points);
+    const venues = index.items.filter((i) => i.kind === "venue" && i.point);
+    const reconstructed = reconstructPhotoAnchors(deduped, venues);
+    setAnchors(reconstructed);
+
+    const removed = group.count - deduped.length;
+    const dayLabel = group.day ? formatBerlinDay(group.day) : "photos without a date";
+    setPhotoMsg(
+      [
+        `${dayLabel} · ${group.count} with location`,
+        removed > 0
+          ? `${deduped.length} after skipping ${removed} shot${removed === 1 ? "" : "s"} <1 min apart`
+          : null,
+        `${reconstructed.length} route ${reconstructed.length === 1 ? "anchor" : "anchors"}`,
+      ]
+        .filter(Boolean)
+        .join(" · ")
+    );
+
+    const drawn = reconstructed.map((anchor) => anchor.point);
+    if (drawn.length < 2 || polylineLength(drawn) < 150) {
+      setRouteNotice(
+        "We found the photo location, but need two places at least a few blocks apart to infer transport."
+      );
+    } else {
+      void compareWithVbb(reconstructed);
+    }
+  };
+
+  // Shared tail for both photo sources: bucket by day, auto-pick a day, apply it.
+  const ingestPhotoPoints = (
+    points: PhotoPoint[],
+    total: number,
+    withGps: number,
+    selectedItem: LostItem = item
+  ) => {
+    if (withGps === 0) {
+      setPhotoDays([]);
+      setSelectedDayKey(null);
+      setPhotoMsg(
+        `Read ${total} photo${total === 1 ? "" : "s"} · none in this date window had both a capture time and location.`
+      );
+      return;
+    }
+    const days = groupPhotoDays(points);
+    setPhotoDays(days);
+    // An exact date remains the obvious first day. For an uncertain trip range,
+    // surface the day with the richest location trail without claiming it is
+    // the day the item was lost; all other candidate days remain available.
+    const preferred =
+      (selectedItem.dateCertainty !== "range"
+        ? days.find((day) => day.day && day.day === selectedItem.lostDate)
+        : undefined) ??
+      [...days].sort((a, b) => b.count - a.count)[0];
+    applyPhotoDay(preferred);
+  };
+
+  // Clear all photo-derived state before a fresh import (web file picker or native).
+  const resetPhotoState = () => {
+    inferenceRequest.current += 1;
     setPhotoMsg(null);
     setAnchors([]);
     setCandidates([]);
     setSelectedCandidate(0);
     setOfflinePlan(null);
     setRouteNotice(null);
+    setPhotoDays([]);
+    setSelectedDayKey(null);
+  };
+
+  const handlePhotos = async (input: HTMLInputElement) => {
+    const files = input.files ? Array.from(input.files) : [];
+    input.value = ""; // allow re-picking the same photos
+    if (!files.length || !index) return;
+    setPhotoBusy(true);
+    resetPhotoState();
+    setPhotoProgress({ done: 0, total: files.length });
     try {
-      const { points, total, withGps } = await extractPhotoPoints(files);
-      const venues = index.items.filter((i) => i.kind === "venue" && i.point);
-      const reconstructed = reconstructPhotoAnchors(points, venues);
-      setAnchors(reconstructed);
-
-      if (withGps === 0) {
-        setPhotoMsg(`Read ${total} photo${total === 1 ? "" : "s"} · none had location data.`);
-        return;
-      }
-
-      setPhotoMsg(
-        `Read ${total} · ${withGps} with location · ${reconstructed.length} route ${
-          reconstructed.length === 1 ? "anchor" : "anchors"
-        } after grouping nearby photos.`
-      );
-
-      const drawn = reconstructed.map((anchor) => anchor.point);
-      if (drawn.length < 2 || polylineLength(drawn) < 150) {
-        setRouteNotice(
-          "We found the photo location, but need two places at least a few blocks apart to infer transport."
-        );
-      } else {
-        setRouteNotice(
-          "Photo locations are ready. Comparing them with VBB is optional and only starts when you press the button below."
-        );
-      }
+      const { points, total } = await extractPhotoPoints(files, {
+        onProgress: (done, totalFiles) => setPhotoProgress({ done, total: totalFiles }),
+      });
+      const selectedItem = selectedPhotoWindow.current;
+      const { start, end } = lossDateWindow(selectedItem);
+      const inWindow = filterPhotoPointsByDateWindow(points, start, end);
+      ingestPhotoPoints(inWindow, total, inWindow.length, selectedItem);
     } catch (error) {
       setPhotoMsg(
         error instanceof Error
@@ -307,24 +405,76 @@ export default function StepRetrace({
       );
     } finally {
       setPhotoBusy(false);
+      setPhotoProgress(null);
     }
   };
 
-  const compareWithVbb = async () => {
-    const drawn = anchors.map((anchor) => anchor.point);
+  // Native (iOS) path: the PhotoKit plugin reads geotag + capture time straight
+  // from the photo library's metadata (no pixels decoded, nothing uploaded).
+  // Restrict the native query to the reported loss day when available so even a
+  // very large library does not have to be scanned or bridged into the WebView.
+  const handleNativeImport = async (selectedItem: LostItem) => {
+    if (!index) return;
+    setPhotoBusy(true);
+    resetPhotoState();
+    setPhotoProgress(null);
+    try {
+      const status = await requestPhotoAuthorization();
+      if (status === "denied" || status === "restricted") {
+        setPhotoMsg(
+          "Photo access is off. Turn it on for this app in Settings to import a day of photos."
+        );
+        return;
+      }
+      const { start, end } = lossDateWindow(selectedItem);
+      const options =
+        selectedItem.dateCertainty === "range"
+          ? { startDate: start, endDate: end }
+          : { day: start };
+      const { total, withGps, points } = await importNativePhotoPoints(options);
+      ingestPhotoPoints(points, total, withGps, selectedItem);
+    } catch (error) {
+      setPhotoMsg(
+        error instanceof Error
+          ? `Couldn't read your photo library: ${error.message}`
+          : "Couldn't read your photo library on this device."
+      );
+    } finally {
+      setPhotoBusy(false);
+    }
+  };
+
+  const confirmPhotoWindow = (patch: Partial<LostItem>) => {
+    const selectedItem = { ...item, ...patch };
+    selectedPhotoWindow.current = selectedItem;
+    onItem(patch);
+    setDatePickerOpen(false);
+    if (nativePhotos) {
+      void handleNativeImport(selectedItem);
+      return;
+    }
+    // A browser cannot query PhotoKit by date. Open its picker only after the
+    // traveller has chosen a window, then discard out-of-window EXIF locally.
+    window.setTimeout(() => webPhotoInput.current?.click(), 0);
+  };
+
+  const compareWithVbb = async (routeAnchors: PhotoAnchor[] = anchors) => {
+    const drawn = routeAnchors.map((anchor) => anchor.point);
     if (drawn.length < 2 || polylineLength(drawn) < 150) return;
+    const requestId = ++inferenceRequest.current;
     setInferenceBusy(true);
     setCandidates([]);
     setSelectedCandidate(0);
     setOfflinePlan(null);
-    setRouteNotice(null);
-    const firstTime = anchors.find((anchor) => anchor.time != null)?.time;
+    setRouteNotice("Automatically comparing the photo route with VBB…");
+    const firstTime = routeAnchors.find((anchor) => anchor.time != null)?.time;
     const departure =
       firstTime != null
         ? formatDateTimeLocal(new Date(firstTime))
         : `${lostDate || formatDateTimeLocal(new Date()).slice(0, 10)}T${timeFrom || "09:00"}`;
     try {
       const network = await fetchInferenceNetwork();
+      if (requestId !== inferenceRequest.current) return;
       try {
         const journeys = await fetchVbbTraceJourneys({
           drawn,
@@ -332,6 +482,7 @@ export default function StepRetrace({
           modes: ALL_MODES,
           lines: network.lines,
         });
+        if (requestId !== inferenceRequest.current) return;
         setCandidates(journeys);
         setRouteNotice(
           "This is a likely schedule-valid route, not proof. Pick another option if it better matches your memory."
@@ -340,6 +491,7 @@ export default function StepRetrace({
         const reason =
           error instanceof Error ? error.message : "VBB returned an unknown error.";
         const fallback = inferJourney(drawn, network.lines);
+        if (requestId !== inferenceRequest.current) return;
         setOfflinePlan(
           fallback
             ? toOfflineRoutePlan(fallback, { referenceTime: firstTime ?? departure })
@@ -352,223 +504,206 @@ export default function StepRetrace({
         );
       }
     } catch (error) {
+      if (requestId !== inferenceRequest.current) return;
       setRouteNotice(
         error instanceof Error
           ? error.message
           : "The transit data needed for route inference could not be loaded."
       );
     } finally {
-      setInferenceBusy(false);
+      if (requestId === inferenceRequest.current) setInferenceBusy(false);
     }
   };
 
-  return (
-    <div className="space-y-5">
-      <p className="text-sm text-stone-500 dark:text-stone-400">
-        Start with the places and lines you remember. Add every realistic
-        possibility; we combine entries that lead to the same lost-property
-        office.
-      </p>
+  const selectedItinerary = itinerary.length > 0 && (
+    <div className="lf-selected-itinerary" aria-label="Added to your day">
+      {itinerary.map((entry) => (
+        <span key={entry.uid}>
+          <strong>{entry.label}</strong>
+          <button type="button" onClick={() => onRemove(entry.uid)} aria-label={`Remove ${entry.label}`}>×</button>
+        </span>
+      ))}
+    </div>
+  );
 
-      {/* Selected itinerary */}
-      {itinerary.length > 0 && (
-        <div className="flex flex-wrap gap-2">
-          {itinerary.map((entry) => (
-            <span
-              key={entry.uid}
-              className="inline-flex items-center gap-1.5 rounded-full border border-stone-200 bg-white py-1 pl-2.5 pr-1.5 text-sm dark:border-stone-700 dark:bg-stone-900"
-            >
-              <span className="font-medium text-stone-700 dark:text-stone-200">{entry.label}</span>
-              <button
-                type="button"
-                onClick={() => onRemove(entry.uid)}
-                aria-label={`Remove ${entry.label}`}
-                className="flex h-5 w-5 items-center justify-center rounded-full text-stone-400 hover:bg-stone-100 hover:text-stone-600 dark:hover:bg-stone-700"
-              >
-                ×
-              </button>
-            </span>
-          ))}
-        </div>
-      )}
+  if (view === "search") {
+    return (
+      <div className="lf-search-panel">
+        <label className="lf-search-input">
+          <svg aria-hidden="true" width="17" height="17" viewBox="0 0 24 24" fill="none">
+            <circle cx="11" cy="11" r="7" />
+            <path d="m16.5 16.5 4.5 4.5" />
+          </svg>
+          <input
+            value={query}
+            onChange={(event) => setQuery(event.target.value)}
+            placeholder="U8, Alexanderplatz, museum…"
+            aria-label="Search a Berlin line, station or place"
+          />
+        </label>
 
-      <input
-        value={query}
-        onChange={(e) => setQuery(e.target.value)}
-        placeholder="Search a line or place: U5, S7, Museumsinsel, Alexanderplatz…"
-        className="w-full rounded-xl border border-stone-200 bg-white px-4 py-3 text-sm outline-none transition placeholder:text-stone-400 focus:border-orange-400 focus:ring-2 focus:ring-orange-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:focus:ring-orange-500/20"
-      />
+        {selectedItinerary}
 
-      {sourceError && (
-        <div
-          role="alert"
-          className="flex flex-wrap items-center justify-between gap-3 rounded-xl border border-red-200 bg-red-50 px-3.5 py-3 text-sm text-red-800 dark:border-red-500/30 dark:bg-red-500/10 dark:text-red-200"
-        >
-          <span>{sourceError} Search, quick-add and photo matching are unavailable.</span>
-          <button
-            type="button"
-            onClick={onRetrySources}
-            className="rounded-lg bg-white px-3 py-1.5 text-xs font-semibold text-red-700 shadow-sm dark:bg-stone-900 dark:text-red-200"
-          >
-            Retry
-          </button>
-        </div>
-      )}
+        {sourceError && (
+          <div className="lf-tool-alert" role="alert">
+            <span>{sourceError}</span>
+            <button type="button" onClick={onRetrySources}>Retry</button>
+          </div>
+        )}
+        {loading && <p className="lf-tool-note">Loading Berlin lines and places…</p>}
 
-      {/* Quick add when no query */}
-      {!query && index && (
-        <div className="space-y-4">
-          <div>
-            <p className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-400">
-              Common U-Bahn / S-Bahn · tap to add
-            </p>
-            <div className="flex flex-wrap gap-1.5">
+        {!query && index && (
+          <>
+            <span className="lf-section-label">Lines</span>
+            <div className="lf-quick-lines">
               {index.quickLines.map((item) => {
                 const added = addedRefs.has(item.refId);
                 return (
                   <button
                     key={item.refId}
                     type="button"
-                    onClick={() => toggle(item)}
-                    className={cx(
-                      "rounded-md px-2 py-1 text-xs font-bold text-white transition",
-                      added ? "opacity-100 ring-2 ring-orange-400 ring-offset-1 dark:ring-offset-stone-950" : "opacity-90 hover:opacity-100"
-                    )}
+                    className={added ? "is-added" : undefined}
                     style={{ backgroundColor: item.color || "#57534e" }}
+                    onClick={() => toggle(item)}
                   >
-                    {item.label}
+                    {item.label}{added ? " ✓" : ""}
+                  </button>
+                );
+              })}
+            </div>
+            {index.quickVenues.length > 0 && (
+              <>
+                <span className="lf-section-label">Places</span>
+                <div className="lf-search-results">
+                  {index.quickVenues.map((item) => (
+                    <ItemRow
+                      key={item.refId}
+                      item={item}
+                      added={addedRefs.has(item.refId)}
+                      onToggle={() => toggle(item)}
+                    />
+                  ))}
+                </div>
+              </>
+            )}
+          </>
+        )}
+
+        {query && !sourceError && (
+          <>
+            <span className="lf-section-label">Results</span>
+            <div className="lf-search-results">
+              {results.length ? (
+                results.map((item) => (
+                  <ItemRow
+                    key={`${item.kind}-${item.refId}`}
+                    item={item}
+                    added={addedRefs.has(item.refId)}
+                    onToggle={() => toggle(item)}
+                  />
+                ))
+              ) : (
+                !loading && <p className="lf-tool-note">No lines or places match “{query}”.</p>
+              )}
+            </div>
+          </>
+        )}
+      </div>
+    );
+  }
+
+  if (view === "photos") {
+    return (
+      <div className="lf-photos-panel">
+        <span className="lf-section-label">Step 2 of 3 · Rebuild your day</span>
+        <h1>Choose the dates you were travelling</h1>
+        <p className="lf-photo-privacy">
+          If you do not know the exact loss day, choose the start and end of your trip. We read photo times and coordinates only inside that window, then show each possible day separately.
+        </p>
+
+        <div className="lf-photo-import">
+          <span className="lf-photo-window-label">{item.dateCertainty === "range" ? "TRIP RANGE" : "ONE DAY"}</span>
+          <strong>{currentWindowLabel}</strong>
+          <button type="button" disabled={photoBusy || !index} onClick={() => setDatePickerOpen(true)} className="lf-primary">
+            {photoBusy
+              ? photoProgress
+                ? `Reading ${photoProgress.done}/${photoProgress.total}…`
+                : "Reading on your device…"
+              : photoDays.length
+                ? "Change dates & read again"
+                : "Choose dates & read photos"}
+          </button>
+          <input
+            ref={webPhotoInput}
+            className="lf-hidden-photo-input"
+            type="file"
+            accept="image/*"
+            multiple
+            disabled={photoBusy || !index}
+            onChange={(event) => handlePhotos(event.currentTarget)}
+          />
+          <small>
+            {nativePhotos
+              ? "Photos stay on this iPhone; PhotoKit filters the dates before metadata is read. No image is uploaded."
+              : "After choosing dates, select the matching photos. We discard photos outside the window from their local EXIF metadata. No image is uploaded."}
+          </small>
+        </div>
+
+        {photoMsg && <p className="lf-photo-message" role="status">{photoMsg}</p>}
+
+        {photoDays.length > 1 && (
+          <div className="lf-photo-days">
+            <span className="lf-section-label">Possible days · review one at a time</span>
+            <div role="group" aria-label="Choose a possible day to review">
+              {photoDays.map((group) => {
+                const key = dayKeyOf(group);
+                const selected = key === selectedDayKey;
+                return (
+                  <button key={key} type="button" className={selected ? "is-active" : undefined} disabled={photoBusy} onClick={() => applyPhotoDay(group)}>
+                    {group.day ? formatBerlinDay(group.day) : "No date"} <small>{group.count}</small>
                   </button>
                 );
               })}
             </div>
           </div>
+        )}
 
-          {index.quickVenues.length > 0 && (
-            <div>
-              <p className="mb-2 text-xs font-medium uppercase tracking-wide text-stone-400">
-                Popular sights · tap to add
-              </p>
-              <div className="flex flex-wrap gap-1.5">
-                {index.quickVenues.map((item) => {
-                  const added = addedRefs.has(item.refId);
-                  return (
-                    <button
-                      key={item.refId}
-                      type="button"
-                      onClick={() => toggle(item)}
-                      className={cx(
-                        "inline-flex items-center gap-1 rounded-full border px-2.5 py-1 text-xs font-medium transition",
-                        added
-                          ? "border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-500/60 dark:bg-orange-500/10 dark:text-orange-300"
-                          : "border-stone-200 text-stone-600 hover:border-stone-300 dark:border-stone-700 dark:text-stone-300 dark:hover:border-stone-600"
-                      )}
-                    >
-                      <span className="leading-none">
-                        {item.category ? CATEGORY_META[item.category].emoji : "📍"}
-                      </span>
-                      {item.label}
-                      <span className={added ? "text-orange-500" : "text-stone-400"}>
-                        {added ? "✓" : "+"}
-                      </span>
-                    </button>
-                  );
-                })}
-              </div>
-            </div>
-          )}
-        </div>
-      )}
-
-      {/* Results */}
-      {loading && <p className="text-sm text-stone-400">Loading Berlin lines and sights…</p>}
-      {query && !sourceError && (
-        <div className="space-y-1.5">
-          {results.length === 0 ? (
-            <p className="text-sm text-stone-400">No lines or places match “{query}”.</p>
-          ) : (
-            results.map((item) => (
-              <ItemRow
-                key={`${item.kind}-${item.refId}`}
-                item={item}
-                added={addedRefs.has(item.refId)}
-                onToggle={() => toggle(item)}
-              />
-            ))
-          )}
-        </div>
-      )}
-
-      <details className="group rounded-2xl border border-stone-200 bg-white dark:border-stone-700 dark:bg-stone-900">
-        <summary className="cursor-pointer list-none px-4 py-3.5 text-sm font-semibold text-stone-700 dark:text-stone-200">
-          <span className="group-open:hidden">
-            📷 Use photos to remember your route (optional) ▾
-          </span>
-          <span className="hidden group-open:inline">
-            Hide photo route helper ▴
-          </span>
-        </summary>
-        <div className="space-y-4 border-t border-stone-100 p-4 dark:border-stone-800">
-          <p className="text-xs leading-relaxed text-stone-500 dark:text-stone-400">
-            Choose photos from that day. We read their time and location on
-            this device to suggest nearby sights. The images are never
-            uploaded. A timetable comparison happens only if you choose it
-            separately.
-          </p>
-          <div className="flex flex-wrap items-center gap-3">
-            <label
-              className={cx(
-                "inline-flex cursor-pointer items-center gap-2 rounded-xl px-4 py-2 text-sm font-semibold text-white transition",
-                photoBusy || !index
-                  ? "bg-stone-300 dark:bg-stone-700"
-                  : "bg-orange-600 hover:bg-orange-500"
-              )}
-            >
-              {photoBusy ? "Reading on your device…" : "Choose photos"}
-              <input
-                type="file"
-                accept="image/*"
-                multiple
-                disabled={photoBusy || !index}
-                onChange={(e) => handlePhotos(e.currentTarget)}
-                className="hidden"
-              />
-            </label>
-            {photoMsg && (
-              <span className="text-xs text-stone-500 dark:text-stone-400">
-                {photoMsg}
-              </span>
-            )}
+        {anchors.length >= 2 && (
+          <div className="lf-photo-map">
+            <DayReplay anchors={anchors} dayKey={selectedDayKey && selectedDayKey !== "unknown" ? selectedDayKey : null} />
           </div>
+        )}
 
-          <JourneyInference
-            anchors={anchors}
-            busy={photoBusy || inferenceBusy}
-            busyMessage={
-              photoBusy
-                ? "Reading photo locations and capture times on this device."
-                : "Comparing the possible route with Berlin’s timetable."
-            }
-            candidates={candidates}
-            selectedIndex={selectedCandidate}
-            offlinePlan={offlinePlan}
-            addedRefs={addedRefs}
-            notice={routeNotice}
-            used={inferredUsed}
-            onSelect={setSelectedCandidate}
-            onUse={useInferredItinerary}
-            onAddLine={addLineById}
-            canCompare={
-              !photoBusy &&
-              !inferenceBusy &&
-              candidates.length === 0 &&
-              !offlinePlan &&
-              anchors.length >= 2 &&
-              polylineLength(anchors.map((anchor) => anchor.point)) >= 150
-            }
-            onCompare={compareWithVbb}
+        {(anchors.length > 0 || routeNotice || photoBusy) && (
+          <div className="lf-inference-card">
+            <JourneyInference
+              anchors={anchors}
+              busy={photoBusy || inferenceBusy}
+              busyMessage={photoBusy ? "Reading photo locations and capture times on this device." : "Comparing the possible route with Berlin’s timetable."}
+              candidates={candidates}
+              selectedIndex={selectedCandidate}
+              offlinePlan={offlinePlan}
+              addedRefs={addedRefs}
+              notice={routeNotice}
+              used={inferredUsed}
+              onSelect={setSelectedCandidate}
+              onUse={useInferredItinerary}
+              onAddLine={addLineById}
+            />
+          </div>
+        )}
+
+        {datePickerOpen && (
+          <DateWindowPicker
+            item={item}
+            busy={photoBusy}
+            onCancel={() => setDatePickerOpen(false)}
+            onConfirm={confirmPhotoWindow}
           />
-        </div>
-      </details>
-    </div>
-  );
+        )}
+      </div>
+    );
+  }
+
+  return null;
 }

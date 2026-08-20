@@ -1,0 +1,902 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-28T11:58:00.119Z",
+  "results": [
+    {
+      "placeName": "Café Charlie",
+      "website": "http://www.cafe-charlie.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 54 59 18 74",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:31.414Z",
+      "names": [
+        "Café Charlie"
+      ],
+      "venueIds": [
+        "node/10167857919"
+      ]
+    },
+    {
+      "placeName": "Alte Kantine",
+      "website": "http://alte-kantine-wedding.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 172 5693153",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:31.414Z",
+      "names": [
+        "Alte Kantine"
+      ],
+      "venueIds": [
+        "node/10216554649"
+      ]
+    },
+    {
+      "placeName": "Tatwerk Theater",
+      "website": "https://tatwerk-berlin.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:31.414Z",
+      "names": [
+        "Tatwerk Theater"
+      ],
+      "venueIds": [
+        "node/10167589317"
+      ]
+    },
+    {
+      "placeName": "Old Smithy's Dizzle",
+      "website": "https://www.osd.events",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:31.412Z",
+      "names": [
+        "Old Smithy's Dizzle"
+      ],
+      "venueIds": [
+        "node/10017841039"
+      ]
+    },
+    {
+      "placeName": "Stadttheater Cöpenick",
+      "website": "http://www.stadttheater-coepenick.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 650 75 483",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:35.829Z",
+      "names": [
+        "Stadttheater Cöpenick"
+      ],
+      "venueIds": [
+        "node/10262733380"
+      ]
+    },
+    {
+      "placeName": "Berliner Freiheit Eventlocation",
+      "website": "https://www.berlinerfreiheit.com",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 92 10 46 06",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:36.352Z",
+      "names": [
+        "Berliner Freiheit Eventlocation"
+      ],
+      "venueIds": [
+        "node/10298591807"
+      ]
+    },
+    {
+      "placeName": "Messe Berlin Eingang Süd Eventlocation",
+      "website": "https://www.messe-berlin.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:37.131Z",
+      "names": [
+        "Messe Berlin Eingang Süd Eventlocation",
+        "Palais am Funkturm",
+        "Funkturm-Lounge",
+        "Sommergarten - Messe Berlin",
+        "Marshall-Haus"
+      ],
+      "venueIds": [
+        "node/10302561467",
+        "node/10311860924",
+        "node/10312862793",
+        "node/10312864084",
+        "node/13516488509"
+      ]
+    },
+    {
+      "placeName": "Leibniz-Saal",
+      "website": "https://veranstaltungszentrum.bbaw.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:38.672Z",
+      "names": [
+        "Leibniz-Saal"
+      ],
+      "venueIds": [
+        "node/10309398559"
+      ]
+    },
+    {
+      "placeName": "Theater Morgenstern",
+      "website": "https://www.theater-morgenstern.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 92355950",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:31.414Z",
+      "names": [
+        "Theater Morgenstern"
+      ],
+      "venueIds": [
+        "node/10098812511"
+      ]
+    },
+    {
+      "placeName": "theaterforum kreuzberg",
+      "website": "https://tfk-berlin.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+493061288880",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:42.483Z",
+      "names": [
+        "theaterforum kreuzberg"
+      ],
+      "venueIds": [
+        "node/10316977904"
+      ]
+    },
+    {
+      "placeName": "Säälchen im Holzmarkt",
+      "website": "https://meow.berlin",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:31.414Z",
+      "names": [
+        "Säälchen im Holzmarkt"
+      ],
+      "venueIds": [
+        "node/10060625894"
+      ]
+    },
+    {
+      "placeName": "Veranstaltungshaus Wannsee Berliner Sparkasse",
+      "website": "https://www.berliner-sparkasse.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:44.220Z",
+      "names": [
+        "Veranstaltungshaus Wannsee Berliner Sparkasse"
+      ],
+      "venueIds": [
+        "node/10570579085"
+      ]
+    },
+    {
+      "placeName": "Fitzroy",
+      "website": "https://fitzroy-berlin.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 10,
+      "pagesRead": 18,
+      "checkedAt": "2026-07-28T11:55:44.609Z",
+      "names": [
+        "Fitzroy"
+      ],
+      "venueIds": [
+        "node/10621062970"
+      ]
+    },
+    {
+      "placeName": "Stadtwerkstatt",
+      "website": "https://www.berlin.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+493032515511",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:45.797Z",
+      "names": [
+        "Stadtwerkstatt",
+        "Theater Coupé"
+      ],
+      "venueIds": [
+        "node/10657632232",
+        "node/695831689"
+      ]
+    },
+    {
+      "placeName": "Loewe Saal",
+      "website": "https://www.loewesaal.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:43.896Z",
+      "names": [
+        "Loewe Saal"
+      ],
+      "venueIds": [
+        "node/10536929773"
+      ]
+    },
+    {
+      "placeName": "ALICE Rooftop & Garden",
+      "website": "https://www.alice-rooftop.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:47.651Z",
+      "names": [
+        "ALICE Rooftop & Garden"
+      ],
+      "venueIds": [
+        "node/10660920837"
+      ]
+    },
+    {
+      "placeName": "Tagungszentrum im Haus der Bundespressekonferenz",
+      "website": "https://tagungszentrum-bpk.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 767597861",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:52.839Z",
+      "names": [
+        "Tagungszentrum im Haus der Bundespressekonferenz"
+      ],
+      "venueIds": [
+        "node/1074960875"
+      ]
+    },
+    {
+      "placeName": "Uferstudios für zeitgenössischen Tanz",
+      "website": "https://www.uferstudios.com",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:47.775Z",
+      "names": [
+        "Uferstudios für zeitgenössischen Tanz"
+      ],
+      "venueIds": [
+        "node/10688463815"
+      ]
+    },
+    {
+      "placeName": "so 'ne Art Salon",
+      "website": "https://www.soneartsalon.berlin",
+      "status": "MANUAL_REVIEW",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:54.878Z",
+      "names": [
+        "so 'ne Art Salon"
+      ],
+      "venueIds": [
+        "node/10795713606"
+      ]
+    },
+    {
+      "placeName": "White Spreelounge",
+      "website": "https://www.white-spreelounge.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+4930403656300",
+      "confidence": 12,
+      "pagesRead": 14,
+      "checkedAt": "2026-07-28T11:55:55.866Z",
+      "names": [
+        "White Spreelounge",
+        "Lichtermeer",
+        "Lighthouse"
+      ],
+      "venueIds": [
+        "node/10809387811",
+        "node/13969964175",
+        "node/549928912"
+      ]
+    },
+    {
+      "placeName": "Casa Carlotta",
+      "website": "https://www.casa-carlotta.com",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 8558068",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:53.654Z",
+      "names": [
+        "Casa Carlotta"
+      ],
+      "venueIds": [
+        "node/10794932605"
+      ]
+    },
+    {
+      "placeName": "Ochsenstall",
+      "website": "https://www.schloss-britz-berlin.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 60975034",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:48.480Z",
+      "names": [
+        "Ochsenstall"
+      ],
+      "venueIds": [
+        "node/10737240778"
+      ]
+    },
+    {
+      "placeName": "Bäkeburg",
+      "website": "http://baekeburg.org",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:57.181Z",
+      "names": [
+        "Bäkeburg"
+      ],
+      "venueIds": [
+        "node/10832366202"
+      ]
+    },
+    {
+      "placeName": "Würth Haus",
+      "website": "https://www.wuerth-haus-berlin.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:02.891Z",
+      "names": [
+        "Würth Haus"
+      ],
+      "venueIds": [
+        "node/10870902862"
+      ]
+    },
+    {
+      "placeName": "Eventlocation Deep",
+      "website": "https://deep-event.berlin",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:36.080Z",
+      "names": [
+        "Eventlocation Deep"
+      ],
+      "venueIds": [
+        "node/10297101595"
+      ]
+    },
+    {
+      "placeName": "Neukölln Speicher",
+      "website": "https://www.estrel.com",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:59.687Z",
+      "names": [
+        "Neukölln Speicher",
+        "Estrel Convention Hall I"
+      ],
+      "venueIds": [
+        "node/10836623615",
+        "relation/2237516"
+      ]
+    },
+    {
+      "placeName": "Festplatz Teltowkanal",
+      "website": "https://volksfest-berlin.de",
+      "status": "PAGE_FOUND",
+      "lostFoundUrl": "https://volksfest-berlin.de/fundsachen/",
+      "contactValues": [
+        {
+          "kind": "email",
+          "value": "info@svbev.de"
+        }
+      ],
+      "confidence": 17,
+      "pagesRead": 1,
+      "discoveredVia": "sitemap",
+      "checkedAt": "2026-07-28T11:56:14.871Z",
+      "names": [
+        "Festplatz Teltowkanal"
+      ],
+      "venueIds": [
+        "node/10921672803"
+      ]
+    },
+    {
+      "placeName": "Berlin macht Dampf",
+      "website": "https://www.berlin-macht-dampf.com",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:31.410Z",
+      "names": [
+        "Berlin macht Dampf"
+      ],
+      "venueIds": [
+        "node/10005228965"
+      ]
+    },
+    {
+      "placeName": "U3 Tunnel",
+      "website": "https://thetunnel.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:16.305Z",
+      "names": [
+        "U3 Tunnel"
+      ],
+      "venueIds": [
+        "node/10951348568"
+      ]
+    },
+    {
+      "placeName": "Wartehalle Berlin",
+      "website": "https://www.wartehalle-berlin.com",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:03.761Z",
+      "names": [
+        "Wartehalle Berlin"
+      ],
+      "venueIds": [
+        "node/10878073159"
+      ]
+    },
+    {
+      "placeName": "Theater im Nikolaiviertel",
+      "website": "http://www.theater-im-nikolaiviertel.de",
+      "status": "MANUAL_REVIEW",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:24.921Z",
+      "names": [
+        "Theater im Nikolaiviertel"
+      ],
+      "venueIds": [
+        "node/1096182603"
+      ]
+    },
+    {
+      "placeName": "Sommerpavillon",
+      "website": "https://www.kultur-kreativ-wirtschaft.de",
+      "status": "MANUAL_REVIEW",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:15.346Z",
+      "names": [
+        "Sommerpavillon"
+      ],
+      "venueIds": [
+        "node/10929290115"
+      ]
+    },
+    {
+      "placeName": "TEC Event Campus",
+      "website": "https://www.tec-event-campus.com",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:04.376Z",
+      "names": [
+        "TEC Event Campus"
+      ],
+      "venueIds": [
+        "node/10899677966"
+      ]
+    },
+    {
+      "placeName": "Luftschloss",
+      "website": "https://luftschloss-tempelhoferfeld.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:08.484Z",
+      "names": [
+        "Luftschloss"
+      ],
+      "venueIds": [
+        "node/10902497205"
+      ]
+    },
+    {
+      "placeName": "Projektraum Moabit",
+      "website": "https://www.projektraum-moabit.de",
+      "status": "MANUAL_REVIEW",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:27.791Z",
+      "names": [
+        "Projektraum Moabit"
+      ],
+      "venueIds": [
+        "node/11250932290"
+      ]
+    },
+    {
+      "placeName": "AM to PM",
+      "website": "https://am-to-pm.metro.bar",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 24085301",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:38.095Z",
+      "names": [
+        "AM to PM"
+      ],
+      "venueIds": [
+        "node/1144034120"
+      ]
+    },
+    {
+      "placeName": "Urban Tech Republic",
+      "website": "https://urbantechrepublic.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:24.320Z",
+      "names": [
+        "Urban Tech Republic"
+      ],
+      "venueIds": [
+        "node/10951373611"
+      ]
+    },
+    {
+      "placeName": "artloft.berlin",
+      "website": "https://www.artloft.berlin",
+      "status": "MANUAL_REVIEW",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:33.001Z",
+      "names": [
+        "artloft.berlin"
+      ],
+      "venueIds": [
+        "node/10233027889"
+      ]
+    },
+    {
+      "placeName": "Luxx",
+      "website": "https://luxxfestsaal.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:33.295Z",
+      "names": [
+        "Luxx"
+      ],
+      "venueIds": [
+        "node/11392834387"
+      ]
+    },
+    {
+      "placeName": "Falscher Fisch",
+      "website": "https://falscherfisch.net",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:25.129Z",
+      "names": [
+        "Falscher Fisch"
+      ],
+      "venueIds": [
+        "node/11066768896"
+      ]
+    },
+    {
+      "placeName": "Weekend Club",
+      "website": "http://www.week-end-berlin.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 24631676",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:42.719Z",
+      "names": [
+        "Weekend Club"
+      ],
+      "venueIds": [
+        "node/1162812586"
+      ]
+    },
+    {
+      "placeName": "Soda Club",
+      "website": "https://www.soda-berlin.de",
+      "status": "PAGE_FOUND",
+      "lostFoundUrl": "https://www.soda-berlin.de/fundsachen",
+      "evidence": "Home Events Soda Social Club Lounges Jobs Firmenevents Miet mich Fundsachen Events Soda Social Club Lounges Jobs Firmenevents Miet mich Fundsachen Kontaktiere uns Du hast etwas bei uns verloren oder vergessen?",
+      "contactValues": [
+        {
+          "kind": "email",
+          "value": "fundbuero@soda-berlin.de"
+        },
+        {
+          "kind": "email",
+          "value": "info@soda-berlin.de"
+        },
+        {
+          "kind": "phone",
+          "value": "+493044315111"
+        },
+        {
+          "kind": "phone",
+          "value": "+493044315144"
+        },
+        {
+          "kind": "phone",
+          "value": "+493044315155"
+        }
+      ],
+      "confidence": 17,
+      "pagesRead": 1,
+      "discoveredVia": "sitemap",
+      "checkedAt": "2026-07-28T11:56:43.872Z",
+      "names": [
+        "Soda Club"
+      ],
+      "venueIds": [
+        "node/1165008486"
+      ]
+    },
+    {
+      "placeName": "Zimmertheater Steglitz",
+      "website": "http://www.zimmertheater-steglitz.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 25058078",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:41.995Z",
+      "names": [
+        "Zimmertheater Steglitz"
+      ],
+      "venueIds": [
+        "node/1154118481"
+      ]
+    },
+    {
+      "placeName": "RSO.Berlin",
+      "website": "https://www.reviersuedost.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 12,
+      "pagesRead": 14,
+      "checkedAt": "2026-07-28T11:56:44.547Z",
+      "names": [
+        "RSO.Berlin"
+      ],
+      "venueIds": [
+        "node/11804553537"
+      ]
+    },
+    {
+      "placeName": "Zilles Stubentheater",
+      "website": "https://zilles-stubentheater.de",
+      "status": "MANUAL_REVIEW",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:25.447Z",
+      "names": [
+        "Zilles Stubentheater"
+      ],
+      "venueIds": [
+        "node/11218721726"
+      ]
+    },
+    {
+      "placeName": "ENNA",
+      "website": "https://www.enna.live",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:44.145Z",
+      "names": [
+        "ENNA"
+      ],
+      "venueIds": [
+        "node/11750558726"
+      ]
+    },
+    {
+      "placeName": "Theater am Frankfurter Tor",
+      "website": "https://www.theater-am-frankfurter-tor.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:47.974Z",
+      "names": [
+        "Theater am Frankfurter Tor"
+      ],
+      "venueIds": [
+        "node/1187935417"
+      ]
+    },
+    {
+      "placeName": "Ballhaus Ost",
+      "website": "https://www.ballhausost.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 44049250",
+      "confidence": 12,
+      "pagesRead": 19,
+      "checkedAt": "2026-07-28T11:56:42.657Z",
+      "names": [
+        "Ballhaus Ost"
+      ],
+      "venueIds": [
+        "node/1158225994"
+      ]
+    },
+    {
+      "placeName": "AUDIO",
+      "website": "https://www.audioberlin.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:50.075Z",
+      "names": [
+        "AUDIO"
+      ],
+      "venueIds": [
+        "node/12078225561"
+      ]
+    },
+    {
+      "placeName": "Monbijou Theater",
+      "website": "https://www.berlin-buehnen.de",
+      "status": "MANUAL_REVIEW",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:51.391Z",
+      "names": [
+        "Monbijou Theater"
+      ],
+      "venueIds": [
+        "node/12110093947"
+      ]
+    },
+    {
+      "placeName": "Kreuzwerk",
+      "website": "https://kreuzwerk.berlin",
+      "status": "MANUAL_REVIEW",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:54.201Z",
+      "names": [
+        "Kreuzwerk"
+      ],
+      "venueIds": [
+        "node/12137704154"
+      ]
+    },
+    {
+      "placeName": "Mitosis LAB",
+      "website": "https://mitosis.co",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:48.857Z",
+      "names": [
+        "Mitosis LAB"
+      ],
+      "venueIds": [
+        "node/11999154164"
+      ]
+    },
+    {
+      "placeName": "Altstadttheater Köpenick",
+      "website": "https://altstadttheater-koepenick.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 99276099",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:27.232Z",
+      "names": [
+        "Altstadttheater Köpenick"
+      ],
+      "venueIds": [
+        "node/11218737137"
+      ]
+    },
+    {
+      "placeName": "Kochende Welten-Loft",
+      "website": "https://kochende-welten.de",
+      "status": "MANUAL_REVIEW",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:55:31.414Z",
+      "names": [
+        "Kochende Welten-Loft"
+      ],
+      "venueIds": [
+        "node/10233002668"
+      ]
+    },
+    {
+      "placeName": "Spielwerk",
+      "website": "https://www.werkhof-berlin.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 80197059",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:55.742Z",
+      "names": [
+        "Spielwerk"
+      ],
+      "venueIds": [
+        "node/12233837004"
+      ]
+    },
+    {
+      "placeName": "Richtershorn am See",
+      "website": "https://www.richtershorn.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 1783958488",
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:48.594Z",
+      "names": [
+        "Richtershorn am See"
+      ],
+      "venueIds": [
+        "node/11916172412"
+      ]
+    },
+    {
+      "placeName": "Glaskiste",
+      "website": "https://www.exrotaprint.de",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:53.468Z",
+      "names": [
+        "Glaskiste"
+      ],
+      "venueIds": [
+        "node/12121854769"
+      ]
+    },
+    {
+      "placeName": "Expedition Metropolis",
+      "website": "https://expedition-metropolis.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49 30 47980152",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:47.845Z",
+      "names": [
+        "Expedition Metropolis"
+      ],
+      "venueIds": [
+        "node/11847642699"
+      ]
+    },
+    {
+      "placeName": "Brixen",
+      "website": "https://brixen.berlin",
+      "status": "MANUAL_REVIEW",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:55.545Z",
+      "names": [
+        "Brixen"
+      ],
+      "venueIds": [
+        "node/12233808017"
+      ]
+    },
+    {
+      "placeName": "Hafenbar",
+      "website": "https://www.hafenbar-berlin.de",
+      "status": "PHONE_FALLBACK",
+      "phone": "+49302828593",
+      "confidence": 0,
+      "pagesRead": 21,
+      "checkedAt": "2026-07-28T11:56:40.869Z",
+      "names": [
+        "Hafenbar"
+      ],
+      "venueIds": [
+        "node/1145853246"
+      ]
+    }
+  ]
+}

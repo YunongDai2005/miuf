@@ -7,8 +7,10 @@ import type { JourneyMatch, TransitMode } from "../berlin-transit/transit";
  * prioritized search plan for the UI. The chosen path normally becomes
  * high-priority; runner-up lines from the same corridor become medium/low. A
  * daytime photo can down-rank Berlin's N-prefixed night services. The 0–100
- * figure is a "route match" (how tightly a line hugs the photo path), never a
- * probability.
+ * `routeMatch` is how tightly a line hugs the photo path, never a probability.
+ * It orders candidates and sets the medium/low cutoff, but is deliberately not
+ * surfaced in the UI: the priority badge says the same thing in words, and a
+ * bare percentage reads as "we are 68% sure" — a precision this data lacks.
  */
 
 export type SearchPriority = "high" | "medium" | "low";

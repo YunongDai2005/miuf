@@ -85,19 +85,23 @@
     if (expiresAt < Date.now()) {
       throw new Error("This package has expired. Copy a fresh one from the app.");
     }
-    if (!payload.submitAllowed) {
-      if (requireSubmit) throw new Error("Automatic submission is not approved for this channel.");
-      return null;
-    }
     const adapters = globalThis.BERLIN_LOST_FOUND_ADAPTERS || [];
-    const adapter = adapters.find(
-      (entry) =>
-        entry.id === payload.adapterId &&
-        entry.channelId === payload.channelId &&
-        entry.origin === location.origin &&
-        entry.testedContentHash === payload.formContentHash
-    );
-    if (!adapter) throw new Error("The reviewed adapter is missing or no longer matches.");
+    const adapter = payload.adapterId
+      ? adapters.find(
+          (entry) =>
+            entry.id === payload.adapterId &&
+            entry.channelId === payload.channelId &&
+            entry.origin === location.origin &&
+            entry.testedContentHash === payload.formContentHash
+        )
+      : null;
+    if (payload.adapterId && !adapter) {
+      throw new Error("The reviewed form adapter is missing or no longer matches.");
+    }
+    if (!payload.submitAllowed && requireSubmit) {
+      throw new Error("Automatic submission is not approved for this channel.");
+    }
+    if (!adapter) return null;
     let pathMatches = false;
     try {
       pathMatches = new RegExp(adapter.pathPattern).test(location.pathname);
@@ -105,6 +109,9 @@
       pathMatches = false;
     }
     if (!pathMatches) throw new Error("The adapter does not apply to this page.");
+    if (requireSubmit && adapter.capability !== "reviewed_submit") {
+      throw new Error("This adapter is approved for filling only, not submission.");
+    }
     return adapter;
   };
 
@@ -126,7 +133,14 @@
       if (element && dispatchValue(element, field.value, field.control)) filled += 1;
       else missing += 1;
     }
-    return { filled, missing, canSubmit: Boolean(adapter) && missing === 0 };
+    return {
+      filled,
+      missing,
+      canSubmit:
+        Boolean(payload.submitAllowed) &&
+        adapter?.capability === "reviewed_submit" &&
+        missing === 0,
+    };
   };
 
   const currentValueMatches = (element, expected) => {

@@ -2,12 +2,17 @@ import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import {
   CHANNEL_REGISTRY_VERSION,
+  isPublishedChannelRegistry,
   type PublishedChannelRegistry,
 } from "../../lib/lost-found-channel-schema";
-import { buildPublishedChannelRegistry } from "../../lib/lost-found-channel-publish";
+import {
+  buildPublishedChannelRegistry,
+  mergePublishedChannelRegistries,
+} from "../../lib/lost-found-channel-publish";
 import type {
   AdapterFile,
   CandidateFile,
+  ResponsibilityGraph,
   ReviewFile,
 } from "./schemas";
 
@@ -15,7 +20,9 @@ export async function publishReviewedChannels(options: {
   candidatePath: string;
   reviewPath: string;
   adapterPath: string;
+  responsibilityPath?: string;
   outputPath: string;
+  allowCoverageRegression?: boolean;
 }): Promise<PublishedChannelRegistry> {
   const candidates = JSON.parse(
     await readFile(options.candidatePath, "utf8")
@@ -26,6 +33,11 @@ export async function publishReviewedChannels(options: {
   const adapterFile = JSON.parse(
     await readFile(options.adapterPath, "utf8")
   ) as AdapterFile;
+  const responsibilities = options.responsibilityPath
+    ? (JSON.parse(
+        await readFile(options.responsibilityPath, "utf8")
+      ) as ResponsibilityGraph)
+    : undefined;
   if (
     candidates.version !== 1 ||
     reviews.version !== 1 ||
@@ -33,11 +45,32 @@ export async function publishReviewedChannels(options: {
   ) {
     throw new Error("Unsupported candidate or review file version");
   }
-  const registry = buildPublishedChannelRegistry({
+  let registry = buildPublishedChannelRegistry({
     candidates,
     reviews,
     adapters: adapterFile,
+    responsibilities,
   });
+  if (!options.allowCoverageRegression) {
+    try {
+      const current = JSON.parse(
+        await readFile(options.outputPath, "utf8")
+      ) as unknown;
+      if (isPublishedChannelRegistry(current)) {
+        registry = mergePublishedChannelRegistries(current, registry);
+      }
+    } catch (error) {
+      if (
+        error instanceof Error &&
+        "code" in error &&
+        error.code === "ENOENT"
+      ) {
+        // A first publication has no previous coverage to protect.
+      } else {
+        throw error;
+      }
+    }
+  }
   await mkdir(dirname(options.outputPath), { recursive: true });
   await writeFile(options.outputPath, `${JSON.stringify(registry, null, 2)}\n`);
   return registry;
@@ -64,7 +97,7 @@ export async function exportExtensionAdapters(options: {
     throw new Error("Unsupported published channel registry version");
   }
   const approvedAdapters = registry.channels
-    .filter((channel) => channel.submissionMode === "adapter")
+    .filter((channel) => Boolean(channel.adapterId))
     .map((channel) => {
       const adapter = adapterFile.adapters.find(
         (entry) => entry.id === channel.adapterId
@@ -73,10 +106,12 @@ export async function exportExtensionAdapters(options: {
         !adapter ||
         adapter.channelId !== channel.id ||
         adapter.testedContentHash !== channel.contentHash ||
-        adapter.origin !== new URL(channel.pageUrl).origin
+        adapter.origin !== new URL(channel.pageUrl).origin ||
+        (channel.submissionMode === "adapter" &&
+          adapter.capability !== "reviewed_submit")
       ) {
         throw new Error(
-          `Published adapter channel ${channel.id} has no exact approved adapter`
+          `Published adapter channel ${channel.id} has no exact approved form adapter`
         );
       }
       return adapter;

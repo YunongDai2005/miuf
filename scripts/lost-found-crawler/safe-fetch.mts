@@ -5,7 +5,9 @@ import { Agent, fetch as undiciFetch } from "undici";
 const USER_AGENT =
   "Berlin-Lost-Found-Channel-Research/1.0";
 const MAX_REDIRECTS = 5;
+const MAX_IDLE_DISPATCHERS = 64;
 export const DEFAULT_MAX_BYTES = 2_000_000;
+const dispatchers = new Map<string, Agent>();
 
 function isPrivateIpv4(address: string): boolean {
   const parts = address.split(".").map(Number);
@@ -47,7 +49,7 @@ export function isForbiddenIp(address: string): boolean {
   return true;
 }
 
-export async function assertPublicHttpUrl(rawUrl: string): Promise<URL> {
+function parsePublicHttpUrl(rawUrl: string): URL {
   const url = new URL(rawUrl);
   if (
     !["http:", "https:"].includes(url.protocol) ||
@@ -58,6 +60,11 @@ export async function assertPublicHttpUrl(rawUrl: string): Promise<URL> {
   ) {
     throw new Error(`Refusing unsafe URL: ${rawUrl}`);
   }
+  return url;
+}
+
+export async function assertPublicHttpUrl(rawUrl: string): Promise<URL> {
+  const url = parsePublicHttpUrl(rawUrl);
   const addresses = await lookup(url.hostname, { all: true, verbatim: true });
   if (!addresses.length || addresses.some(({ address }) => isForbiddenIp(address))) {
     throw new Error(`Refusing non-public destination: ${url.hostname}`);
@@ -71,7 +78,7 @@ async function resolvePublicHttpUrl(
   url: URL;
   addresses: Array<{ address: string; family: 4 | 6 }>;
 }> {
-  const url = await assertPublicHttpUrl(rawUrl);
+  const url = parsePublicHttpUrl(rawUrl);
   const addresses = await lookup(url.hostname, { all: true, verbatim: true });
   const publicAddresses = addresses.filter(
     (entry): entry is { address: string; family: 4 | 6 } =>
@@ -85,6 +92,44 @@ async function resolvePublicHttpUrl(
     throw new Error(`Refusing non-public destination: ${url.hostname}`);
   }
   return { url, addresses: publicAddresses };
+}
+
+function dispatcherFor(
+  url: URL,
+  pinned: { address: string; family: 4 | 6 }
+): Agent {
+  const key = `${url.origin}\0${pinned.address}`;
+  const existing = dispatchers.get(key);
+  if (existing) {
+    dispatchers.delete(key);
+    dispatchers.set(key, existing);
+    return existing;
+  }
+  const dispatcher = new Agent({
+    connections: 2,
+    pipelining: 1,
+    keepAliveTimeout: 5_000,
+    keepAliveMaxTimeout: 15_000,
+    connect: {
+      lookup: (_hostname, _options, callback) => {
+        if (typeof _options === "object" && _options?.all) {
+          callback(null, [pinned]);
+        } else {
+          callback(null, pinned.address, pinned.family);
+        }
+      },
+    },
+  });
+  dispatchers.set(key, dispatcher);
+  if (dispatchers.size > MAX_IDLE_DISPATCHERS) {
+    const oldestKey = dispatchers.keys().next().value as string | undefined;
+    if (oldestKey) {
+      const oldest = dispatchers.get(oldestKey);
+      dispatchers.delete(oldestKey);
+      void oldest?.close();
+    }
+  }
+  return dispatcher;
 }
 
 async function readBoundedBody(
@@ -133,23 +178,12 @@ async function fetchPublicBytes(
     accept?: string;
   } = {}
 ): Promise<SafeFetchBytesResult> {
-  let current = await assertPublicHttpUrl(rawUrl);
+  let current = parsePublicHttpUrl(rawUrl);
   for (let redirect = 0; redirect <= MAX_REDIRECTS; redirect += 1) {
     const resolved = await resolvePublicHttpUrl(current.toString());
     const pinned = resolved.addresses[0];
-    const dispatcher = new Agent({
-      connect: {
-        lookup: (_hostname, _options, callback) => {
-          if (typeof _options === "object" && _options?.all) {
-            callback(null, [pinned]);
-          } else {
-            callback(null, pinned.address, pinned.family);
-          }
-        },
-      },
-    });
-    try {
-      const response = await undiciFetch(current, {
+    const dispatcher = dispatcherFor(resolved.url, pinned);
+    const response = await undiciFetch(current, {
         method: "GET",
         redirect: "manual",
         dispatcher,
@@ -158,23 +192,20 @@ async function fetchPublicBytes(
           "user-agent": USER_AGENT,
         },
         signal: AbortSignal.timeout(options.timeoutMs ?? 20_000),
-      });
-      if (response.status >= 300 && response.status < 400) {
-        const location = response.headers.get("location");
-        await response.body?.cancel();
-        if (!location) throw new Error(`Redirect without Location from ${current}`);
-        current = await assertPublicHttpUrl(new URL(location, current).toString());
-        continue;
-      }
-      return {
-        url: current.toString(),
-        status: response.status,
-        headers: response.headers,
-        body: await readBoundedBody(response, options.maxBytes ?? DEFAULT_MAX_BYTES),
-      };
-    } finally {
-      await dispatcher.close();
+    });
+    if (response.status >= 300 && response.status < 400) {
+      const location = response.headers.get("location");
+      await response.body?.cancel();
+      if (!location) throw new Error(`Redirect without Location from ${current}`);
+      current = parsePublicHttpUrl(new URL(location, current).toString());
+      continue;
     }
+    return {
+      url: current.toString(),
+      status: response.status,
+      headers: response.headers,
+      body: await readBoundedBody(response, options.maxBytes ?? DEFAULT_MAX_BYTES),
+    };
   }
   throw new Error(`Too many redirects from ${rawUrl}`);
 }

@@ -1,21 +1,20 @@
 "use client";
 
 import { ITEM_CATEGORY_META, type ItemCategory, type LostItem } from "../types";
-import { Field, TextArea, TextInput, cx } from "../ui";
-import { addCalendarDays, berlinDateKey } from "../time";
+
+const CATEGORY_ICONS: Record<ItemCategory, string> = {
+  bag: "M4.5 8.5h15v11h-15z M9 8.5V6.2a3 3 0 016 0v2.3",
+  wallet: "M3.5 7h17v11h-17z M15.5 12.5h3.5",
+  phone: "M8 3.5h8v17H8z M11 18h2",
+  electronics: "M4 6h16v10H4z M9 20h6",
+  documents: "M6.5 3.5h8l3.5 3.5v13.5h-11.5z M9.5 9h5M9.5 12.5h5M9.5 16h3.5",
+  keys: "M15 7.5a4 4 0 100 8 4 4 0 000-8z M11 11.5H3.5M5.5 11.5v3",
+  camera: "M3.5 8.5h4l2-2h5l2 2h4v10.5h-17z M12 17a3.8 3.8 0 100-7.6 3.8 3.8 0 000 7.6z",
+  clothing: "M9 4.2l3 1.8 3-1.8 4.5 2.8-2 3-1-.8v11.3H7.5V9.2l-1 .8-2-3z",
+  other: "M6.5 12h.01M12 12h.01M17.5 12h.01",
+};
 
 const CATEGORIES = Object.keys(ITEM_CATEGORY_META) as ItemCategory[];
-
-function todayLabel(date: string): string {
-  const today = berlinDateKey();
-  if (date === today) return "Today";
-  const yesterday = addCalendarDays(today, -1);
-  if (date === yesterday) return "Yesterday";
-  return new Date(date + "T00:00:00").toLocaleDateString("en-US", {
-    month: "short",
-    day: "numeric",
-  });
-}
 
 export default function StepItem({
   item,
@@ -24,174 +23,90 @@ export default function StepItem({
   item: LostItem;
   onItem: (patch: Partial<LostItem>) => void;
 }) {
+  const urgent =
+    item.category === "documents"
+      ? {
+          title: "Report the loss to the police first",
+          body: "A lost passport or ID must be reported immediately. Your embassy can issue travel papers.",
+          href: "https://www.berlin.de/en/tourism/travel-information/1735948-2862820-lost-and-found-and-lost-property-offices.en.html",
+        }
+      : item.category === "wallet"
+        ? {
+            title: "Block your cards first",
+            body: "Call your bank now. If the wallet may have been stolen, report the theft to the police.",
+            href: "https://www.berlin.de/en/tourism/travel-information/2832639-2862820-pickpockets.en.html",
+          }
+        : item.category === "phone"
+          ? {
+              title: "Secure the device first",
+              body: "Block the SIM and keep the IMEI number for a police report.",
+              href: "https://www.berlin.de/en/tourism/travel-information/2832639-2862820-pickpockets.en.html",
+            }
+          : null;
+
   return (
-    <div className="space-y-5">
-      {/* Optional one-tap category */}
-      <div className="flex flex-wrap gap-2">
+    <div className="lf-describe-form">
+      <div className="lf-category-grid lf-stagger" role="group" aria-label="Item category">
         {CATEGORIES.map((category) => {
-          const meta = ITEM_CATEGORY_META[category];
           const active = item.category === category;
+          const label = ITEM_CATEGORY_META[category].label.split(" /")[0].replace("Electronics", "Device").replace("Documents", "Documents");
           return (
             <button
               key={category}
               type="button"
-              onClick={() => onItem({ category: active ? null : category })}
-              className={cx(
-                "inline-flex items-center gap-1.5 rounded-full border px-3 py-1.5 text-sm font-medium transition",
-                active
-                  ? "border-orange-400 bg-orange-50 text-orange-700 dark:border-orange-500/60 dark:bg-orange-500/10 dark:text-orange-300"
-                  : "border-stone-200 text-stone-600 hover:border-stone-300 dark:border-stone-700 dark:text-stone-400 dark:hover:border-stone-600"
-              )}
+              className={active ? "is-active" : undefined}
+              onClick={() => onItem({ category: category })}
+              aria-pressed={active}
             >
-              <span className="text-base leading-none">{meta.emoji}</span>
-              {meta.label}
+              <svg aria-hidden="true" width="23" height="23" viewBox="0 0 24 24" fill="none">
+                <path d={CATEGORY_ICONS[category]} />
+              </svg>
+              <span>{label}</span>
             </button>
           );
         })}
       </div>
 
-      {item.category === "documents" && (
-        <div className="rounded-2xl border border-rose-200 bg-rose-50 p-4 text-sm dark:border-rose-500/30 dark:bg-rose-500/10">
-          <p className="font-semibold text-rose-900 dark:text-rose-100">
-            Passport or ID missing?
-          </p>
-          <p className="mt-1 text-xs leading-relaxed text-rose-800 dark:text-rose-200">
-            Report a lost or stolen passport to the police immediately. If you
-            are visiting Berlin and need to travel, contact your country’s
-            embassy as well.
-          </p>
-          <a
-            href="https://www.berlin.de/en/tourism/travel-information/1735948-2862820-lost-and-found-and-lost-property-offices.en.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-flex text-xs font-semibold text-rose-800 underline underline-offset-2 dark:text-rose-200"
-          >
-            Open Berlin’s official guidance ↗
-          </a>
+      {urgent && (
+        <div className="lf-urgent">
+          <strong>{urgent.title}</strong>
+          <p>{urgent.body}</p>
+          <a href={urgent.href} target="_blank" rel="noopener noreferrer">Official guidance ↗</a>
         </div>
       )}
 
-      {(item.category === "wallet" || item.category === "phone") && (
-        <div className="rounded-2xl border border-amber-200 bg-amber-50 p-4 text-sm dark:border-amber-500/30 dark:bg-amber-500/10">
-          <p className="font-semibold text-amber-900 dark:text-amber-100">
-            Protect your accounts first
-          </p>
-          <p className="mt-1 text-xs leading-relaxed text-amber-800 dark:text-amber-200">
-            {item.category === "wallet"
-              ? "Block payment cards now through your bank. If the wallet may have been stolen, report the theft to police."
-              : "Block the SIM and secure the device now. If the phone may have been stolen, keep the IMEI number for the police report."}
-          </p>
-          <a
-            href="https://www.berlin.de/en/tourism/travel-information/2832639-2862820-pickpockets.en.html"
-            target="_blank"
-            rel="noopener noreferrer"
-            className="mt-2 inline-flex text-xs font-semibold text-amber-800 underline underline-offset-2 dark:text-amber-200"
-          >
-            Open Berlin’s official safety steps ↗
-          </a>
-        </div>
-      )}
-
-      {/* The one field that matters */}
-      <Field label="Describe what you lost, in one line" hint="colour, brand, what's inside…">
-        <TextArea
+      <label className="lf-field-block">
+        <span className="lf-section-label">Description</span>
+        <textarea
           value={item.description}
-          onChange={(e) => onItem({ description: e.target.value })}
-          placeholder="e.g. Black Fjällräven backpack with a passport, a notebook, and a panda charm on the zip"
-          autoFocus
+          onChange={(event) => onItem({ description: event.target.value })}
+          placeholder="Black Fjällräven backpack, notebook inside, panda charm on the zip"
         />
-      </Field>
-
-      {/* Date defaults to today; one tap to change */}
-      <div className="flex items-center gap-3">
-        <span className="text-sm text-stone-500 dark:text-stone-400">Date lost</span>
-        <input
-          type="date"
-          value={item.lostDate}
-          max={berlinDateKey()}
-          onChange={(e) => e.target.value && onItem({ lostDate: e.target.value })}
-          aria-label="Date lost"
-          className="rounded-xl border border-stone-200 bg-white px-3 py-1.5 text-sm text-stone-800 outline-none transition focus:border-orange-400 focus:ring-2 focus:ring-orange-100 dark:border-stone-700 dark:bg-stone-900 dark:text-stone-100 dark:focus:ring-orange-500/20"
-        />
-        <span className="text-xs font-medium text-stone-400">{todayLabel(item.lostDate)}</span>
-      </div>
-
-      <label className="flex cursor-pointer items-start gap-3 rounded-2xl border border-stone-200 bg-white p-3.5 dark:border-stone-700 dark:bg-stone-900">
-        <input
-          type="checkbox"
-          checked={Boolean(item.includeCentralOffice)}
-          onChange={(event) =>
-            onItem({ includeCentralOffice: event.target.checked })
-          }
-          className="mt-0.5 h-4 w-4 rounded border-stone-300 text-orange-600 focus:ring-orange-500"
-        />
-        <span>
-          <span className="block text-sm font-medium text-stone-700 dark:text-stone-200">
-            I am not sure where I lost it
-          </span>
-          <span className="mt-0.5 block text-xs leading-relaxed text-stone-400">
-            Include Berlin’s city-wide lost-property search for streets, taxis
-            and uncertain locations. Leave this off if your possible locations
-            are only the operators and venues you add next.
-          </span>
-        </span>
+        <small>Colour, brand, what is inside.</small>
       </label>
 
-      {/* Everything else is optional and out of the way */}
-      <details className="group">
-        <summary className="inline-flex cursor-pointer list-none items-center gap-1 text-sm font-medium text-stone-500 hover:text-stone-700 dark:text-stone-400 dark:hover:text-stone-200">
-          <span className="transition group-open:rotate-90">▸</span> More details (optional)
-        </summary>
-        <div className="mt-3 grid gap-4 sm:grid-cols-2">
-          <Field label="Approx. time lost · from">
-            <TextInput
-              type="time"
-              value={item.timeFrom ?? ""}
-              onChange={(e) => onItem({ timeFrom: e.target.value })}
-            />
-          </Field>
-          <Field label="Approx. time lost · to">
-            <TextInput
-              type="time"
-              value={item.timeTo ?? ""}
-              onChange={(e) => onItem({ timeTo: e.target.value })}
-            />
-          </Field>
-          <Field label="Brand">
-            <TextInput
-              value={item.brand ?? ""}
-              onChange={(e) => onItem({ brand: e.target.value })}
-              placeholder="e.g. Fjällräven"
-            />
-          </Field>
-          <Field label="Colour">
-            <TextInput
-              value={item.color ?? ""}
-              onChange={(e) => onItem({ color: e.target.value })}
-              placeholder="e.g. black"
-            />
-          </Field>
-          <Field label="Identifying features">
-            <TextInput
-              value={item.identifyingFeatures ?? ""}
-              onChange={(e) => onItem({ identifyingFeatures: e.target.value })}
-              placeholder="e.g. panda charm on the zip"
-            />
-          </Field>
-          <Field label="Approximate value">
-            <TextInput
-              value={item.estimatedValue ?? ""}
-              onChange={(e) => onItem({ estimatedValue: e.target.value })}
-              placeholder="e.g. €80"
-            />
-          </Field>
-          <Field label="City or postcode where it was lost">
-            <TextInput
-              value={item.lossCity ?? ""}
-              onChange={(e) => onItem({ lossCity: e.target.value })}
-              placeholder="e.g. Berlin 10117"
-            />
-          </Field>
+      <div className="lf-date-next">
+        <span aria-hidden="true">02</span>
+        <p>
+          <strong>Choose the time window next</strong>
+          <small>Know the day? Pick it. Not sure? Select the start and end of your trip, then we only read photos from that range.</small>
+        </p>
+      </div>
+
+      <label className="lf-unsure">
+        <input type="checkbox" checked={Boolean(item.includeCentralOffice)} onChange={(event) => onItem({ includeCentralOffice: event.target.checked })} />
+        <i aria-hidden="true">✓</i>
+        <span><strong>I am not sure where I lost it</strong><small>Adds Berlin&apos;s city-wide office for streets and taxis.</small></span>
+      </label>
+
+      <details className="lf-more-details">
+        <summary>More details (optional)</summary>
+        <div>
+          <label><span>Brand</span><input value={item.brand ?? ""} onChange={(event) => onItem({ brand: event.target.value })} placeholder="e.g. Fjällräven" /></label>
+          <label><span>Colour</span><input value={item.color ?? ""} onChange={(event) => onItem({ color: event.target.value })} placeholder="e.g. black" /></label>
+          <label><span>Identifying features</span><input value={item.identifyingFeatures ?? ""} onChange={(event) => onItem({ identifyingFeatures: event.target.value })} placeholder="e.g. panda charm" /></label>
+          <label><span>Approximate value</span><input value={item.estimatedValue ?? ""} onChange={(event) => onItem({ estimatedValue: event.target.value })} placeholder="e.g. €80" /></label>
+          <label><span>City or postcode</span><input value={item.lossCity ?? ""} onChange={(event) => onItem({ lossCity: event.target.value })} placeholder="Berlin 10117" /></label>
         </div>
       </details>
     </div>

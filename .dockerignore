@@ -1,0 +1,14 @@
+*
+!package.json
+!package-lock.json
+!Dockerfile.cloud-run
+!scripts/
+!scripts/**
+!lib/
+!lib/**
+!data/
+!data/lost-found-crawler/
+!data/lost-found-crawler/**
+!public/
+!public/berlin-attractions.json
+!public/berlin-lost-found-channels.json

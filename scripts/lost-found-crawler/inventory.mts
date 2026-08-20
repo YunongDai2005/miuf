@@ -1,3 +1,4 @@
+import { createHash } from "node:crypto";
 import { mkdir, readFile, writeFile } from "node:fs/promises";
 import { dirname } from "node:path";
 import { stableId } from "./hash.mjs";
@@ -183,7 +184,9 @@ export async function buildInventory(options: {
   sourceLabel?: string;
   operatorOverridePath?: string;
 }): Promise<InventoryFile> {
-  const payload = JSON.parse(await readFile(options.inputPath, "utf8")) as AttractionFile;
+  const sourceText = await readFile(options.inputPath, "utf8");
+  const sourceHash = createHash("sha256").update(sourceText).digest("hex");
+  const payload = JSON.parse(sourceText) as AttractionFile;
   const operatorOverrides = options.operatorOverridePath
     ? validateOperatorOverrides(
         JSON.parse(await readFile(options.operatorOverridePath, "utf8"))
@@ -334,6 +337,7 @@ export async function buildInventory(options: {
         if (operatorResolutionSource === "official_source_audit") {
           existing.resolutionSource = operatorResolutionSource;
           existing.confidence = 0.98;
+          existing.auditedAt = auditedOverride?.auditedAt;
         }
       } else {
         operatorsByKey.set(operatorKey, {
@@ -351,6 +355,7 @@ export async function buildInventory(options: {
           resolutionSource:
             operatorResolutionSource ?? "metadata_candidate",
           evidenceUrls: [...evidenceUrls],
+          auditedAt: auditedOverride?.auditedAt,
         });
       }
     }
@@ -431,6 +436,7 @@ export async function buildInventory(options: {
     version: 1,
     generatedAt: new Date().toISOString(),
     sourceFile: options.sourceLabel ?? options.inputPath,
+    sourceHash,
     operators,
     entityGroups,
     venues,
@@ -455,4 +461,21 @@ export async function buildInventory(options: {
   await mkdir(dirname(options.outputPath), { recursive: true });
   await writeFile(options.outputPath, `${JSON.stringify(inventory, null, 2)}\n`);
   return inventory;
+}
+
+export async function assertInventoryMatchesSource(options: {
+  inventoryPath: string;
+  inputPath: string;
+}): Promise<void> {
+  const [inventoryText, sourceText] = await Promise.all([
+    readFile(options.inventoryPath, "utf8"),
+    readFile(options.inputPath, "utf8"),
+  ]);
+  const inventory = JSON.parse(inventoryText) as InventoryFile;
+  const sourceHash = createHash("sha256").update(sourceText).digest("hex");
+  if (!inventory.sourceHash || inventory.sourceHash !== sourceHash) {
+    throw new Error(
+      "The lost-property inventory is stale. Run npm run data:lost-found:inventory before discovery, coverage or publication."
+    );
+  }
 }

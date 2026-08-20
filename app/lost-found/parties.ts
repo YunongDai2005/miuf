@@ -13,6 +13,7 @@ import type {
   PublishedLostFoundChannel,
 } from "../../lib/lost-found-channel-schema";
 import { isChannelReviewCurrent } from "../../lib/lost-found-channel-schema";
+import { publishedChannelPurpose } from "../../lib/lost-found-channel-schema";
 
 export type PartySourceField =
   | "scope"
@@ -44,7 +45,7 @@ export interface PartyAlternativeChannel {
 /** A lost-property office or official next-step service. */
 export interface Party {
   id: string;
-  /** Registry channel id; unlike the UI party id, this must match a reviewed adapter exactly. */
+  /** Registry channel id; unlike the UI party id, this identifies the reviewed form channel. */
   channelId?: string;
   /** The reviewed primary channel controls which contact action is shown. */
   channelKind?: PublishedLostFoundChannel["kind"];
@@ -380,17 +381,19 @@ export interface ResolvedParty {
 }
 
 function channelLabel(channel: PublishedLostFoundChannel): string {
+  const fallback =
+    publishedChannelPurpose(channel) === "general_contact_fallback";
   switch (channel.kind) {
     case "dedicated_lost_found_form":
       return "Dedicated lost-property form";
     case "operator_lost_found_form":
       return "Operator lost-property form";
     case "general_contact_form":
-      return "General contact form";
+      return "General contact form fallback";
     case "email":
-      return "Official email";
+      return fallback ? "Official email fallback" : "Lost-property email";
     case "phone":
-      return "Official phone contact";
+      return fallback ? "Official phone fallback" : "Lost-property phone";
     case "central_office_fallback":
       return "Central-office fallback";
   }
@@ -408,12 +411,31 @@ function channelHref(channel: PublishedLostFoundChannel): string {
 
 function venueParty(entry: ItineraryEntry): Party | null {
   const [channel, ...alternativeChannels] = entry.lostFoundChannels ?? [];
+  const responsibility = entry.lostFoundResponsibility;
+  if (!channel && responsibility?.assignment.resolution === "manual_guidance") {
+    return null;
+  }
   const channelReviewCurrent = channel
     ? isChannelReviewCurrent(channel)
     : false;
-  const website = channel?.pageUrl ?? entry.officialWebsite;
+  const channelIsFallback = channel
+    ? publishedChannelPurpose(channel) === "general_contact_fallback"
+    : false;
+  const parentCandidate =
+    responsibility?.assignment.resolution === "parent_candidate";
+  const auditedOperator =
+    responsibility?.assignment.resolution === "audited_operator";
+  const website =
+    channel?.pageUrl ??
+    responsibility?.responsibility.website ??
+    entry.officialWebsite;
   if (!website) return null;
-  const source = channel?.evidence[0]?.sourceUrl ?? entry.contactSourceUrl ?? website;
+  const responsibilitySource =
+    responsibility?.responsibility.evidenceUrls[0] ?? website;
+  const source =
+    channel?.evidence[0]?.sourceUrl ??
+    entry.contactSourceUrl ??
+    responsibilitySource;
   const websiteSource = entry.officialWebsiteSourceUrl ?? source;
   const channelHasForm =
     channel?.kind === "dedicated_lost_found_form" ||
@@ -423,8 +445,16 @@ function venueParty(entry: ItineraryEntry): Party | null {
     channel?.kind === "email" ? channel.contactValue : undefined;
   const channelPhone =
     channel?.kind === "phone" ? channel.contactValue : undefined;
-  const partyEmail = channel ? channelEmail : entry.officialEmail;
-  const partyPhone = channel ? channelPhone : entry.officialPhone;
+  const partyEmail = channel
+    ? channelEmail
+    : parentCandidate
+      ? undefined
+      : entry.officialEmail;
+  const partyPhone = channel
+    ? channelPhone
+    : parentCandidate
+      ? undefined
+      : entry.officialPhone;
   const manualFormSteps = [
     channel?.fields.some((field) => field.semanticKey === "privacyConsent")
       ? "consent"
@@ -436,42 +466,93 @@ function venueParty(entry: ItineraryEntry): Party | null {
         " and "
       )} yourself, then submit the form.`
     : "Submit the form yourself.";
-  const formLabel = channelHasForm
-    ? channel?.submissionMode === "assisted_fill"
-      ? "Open verified form with filling guide"
-      : "Open verified lost-property page"
-    : channel
-      ? "Open reviewed official source"
-      : entry.lostFoundUrl
-        ? "Open the venue’s lost-property page"
-        : "Open the public official-site candidate";
+  let formLabel = "Open the public official-site candidate";
+  if (channelHasForm) {
+    formLabel =
+      channel?.submissionMode === "assisted_fill" ||
+      channel?.submissionMode === "adapter"
+        ? "Open verified form with filling guide"
+        : channelIsFallback
+          ? "Open verified official contact form"
+          : "Open verified lost-property page";
+  } else if (channel) {
+    formLabel = "Open reviewed official source";
+  } else if (parentCandidate) {
+    formLabel = "Check the possible responsible venue";
+  } else if (entry.lostFoundUrl) {
+    formLabel = "Open the venue’s lost-property page";
+  }
+  const partyId = channel
+    ? `channel:${channel.id}`
+    : responsibility
+      ? `${parentCandidate ? "parent-candidate" : "responsibility"}:${responsibility.responsibility.id}`
+      : `venue:${entry.refId}`;
+  let partyName = `${entry.label} contact candidate`;
+  if (channel) {
+    partyName = channelIsFallback
+      ? `${entry.label} official contact fallback`
+      : `${entry.label} lost-property service`;
+  } else if (parentCandidate) {
+    partyName = `Possible responsible site: ${responsibility?.responsibility.name}`;
+  } else if (auditedOperator) {
+    partyName = `${responsibility?.responsibility.name} contact candidate`;
+  }
+  let nextStep =
+    "Open the official website and contact reception or visitor service. This contact was found from public venue data and should be checked before sending personal details.";
+  if (channel?.kind === "email") {
+    nextStep = channelIsFallback
+      ? "No dedicated lost-property route was confirmed. Send one concise enquiry to this reviewed official venue email and keep the reply as your receipt."
+      : "Send one report to the reviewed official email address. Keep the sent message or any case number as your receipt.";
+  } else if (channel?.kind === "phone") {
+    nextStep = channelIsFallback
+      ? "No dedicated lost-property route was confirmed. Call this reviewed official venue number and ask for reception or visitor service."
+      : "Call the reviewed official number and note any case number. Use a written backup only if the office asks you to.";
+  } else if (channel) {
+    nextStep = `Review the suggested field values below, then open the verified official page. ${formFinish}`;
+  } else if (parentCandidate) {
+    nextStep = `This nearby parent venue is a routing candidate, not a confirmed owner. Open its official site and ask reception whether it handles ${entry.label} before sharing detailed personal information.`;
+  } else if (auditedOperator) {
+    nextStep =
+      "The responsible organisation was checked against an official source, but this destination is not yet a reviewed lost-property channel. Open its official site and locate Fundbüro, Fundsachen or visitor service.";
+  } else if (entry.lostFoundUrl) {
+    nextStep =
+      "Use the venue’s lost-property page first and include the visit time and a precise item description.";
+  }
+  let note: string | undefined;
+  if (channel && !channelReviewCurrent) {
+    note =
+      "This channel is past its human re-review date. Check the official page before sharing personal details; assisted filling and submission are disabled.";
+  } else if (channelIsFallback) {
+    note =
+      "Fallback only: this is the venue or operator's own official contact, but the source does not explicitly identify it as a lost-property service.";
+  } else if (parentCandidate) {
+    note =
+      "Candidate only: proximity suggests this parent venue, but no ownership evidence has been approved yet.";
+  } else if (auditedOperator) {
+    note =
+      "The operator relationship is audited; its lost-property destination still awaits channel review.";
+  }
   return {
-    id: channel ? `channel:${channel.id}` : `venue:${entry.refId}`,
+    id: partyId,
     channelId: channel?.id,
     channelKind: channel?.kind,
-    name: channel
-      ? `${entry.label} lost-property service`
-      : `${entry.label} contact candidate`,
-    operatorName: entry.label,
-    scope: `Items possibly lost at ${entry.label}`,
+    name: partyName,
+    operatorName: responsibility?.responsibility.name ?? entry.label,
+    scope: parentCandidate
+      ? `Items possibly lost at ${entry.label}; nearby-site ownership still needs confirmation`
+      : `Items possibly lost at ${entry.label}`,
     website,
     formUrl: channel
       ? channelHasForm
         ? channel.pageUrl
         : undefined
-      : entry.lostFoundUrl,
+      : parentCandidate
+        ? undefined
+        : entry.lostFoundUrl,
     formLabel,
     email: partyEmail,
     phone: partyPhone,
-    nextStep: channel
-      ? channel.kind === "email"
-        ? "Send one report to the reviewed official email address. Keep the sent message or any case number as your receipt."
-        : channel.kind === "phone"
-          ? "Call the reviewed official number and note any case number. Use a written backup only if the office asks you to."
-          : `Review the suggested field values below, then open the verified official page. ${formFinish}`
-      : entry.lostFoundUrl
-      ? "Use the venue’s lost-property page first and include the visit time and a precise item description."
-      : "Open the official website and contact reception or visitor service. This contact was found from public venue data and should be checked before sending personal details.",
+    nextStep,
     followUpAfterDays: 2,
     alternativeChannels: alternativeChannels
       .filter((alternative) => isChannelReviewCurrent(alternative))
@@ -485,19 +566,25 @@ function venueParty(entry: ItineraryEntry): Party | null {
         reviewCurrent: true,
       })),
     verified: Boolean(channel) && channelReviewCurrent,
-    lastVerifiedAt: channel?.verifiedAt ?? entry.contactUpdatedAt ?? VERIFIED_AT,
+    lastVerifiedAt:
+      channel?.verifiedAt ??
+      responsibility?.responsibility.auditedAt ??
+      entry.contactUpdatedAt ??
+      VERIFIED_AT,
     fieldSources: {
       scope: source,
-      website: channel ? source : websiteSource,
-      formUrl: channel || entry.lostFoundUrl ? source : undefined,
+      website: channel
+        ? source
+        : responsibility
+          ? responsibilitySource
+          : websiteSource,
+      formUrl:
+        channel || (!parentCandidate && entry.lostFoundUrl) ? source : undefined,
       email: partyEmail ? source : undefined,
       phone: partyPhone ? source : undefined,
       nextStep: source,
     },
-    note:
-      channel && !channelReviewCurrent
-        ? "This channel is past its human re-review date. Check the official page before sharing personal details; assisted filling and submission are disabled."
-        : undefined,
+    note,
     formFields: channelReviewCurrent ? channel?.fields : undefined,
     submissionMode: channelReviewCurrent ? channel?.submissionMode : "open_only",
     captcha: channel?.captcha,

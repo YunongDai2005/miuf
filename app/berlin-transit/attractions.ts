@@ -8,7 +8,17 @@ export type AttractionCategory =
   | "leisure"
   | "ruins"
   | "memorial"
-  | "artwork";
+  | "artwork"
+  // Staffed places with a ticket desk and a cloakroom. A concert hall empties
+  // several thousand people in ten minutes and has to have somewhere for the
+  // coats left behind, which is why these publish lost-property information far
+  // more often than a sculpture or a small museum does.
+  | "venue"
+  | "theatre"
+  | "cinema"
+  | "stadium"
+  | "gallery"
+  | "library";
 
 export interface Attraction {
   id: string;
@@ -49,6 +59,12 @@ export interface CategoryMeta {
 export const ATTRACTION_CATEGORIES: AttractionCategory[] = [
   "landmark",
   "museum",
+  "venue",
+  "theatre",
+  "cinema",
+  "stadium",
+  "gallery",
+  "library",
   "viewpoint",
   "castle",
   "leisure",
@@ -66,6 +82,12 @@ export const CATEGORY_META: Record<AttractionCategory, CategoryMeta> = {
   ruins: { label: "遗址", emoji: "🏺", color: "#A16207", defaultOn: true },
   memorial: { label: "纪念场所", emoji: "🕯️", color: "#64748B", defaultOn: false },
   artwork: { label: "公共艺术", emoji: "🎨", color: "#DB2777", defaultOn: false },
+  venue: { label: "演出场馆", emoji: "🎤", color: "#F97316", defaultOn: true },
+  theatre: { label: "剧院", emoji: "🎭", color: "#C026D3", defaultOn: true },
+  cinema: { label: "影院", emoji: "🎬", color: "#0891B2", defaultOn: true },
+  stadium: { label: "体育场馆", emoji: "🏟️", color: "#059669", defaultOn: true },
+  gallery: { label: "美术馆", emoji: "🖼️", color: "#8B5CF6", defaultOn: true },
+  library: { label: "图书馆", emoji: "📚", color: "#0F766E", defaultOn: false },
 };
 
 export type CategoryFilter = Record<AttractionCategory, boolean>;

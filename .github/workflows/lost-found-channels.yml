@@ -11,19 +11,26 @@ on:
     - cron: "41 5 * * 2"
     - cron: "23 3 1 * *"
 
+permissions:
+  contents: read
+
+concurrency:
+  group: lost-found-channels-${{ github.ref }}-${{ github.event_name }}
+  cancel-in-progress: false
+
 jobs:
   verify-published:
     if: github.event_name == 'workflow_dispatch' || github.event.schedule == '41 5 * * 2'
     runs-on: ubuntu-latest
     timeout-minutes: 20
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22.13.0
+          node-version: 22.19.0
           cache: npm
       - run: npm ci
-      - uses: actions/cache/restore@v4
+      - uses: actions/cache/restore@v6
         with:
           path: data/lost-found-crawler/verification-state.json
           key: lost-found-verification-state-${{ github.run_id }}
@@ -32,12 +39,12 @@ jobs:
       - run: npm run data:lost-found:browser-install
       - run: npm run data:lost-found:verify -- --browser
       - if: always()
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v6
         with:
           path: data/lost-found-crawler/verification-state.json
           key: lost-found-verification-state-${{ github.run_id }}
       - if: always()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: lost-found-verification
           path: data/lost-found-crawler/verification-report.json
@@ -52,10 +59,10 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 90
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22.13.0
+          node-version: 22.19.0
           cache: npm
       - run: npm ci
       - run: npm run data:lost-found:inventory
@@ -74,7 +81,7 @@ jobs:
             args+=("--domain=$DOMAIN_FILTER")
           fi
           npm run data:lost-found:discover -- "${args[@]}"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: lost-found-candidates-${{ matrix.shard }}
           path: |
@@ -88,14 +95,14 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - uses: actions/checkout@v7
+      - uses: actions/setup-node@v7
         with:
-          node-version: 22.13.0
+          node-version: 22.19.0
           cache: npm
       - run: npm ci
       - run: npm run data:lost-found:inventory
-      - uses: actions/download-artifact@v4
+      - uses: actions/download-artifact@v8
         with:
           pattern: lost-found-candidates-*
           path: artifacts
@@ -110,7 +117,7 @@ jobs:
           joined=$(IFS=,; echo "${inputs[*]}")
           npm run data:lost-found:merge -- "--inputs=$joined"
           npm run data:lost-found:review-export
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: lost-found-review
           path: |

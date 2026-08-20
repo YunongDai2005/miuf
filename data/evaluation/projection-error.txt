@@ -1,0 +1,56 @@
+==========================================================================
+PROJECTION ERROR — local equirectangular vs WGS-84 geodesic
+==========================================================================
+operating points from bundled data : 89,494
+latitude range                     : 52.26017 .. 52.73998 N  (span 0.4798 deg)
+longitude range                    : 12.96053 .. 13.87987 E  (span 0.9193 deg)
+reference latitude in geo.ts       : 52.52 N
+sampled pairs                      : 10,000 (seed 20260727)
+separation range                   : 1 .. 400 m
+
+1. ABSOLUTE ERROR (metres)
+   median 0.115   p95 0.926   p99 1.428   max 2.738
+2. RELATIVE ERROR (per cent)
+   median 0.078   p95 0.388   p99 0.498   max 0.784
+   worst case: -2.738 m at 52.2747 N, bearing 96.4 deg, true separation 363.8 m
+
+3. ABSOLUTE ERROR BY LATITUDE BAND (metres)
+   band        n        median      p95       max
+   52.2 N       38      0.584     2.343     2.738
+   52.3 N      639      0.276     1.529     2.355
+   52.4 N     3842      0.189     1.114     1.795
+   52.5 N     4769      0.092     0.563     0.956
+   52.6 N      698      0.056     0.208     0.601
+   52.7 N       14      0.222     0.977     0.977
+
+4. ABSOLUTE ERROR BY SEPARATION (metres)
+   band          n        median      p95       max
+     1-100 m     2524      0.031     0.260     0.579
+   100-200 m     2499      0.116     0.597     1.202
+   200-300 m     2440      0.195     0.982     1.980
+   300-400 m     2537      0.228     1.331     2.738
+
+5. THRESHOLD DECISION FLIPS
+   For each threshold the true separation is drawn from the band in which a
+   flip is arithmetically possible, so this is a worst-case test rather than
+   a representative one.
+
+   threshold                      band tested        n      flips      rate
+   path resample spacing (65 m)   ±6 m     200000     1332     0.6660%
+   place candidate radius (220 m) ±6 m     200000     4500     2.2500%
+   transit line corridor (230 m)  ±6 m     200000     4681     2.3405%
+   display / tightness (245 m)    ±6 m     200000     5102     2.5510%
+   photo merge radius (300 m)     ±6 m     200000     6273     3.1365%
+
+6. FOR CONTEXT — spherical haversine against the same reference (metres)
+   median 0.310   p95 1.010   max 1.281
+
+7. IF THE REFERENCE LATITUDE WERE ANCHORED PER JOURNEY (metres)
+   median 0.114   p95 0.635   p99 0.772   max 0.837
+   improvement over the fixed reference: 3.3x on the maximum
+
+==========================================================================
+VERDICT: worst-case absolute error 2.738 m over the operating range;
+         a threshold decision can only change when the true separation lies
+         within 2.738 m of that threshold.
+==========================================================================

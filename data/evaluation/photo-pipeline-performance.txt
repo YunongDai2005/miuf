@@ -1,0 +1,32 @@
+==============================================================================
+PHOTO METADATA PIPELINE — batch timing
+==============================================================================
+fixture size            : 4.00 MB each, real EXIF APP1 segment
+logical cores           : 10
+repetitions per batch   : 10
+runtime                 : Node v24.11.0 (desktop, not a handset)
+
+first call in a session : 16.1 ms — dominated by the dynamic
+                          import of the metadata library, paid once
+
+batch   total ms                per photo ms      progress   points
+        P50      P95      max   P50      P95      calls      found
+   1       0.8      1.3      1.3     0.76     1.31        1         1 / 1
+  10       1.5      1.8      1.8     0.15     0.18       10        10 / 10
+  30       3.6      5.0      5.0     0.12     0.17       30        30 / 30
+  60       6.4     12.6     12.6     0.11     0.21       30        60 / 60
+ 100      10.2     12.9     12.9     0.10     0.13       50       100 / 100
+
+CLAIMS CHECKED
+  progress callbacks are capped near 50 : yes (max observed 50)
+  every fixture yields a GPS point      : yes (100 of 100 at the largest batch)
+  per-photo cost with bounded concurrency: 0.76 ms at n=1 -> 0.10 ms at n=100 (7.5x better amortised)
+  bytes on disk per batch of 100         : 400.0 MB, of which 6.3 MB is read
+                                          (the APP1 segment precedes the image data, so one
+                                          64 KiB chunk suffices; the 5-chunk cap is a bound)
+
+CAVEATS
+  Files are served from the OS page cache after the first repetition, so these
+  figures isolate parsing and concurrency cost rather than cold storage I/O.
+  Handset timings under the non-functional requirement remain unmeasured.
+==============================================================================

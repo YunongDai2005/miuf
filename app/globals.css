@@ -8,7 +8,7 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
+  --font-sans: var(--font-fira-sans);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -21,7 +21,7 @@
 body {
   background: var(--background);
   color: var(--foreground);
-  font-family: var(--font-geist-sans), "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
+  font-family: var(--font-fira-sans), "Fira Sans", "PingFang SC", "Microsoft YaHei", Arial, sans-serif;
 }
 
 button,
@@ -33,62 +33,8 @@ input {
 button:focus-visible,
 summary:focus-visible,
 input:focus-visible {
-  outline: 2px solid #f97316;
+  outline: 2px solid var(--lf-navy, #16385c);
   outline-offset: 2px;
-}
-
-.brand-mark {
-  position: relative;
-  display: inline-flex;
-  width: 38px;
-  height: 34px;
-  flex: none;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 4px;
-}
-
-.brand-mark::before,
-.brand-mark::after {
-  position: absolute;
-  top: 16px;
-  height: 2px;
-  width: 13px;
-  border-radius: 999px;
-  background: linear-gradient(90deg, #fb923c, #ea580c);
-  content: "";
-  transform-origin: left center;
-}
-
-.brand-mark::before {
-  left: 8px;
-  transform: rotate(-24deg);
-}
-
-.brand-mark::after {
-  left: 20px;
-  transform: rotate(28deg);
-}
-
-.brand-mark > span {
-  position: relative;
-  z-index: 1;
-  width: 8px;
-  height: 8px;
-  border: 2px solid white;
-  border-radius: 50%;
-  background: #f97316;
-  box-shadow: 0 2px 5px rgb(194 65 12 / 0.25);
-}
-
-.brand-mark > span:nth-child(2) {
-  margin-top: -10px;
-  background: #ef4444;
-}
-
-.brand-mark > span:nth-child(3) {
-  margin-top: 4px;
-  background: #7c3aed;
 }
 
 .leaflet-control-zoom {
@@ -138,178 +84,6 @@ input:focus-visible {
   scrollbar-color: #d6d3d1 transparent;
 }
 
-.map-nail-icon {
-  background: transparent !important;
-  border: 0 !important;
-  overflow: visible !important;
-}
-
-.map-nail {
-  --nail-color: #f05a28;
-  display: block;
-  position: relative;
-  width: 34px;
-  height: 42px;
-  transform-origin: 50% 88%;
-  transition: transform 140ms ease, filter 140ms ease;
-  filter: drop-shadow(0 3px 2px rgb(41 23 18 / 0.28));
-}
-
-.map-nail-icon:hover .map-nail,
-.map-nail-icon:focus .map-nail,
-.map-nail--selected {
-  transform: translateY(-3px) scale(1.1);
-  filter: drop-shadow(0 6px 4px rgb(41 23 18 / 0.34));
-}
-
-.map-nail--ambient {
-  opacity: 0.82;
-  transform: scale(0.76);
-  filter: drop-shadow(0 2px 2px rgb(41 23 18 / 0.22));
-}
-
-.map-nail--muted {
-  opacity: 0.34;
-  transform: scale(0.62);
-  filter: grayscale(0.18) drop-shadow(0 1px 1px rgb(41 23 18 / 0.16));
-}
-
-.map-nail-icon:hover .map-nail--muted,
-.map-nail-icon:focus .map-nail--muted {
-  opacity: 1;
-  transform: translateY(-3px) scale(0.92);
-  filter: drop-shadow(0 5px 3px rgb(41 23 18 / 0.28));
-}
-
-.map-nail-icon:hover .map-nail--ambient,
-.map-nail-icon:focus .map-nail--ambient {
-  z-index: 5;
-  opacity: 1;
-  transform: translateY(-3px) scale(1);
-}
-
-.map-nail__shadow {
-  position: absolute;
-  left: 8px;
-  bottom: 1px;
-  width: 21px;
-  height: 7px;
-  border-radius: 50%;
-  background: rgb(41 23 18 / 0.22);
-  transform: rotate(-8deg);
-  filter: blur(1.5px);
-}
-
-.map-nail__stem {
-  position: absolute;
-  z-index: 1;
-  top: 18px;
-  left: 15px;
-  width: 4px;
-  height: 20px;
-  border-radius: 0 0 3px 3px;
-  background: linear-gradient(90deg, #6b7280 0%, #eef2f4 45%, #808892 68%, #3f464d 100%);
-  box-shadow: 1px 1px 1px rgb(0 0 0 / 0.2);
-  transform: rotate(4deg);
-  transform-origin: top;
-}
-
-.map-nail__head {
-  position: absolute;
-  z-index: 3;
-  top: 3px;
-  left: 6px;
-  display: flex;
-  width: 23px;
-  height: 23px;
-  align-items: center;
-  justify-content: center;
-  border: 2px solid rgb(255 255 255 / 0.88);
-  border-radius: 50%;
-  color: white;
-  background:
-    radial-gradient(circle at 36% 28%, rgb(255 255 255 / 0.48) 0 9%, transparent 10%),
-    radial-gradient(circle at 48% 45%, color-mix(in srgb, var(--nail-color), white 16%) 0 42%, var(--nail-color) 70%);
-  box-shadow:
-    inset -3px -4px 5px rgb(45 18 12 / 0.25),
-    inset 2px 2px 3px rgb(255 255 255 / 0.25),
-    0 2px 3px rgb(41 23 18 / 0.28);
-}
-
-.map-nail__shine {
-  position: absolute;
-  z-index: 4;
-  top: 7px;
-  left: 11px;
-  width: 6px;
-  height: 3px;
-  border-radius: 50%;
-  background: rgb(255 255 255 / 0.66);
-  transform: rotate(-24deg);
-  pointer-events: none;
-}
-
-.map-nail__number {
-  position: relative;
-  z-index: 5;
-  font-size: 9px;
-  font-weight: 900;
-  line-height: 1;
-  text-shadow: 0 1px 1px rgb(0 0 0 / 0.38);
-}
-
-.map-nail--selected .map-nail__head {
-  border-color: white;
-  box-shadow:
-    inset -3px -4px 5px rgb(45 18 12 / 0.28),
-    inset 2px 2px 3px rgb(255 255 255 / 0.3),
-    0 0 0 3px rgb(255 255 255 / 0.88),
-    0 4px 7px rgb(41 23 18 / 0.3);
-}
-
-.map-nail--bend .map-nail__head {
-  border-radius: 7px;
-  transform: rotate(45deg) scale(0.86);
-}
-
-.map-nail--bend .map-nail__number {
-  transform: rotate(-45deg);
-}
-
-.thread-line--shadow {
-  filter: blur(1.1px);
-}
-
-.thread-line--yarn {
-  filter: drop-shadow(0 2px 1px rgb(61 25 15 / 0.25));
-  stroke-dasharray: 1 1.6;
-}
-
-.thread-line--highlight {
-  stroke-dasharray: 3 2;
-}
-
-.thread-preview {
-  animation: thread-pulse 900ms ease-in-out infinite alternate;
-}
-
-@keyframes thread-pulse {
-  from {
-    stroke-opacity: 0.48;
-  }
-  to {
-    stroke-opacity: 0.9;
-  }
-}
-
-@media (prefers-reduced-motion: reduce) {
-  .map-nail,
-  .thread-preview {
-    transition: none;
-    animation: none;
-  }
-}
-
 @media print {
   @page {
     margin: 14mm;
@@ -354,5 +128,3757 @@ input:focus-visible {
   a {
     color: #1c1917 !important;
     text-decoration: none !important;
+  }
+}
+
+/* Berlin Lost & Found · iOS design language */
+:root {
+  --lf-ink: #10161c;
+  --lf-navy: #16385c;
+  --lf-red: #d8232a;
+  --lf-muted: #6b7783;
+  --lf-faint: #8a929b;
+  --lf-rule: #dde2e7;
+  --lf-soft: #f3f4f6;
+  --lf-canvas: #e7e8e4;
+  --lf-surface: #fff;
+  --lf-surface-strong: #e7ebef;
+  --lf-success: #1b7f4b;
+  --lf-success-soft: #e6f2ea;
+  --lf-warning: #765516;
+  --lf-warning-soft: #f5f0e4;
+
+  /* Motion scale. Four durations cover the whole app so nothing has to invent
+     its own timing: press → control state → element enter → sheet/screen.
+     `out` decelerates (things arriving), `standard` for state changes,
+     `in` accelerates (things leaving), `settle` overshoots once for a
+     confirmation that should feel like an object clicking into place. */
+  --lf-dur-press: 110ms;
+  --lf-dur-state: 180ms;
+  --lf-dur-enter: 260ms;
+  --lf-dur-sheet: 340ms;
+  --lf-stagger: 45ms;
+  --lf-motion-out: cubic-bezier(0.22, 1, 0.36, 1);
+  --lf-motion-standard: cubic-bezier(0.4, 0, 0.2, 1);
+  --lf-motion-in: cubic-bezier(0.4, 0, 1, 1);
+  --lf-motion-settle: cubic-bezier(0.2, 1.3, 0.4, 1);
+}
+
+@keyframes lf-screen-enter {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lf-rise-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes lf-fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes lf-row-enter {
+  from {
+    opacity: 0;
+    transform: translateX(-5px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes lf-brand-piece-return {
+  from {
+    translate: 12px 12px;
+    opacity: 0.35;
+  }
+  60% {
+    opacity: 1;
+  }
+  to {
+    translate: 0 0;
+    opacity: 1;
+  }
+}
+
+/* The ring gives one small nod as the missing piece lands — the brand idea
+   ("something lost comes back") stated in motion rather than in copy. */
+@keyframes lf-brand-ring-settle {
+  0%, 55% {
+    scale: 1;
+  }
+  72% {
+    scale: 0.94;
+  }
+  100% {
+    scale: 1;
+  }
+}
+
+@keyframes lf-brand-intro-exit {
+  to {
+    opacity: 0;
+    scale: 1.06;
+  }
+}
+
+/* Bottom sheets and presented screens travel from the edge they belong to. */
+@keyframes lf-sheet-up {
+  from {
+    transform: translateY(100%);
+  }
+  to {
+    transform: translateY(0);
+  }
+}
+
+/* Confirmations (added / checked / sent) land with one small overshoot. */
+@keyframes lf-pop-in {
+  from {
+    opacity: 0;
+    transform: scale(0.72);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+/* Month-to-month paging in the calendar, direction aware. */
+@keyframes lf-page-in-next {
+  from {
+    opacity: 0;
+    transform: translateX(14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes lf-page-in-prev {
+  from {
+    opacity: 0;
+    transform: translateX(-14px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+html,
+body {
+  min-height: 100%;
+}
+
+body {
+  margin: 0;
+  background: var(--lf-canvas);
+  color: var(--lf-ink);
+}
+
+.lf-stage,
+.lf-stage * {
+  box-sizing: border-box;
+}
+
+.lf-stage button,
+.lf-stage input,
+.lf-stage textarea {
+  font: inherit;
+}
+
+.lf-stage button,
+.lf-stage a,
+.lf-stage summary,
+.lf-stage label {
+  -webkit-tap-highlight-color: transparent;
+}
+
+.lf-stage button:focus-visible,
+.lf-stage a:focus-visible,
+.lf-stage input:focus-visible,
+.lf-stage textarea:focus-visible,
+.lf-stage summary:focus-visible {
+  outline: 2px solid var(--lf-navy);
+  outline-offset: 2px;
+}
+
+/* One transition for every tappable surface in the app. Components below only
+   declare *what* changes on `.is-active` / `:active`; how fast it changes and
+   with which curve is decided here, once. */
+.lf-stage :is(button, a, summary, label, .lf-day-chips > *, .lf-time-chips > *) {
+  transition:
+    background-color var(--lf-dur-state) var(--lf-motion-standard),
+    border-color var(--lf-dur-state) var(--lf-motion-standard),
+    box-shadow var(--lf-dur-state) var(--lf-motion-standard),
+    color var(--lf-dur-state) var(--lf-motion-standard),
+    opacity var(--lf-dur-press) var(--lf-motion-standard),
+    transform var(--lf-dur-press) var(--lf-motion-standard);
+}
+
+.lf-stage :is(input, textarea, select) {
+  transition:
+    background-color var(--lf-dur-state) var(--lf-motion-standard),
+    border-color var(--lf-dur-state) var(--lf-motion-standard),
+    box-shadow var(--lf-dur-state) var(--lf-motion-standard);
+}
+
+/* Press feedback comes in two flavours, matched to the shape being touched:
+   a self-contained control compresses, a full-width list row tints instead
+   (scaling a row that spans the screen reads as a glitch, not a press). */
+.lf-stage :is(button, a.lf-primary, a.lf-secondary):active:not(:disabled) {
+  transform: scale(0.985);
+}
+
+.lf-stage
+  :is(
+    .lf-search-result,
+    .lf-case-links button,
+    .lf-tracking-list > button,
+    .lf-add-stop,
+    .lf-settings-list button,
+    .lf-tabbar button
+  ):active:not(:disabled) {
+  background-color: #f5f6f7;
+  transform: none;
+}
+
+/* Lists reveal top-down. Rows opt in by setting --lf-index. */
+.lf-stage .lf-stagger > * {
+  animation: lf-rise-in var(--lf-dur-enter) var(--lf-motion-out) both;
+  animation-delay: calc(var(--lf-stagger) * var(--lf-index, 0));
+}
+
+.lf-stage .lf-stagger > *:nth-child(1) { --lf-index: 0; }
+.lf-stage .lf-stagger > *:nth-child(2) { --lf-index: 1; }
+.lf-stage .lf-stagger > *:nth-child(3) { --lf-index: 2; }
+.lf-stage .lf-stagger > *:nth-child(4) { --lf-index: 3; }
+.lf-stage .lf-stagger > *:nth-child(5) { --lf-index: 4; }
+.lf-stage .lf-stagger > *:nth-child(n + 6) { --lf-index: 5; }
+
+.lf-sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+.lf-stage {
+  min-height: 100dvh;
+  display: grid;
+  place-items: center;
+  padding: 24px;
+  background: var(--lf-canvas);
+  font-family: var(--font-fira-sans), "Fira Sans", -apple-system, BlinkMacSystemFont, sans-serif;
+  color: var(--lf-ink);
+}
+
+.lf-device {
+  position: relative;
+  width: min(402px, 100%);
+  height: min(874px, calc(100dvh - 48px));
+  min-height: 640px;
+  overflow: hidden;
+  border-radius: 48px;
+  background: #fff;
+  box-shadow: 0 40px 80px rgb(0 0 0 / 18%), 0 0 0 1px rgb(0 0 0 / 12%);
+  -webkit-font-smoothing: antialiased;
+}
+
+.lf-dynamic-island {
+  position: absolute;
+  z-index: 100;
+  top: 11px;
+  left: 50%;
+  width: 126px;
+  height: 37px;
+  border-radius: 24px;
+  background: #000;
+  transform: translateX(-50%);
+  pointer-events: none;
+}
+
+.lf-statusbar {
+  position: absolute;
+  z-index: 90;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  height: 58px;
+  padding: 19px 25px 13px 33px;
+  color: #000;
+  font-family: -apple-system, BlinkMacSystemFont, sans-serif;
+  font-size: 15px;
+  font-weight: 650;
+  pointer-events: none;
+}
+
+.lf-status-icons,
+.lf-signal {
+  display: flex;
+  align-items: flex-end;
+}
+
+.lf-status-icons {
+  gap: 7px;
+}
+
+.lf-signal {
+  height: 12px;
+  gap: 2px;
+}
+
+.lf-signal i {
+  display: block;
+  width: 3px;
+  border-radius: 1px;
+  background: currentColor;
+}
+
+.lf-signal i:nth-child(1) { height: 4px; }
+.lf-signal i:nth-child(2) { height: 7px; }
+.lf-signal i:nth-child(3) { height: 10px; }
+.lf-signal i:nth-child(4) { height: 12px; }
+
+.lf-battery {
+  width: 25px;
+  height: 13px;
+  padding: 1.5px;
+  border: 1px solid rgb(0 0 0 / 35%);
+  border-radius: 4px;
+}
+
+.lf-battery::after {
+  position: absolute;
+  width: 2px;
+  height: 5px;
+  margin: 2px 0 0 2px;
+  border-radius: 0 2px 2px 0;
+  background: rgb(0 0 0 / 35%);
+  content: "";
+}
+
+.lf-battery i {
+  display: block;
+  width: 100%;
+  height: 100%;
+  border-radius: 2px;
+  background: currentColor;
+}
+
+.lf-home-indicator {
+  position: absolute;
+  z-index: 100;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  justify-content: center;
+  height: 28px;
+  padding-top: 15px;
+  pointer-events: none;
+}
+
+.lf-home-indicator i {
+  width: 139px;
+  height: 5px;
+  border-radius: 10px;
+  background: rgb(0 0 0 / 25%);
+}
+
+html[data-native="ios"] .lf-dynamic-island,
+html[data-native="ios"] .lf-statusbar,
+html[data-native="ios"] .lf-home-indicator {
+  display: none;
+}
+
+/* Keep the packaged app anchored to the native viewport. The document itself
+   must never become the scroll container; individual .lf-scroll regions own
+   any scrolling required by longer forms. */
+html[data-native="ios"],
+html[data-native="ios"] body,
+html[data-native="ios"] #root {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  overflow: hidden;
+  overscroll-behavior: none;
+  background: #fff;
+}
+
+html[data-native="ios"] {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+html[data-native="ios"] body {
+  position: fixed;
+  inset: 0;
+}
+
+html[data-native="ios"] .lf-stage {
+  position: fixed;
+  inset: 0;
+  padding: 0;
+  background: #fff;
+}
+
+html[data-native="ios"] .lf-device {
+  width: 100%;
+  height: 100%;
+  min-height: 0;
+  max-height: 100%;
+  overflow: hidden;
+}
+
+/* iOS zooms a WebView when a focused field renders below 16px. Keep native
+   form controls at the threshold while leaving labels and helper copy compact. */
+html[data-native="ios"] input:not([type="checkbox"]):not([type="radio"]):not([type="file"]),
+html[data-native="ios"] textarea,
+html[data-native="ios"] select {
+  font-size: 16px !important;
+}
+
+html[data-native="ios"] .lf-scroll,
+html[data-native="ios"] .lf-sheet-list {
+  -webkit-overflow-scrolling: touch;
+  overscroll-behavior-y: contain;
+}
+
+/* The screen owns a transform on purpose: it makes `.lf-screen` the containing
+   block for the fixed-position date overlay, so a sheet opened from a scrolled
+   form still covers the phone frame and nothing else. Keep the transform even
+   if the enter animation ever changes. */
+.lf-screen {
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #fff;
+  transform: translateZ(0);
+  animation: lf-screen-enter var(--lf-dur-enter) var(--lf-motion-out) both;
+}
+
+/* A screen with a Cancel/step bar is an iOS-style presented modal, so it comes
+   up from the bottom edge rather than cross-fading like a pushed screen. */
+.lf-screen:has(> .lf-modalbar) {
+  animation: lf-sheet-up var(--lf-dur-sheet) var(--lf-motion-out) both;
+}
+
+.lf-column {
+  display: flex;
+  flex-direction: column;
+}
+
+/* Vertical only. `overflow: auto` let a single over-wide child make the whole
+   screen draggable sideways, which on a phone reads as the UI having come
+   unstuck. Nothing in a 402pt frame should ever be wider than the frame, so a
+   regression here should show up as clipped content, not as a loose screen. */
+.lf-scroll {
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  overscroll-behavior: contain;
+  scrollbar-width: none;
+}
+
+.lf-scroll::-webkit-scrollbar {
+  width: 0;
+  height: 0;
+}
+
+.lf-launch {
+  display: flex;
+  flex-direction: column;
+}
+
+.lf-launch-body {
+  flex: 1;
+  padding: 66px 24px 28px;
+}
+
+.lf-brand-row,
+.lf-brand,
+.lf-case-header > div,
+.lf-tracking-header > div:first-child {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.lf-brand-row {
+  margin-bottom: 42px;
+}
+
+.lf-launch-tools {
+  display: flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.lf-brand {
+  justify-content: flex-start;
+  gap: 9px;
+  font-size: 13px;
+  letter-spacing: -0.1px;
+}
+
+.lf-brand-mark {
+  display: block;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  overflow: visible;
+  color: var(--lf-ink);
+}
+
+.lf-brand-mark path {
+  stroke-linecap: butt;
+}
+
+.lf-brand-mark-piece {
+  stroke: var(--lf-red);
+  translate: 12px 12px;
+  will-change: translate;
+}
+
+.lf-brand-mark--returning .lf-brand-mark-piece {
+  animation: lf-brand-piece-return 620ms var(--lf-motion-settle) both;
+}
+
+.lf-brand-mark--returning {
+  animation: lf-brand-ring-settle 620ms var(--lf-motion-standard) both;
+}
+
+.lf-brand-mark--settled .lf-brand-mark-piece {
+  translate: none;
+}
+
+.lf-brand-intro {
+  position: absolute;
+  z-index: 80;
+  inset: 0;
+  display: grid;
+  place-items: center;
+  background: #fff;
+  pointer-events: none;
+}
+
+.lf-brand-intro.is-leaving {
+  animation: lf-brand-intro-exit var(--lf-dur-enter) var(--lf-motion-in) both;
+}
+
+.lf-brand-mark--intro {
+  width: 112px;
+  height: 112px;
+  transform: translateY(-8px);
+}
+
+.lf-icon-button {
+  display: grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--lf-muted);
+  cursor: pointer;
+}
+
+.lf-icon-button:active {
+  color: var(--lf-ink);
+}
+
+.lf-icon-button svg {
+  stroke: currentColor;
+  stroke-width: 1.7;
+  transition: rotate var(--lf-dur-sheet) var(--lf-motion-out);
+}
+
+.lf-icon-button:active svg {
+  rotate: 45deg;
+}
+
+.lf-icon-button.is-loading svg {
+  animation: lf-data-spin 900ms linear infinite;
+}
+
+@keyframes lf-data-spin {
+  to { rotate: 360deg; }
+}
+
+.lf-launch h1,
+.lf-form-scroll > h1,
+.lf-screen-content > h1,
+.lf-report-content > h1,
+.lf-case-header h1,
+.lf-tracking-header h1 {
+  margin: 0;
+  font-size: 30px;
+  font-weight: 700;
+  line-height: 1.13;
+  letter-spacing: -0.8px;
+}
+
+.lf-launch h1 {
+  max-width: 300px;
+  font-size: 34px;
+  letter-spacing: -1px;
+}
+
+.lf-lede {
+  max-width: 300px;
+  margin: 14px 0 0;
+  color: #5c6672;
+  font-size: 16px;
+  line-height: 1.5;
+  text-wrap: pretty;
+}
+
+.lf-launch-steps {
+  margin-top: 36px;
+  border-top: 1px solid var(--lf-rule);
+}
+
+.lf-data-notice + .lf-launch-steps {
+  margin-top: 18px;
+}
+
+.lf-launch-steps > div {
+  display: flex;
+  align-items: baseline;
+  gap: 16px;
+  padding: 17px 0;
+  border-bottom: 1px solid var(--lf-rule);
+}
+
+.lf-launch-steps > div > span,
+.lf-section-label,
+.lf-kicker,
+.lf-case-header > div > span,
+.lf-case-header > small,
+.lf-tracking-header > div > span,
+.lf-stop-time,
+.lf-sheet-title span,
+.lf-next-card > span {
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+}
+
+.lf-launch-steps > div > span {
+  width: 22px;
+  flex: none;
+  color: var(--lf-red);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.lf-launch-steps p {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+}
+
+.lf-launch-steps strong {
+  font-size: 15px;
+  font-weight: 600;
+}
+
+.lf-launch-steps small,
+.lf-bottom-action p {
+  color: var(--lf-muted);
+  font-size: 13px;
+  font-weight: 400;
+  line-height: 1.45;
+}
+
+.lf-bottom-action {
+  flex: none;
+  padding: 16px 24px 38px;
+  border-top: 1px solid var(--lf-rule);
+  background: #fff;
+}
+
+.lf-bottom-action p {
+  margin: 11px 0 0;
+  color: var(--lf-faint);
+  text-align: center;
+}
+
+.lf-primary,
+.lf-secondary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  min-height: 52px;
+  padding: 12px 16px;
+  border: 0;
+  border-radius: 0;
+  font-size: 16px;
+  font-weight: 600;
+  text-align: center;
+  text-decoration: none;
+  cursor: pointer;
+}
+
+.lf-primary {
+  background: var(--lf-navy);
+  color: #fff;
+}
+
+.lf-primary:hover,
+.lf-primary:active {
+  background: #102f50;
+  color: #fff;
+}
+
+.lf-primary:disabled,
+.lf-primary.is-disabled {
+  background: #b8c0c8;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.lf-secondary {
+  border: 1px solid #c9d0d7;
+  background: #fff;
+  color: var(--lf-navy);
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.lf-modalbar,
+.lf-topbar {
+  flex: none;
+  border-bottom: 1px solid var(--lf-rule);
+  background: #fff;
+}
+
+.lf-modalbar {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  padding: 62px 16px 12px;
+}
+
+.lf-modalbar button,
+.lf-back {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--lf-navy);
+  font-size: 16px;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lf-modalbar span {
+  color: var(--lf-faint);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+}
+
+.lf-form-scroll {
+  flex: 1;
+  padding: 24px 24px 30px;
+}
+
+/* Every interruption in the app — blocker, sheet warning, tool error, photo
+   status — arrives the same way, so a new message is noticed as a message and
+   not as the page jumping. */
+.lf-alert,
+.lf-sheet-message,
+.lf-tool-alert,
+.lf-photo-message,
+.lf-journey-notice {
+  animation: lf-rise-in var(--lf-dur-enter) var(--lf-motion-out) both;
+}
+
+.lf-alert,
+.lf-sheet-message,
+.lf-tool-alert {
+  border-left: 3px solid var(--lf-red);
+  background: #fbf0ef;
+  color: #6e322f;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.lf-alert {
+  margin: 18px 0 0;
+  padding: 12px 14px;
+}
+
+.lf-describe-form {
+  padding-top: 21px;
+}
+
+.lf-category-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+
+.lf-category-grid button {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 78px;
+  padding: 0;
+  border: 1px solid var(--lf-rule);
+  border-radius: 0;
+  background: #fff;
+  color: #3a454f;
+  cursor: pointer;
+}
+
+.lf-category-grid button.is-active {
+  border-color: var(--lf-navy);
+  background: var(--lf-navy);
+  color: #fff;
+}
+
+.lf-category-grid svg {
+  stroke: currentColor;
+  stroke-width: 1.6;
+  stroke-linecap: round;
+  stroke-linejoin: round;
+  transition: transform var(--lf-dur-state) var(--lf-motion-settle);
+}
+
+.lf-category-grid button.is-active svg {
+  transform: scale(1.12);
+}
+
+.lf-category-grid span {
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.lf-urgent {
+  margin-top: 18px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--lf-red);
+  background: #fbf0ef;
+}
+
+.lf-urgent strong {
+  color: #8e1b18;
+  font-size: 14px;
+}
+
+.lf-urgent p {
+  margin: 5px 0 8px;
+  color: #6e322f;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.lf-urgent a {
+  color: var(--lf-red);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lf-field-block {
+  display: block;
+  margin-top: 25px;
+}
+
+.lf-section-label,
+.lf-kicker {
+  display: block;
+  color: var(--lf-faint);
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.12em;
+  line-height: 1;
+  text-transform: uppercase;
+}
+
+.lf-field-block textarea {
+  display: block;
+  width: 100%;
+  min-height: 92px;
+  margin-top: 10px;
+  padding: 12px 14px;
+  resize: vertical;
+  border: 1px solid #c9d0d7;
+  border-radius: 0;
+  background: #fff;
+  color: var(--lf-ink);
+  font-size: 15px;
+  line-height: 1.5;
+}
+
+.lf-field-block > small {
+  display: block;
+  margin-top: 7px;
+  color: var(--lf-faint);
+  font-size: 13px;
+}
+
+.lf-date-next {
+  display: flex;
+  gap: 13px;
+  margin-top: 24px;
+  padding: 15px 0;
+  border-top: 1px solid var(--lf-rule);
+  border-bottom: 1px solid var(--lf-rule);
+}
+
+.lf-date-next > span {
+  flex: none;
+  color: var(--lf-red);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.lf-date-next p {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  margin: 0;
+}
+
+.lf-date-next strong {
+  color: var(--lf-ink);
+  font-size: 14px;
+}
+
+.lf-date-next small {
+  color: var(--lf-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lf-day-chips,
+.lf-time-chips {
+  display: flex;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.lf-day-chips > *,
+.lf-time-chips > * {
+  position: relative;
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  height: 44px;
+  overflow: hidden;
+  border: 1px solid #c9d0d7;
+  border-radius: 0;
+  background: #fff;
+  color: #3a454f;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.lf-day-chips > *.is-active,
+.lf-time-chips > *.is-active {
+  border-color: var(--lf-navy);
+  background: var(--lf-navy);
+  color: #fff;
+}
+
+.lf-day-chips input,
+.lf-time-chips input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+  cursor: pointer;
+}
+
+.lf-time-chips {
+  margin-top: 8px;
+}
+
+.lf-time-chips > * {
+  flex-direction: column;
+  gap: 3px;
+  font-size: 13px;
+}
+
+.lf-time-chips small {
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 400;
+  opacity: 0.66;
+}
+
+.lf-unsure {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  margin-top: 22px;
+  padding-top: 18px;
+  border-top: 1px solid var(--lf-rule);
+  cursor: pointer;
+}
+
+.lf-unsure input {
+  position: absolute;
+  opacity: 0;
+}
+
+.lf-unsure > i {
+  display: grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  flex: none;
+  border: 1px solid #c9d0d7;
+  background: #fff;
+  color: transparent;
+  font-size: 13px;
+  font-style: normal;
+  font-weight: 700;
+}
+
+.lf-unsure > i {
+  transition:
+    background-color var(--lf-dur-state) var(--lf-motion-standard),
+    border-color var(--lf-dur-state) var(--lf-motion-standard),
+    color var(--lf-dur-state) var(--lf-motion-standard);
+}
+
+.lf-unsure input:checked + i {
+  border-color: var(--lf-navy);
+  background: var(--lf-navy);
+  color: #fff;
+  animation: lf-pop-in var(--lf-dur-state) var(--lf-motion-settle);
+}
+
+.lf-unsure span {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lf-unsure strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.lf-unsure small {
+  color: var(--lf-faint);
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.lf-more-details {
+  margin-top: 20px;
+  border-top: 1px solid var(--lf-rule);
+  padding-top: 16px;
+}
+
+.lf-more-details summary {
+  color: var(--lf-navy);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.lf-more-details summary::marker {
+  color: var(--lf-faint);
+}
+
+.lf-more-details > div {
+  display: grid;
+  gap: 12px;
+  margin-top: 14px;
+}
+
+.lf-more-details[open] > div {
+  animation: lf-rise-in var(--lf-dur-enter) var(--lf-motion-out) both;
+}
+
+.lf-more-details label {
+  display: grid;
+  gap: 5px;
+  color: var(--lf-muted);
+  font-size: 12px;
+}
+
+.lf-more-details input,
+.lf-contact-prompt input,
+.lf-settings-fields input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  border-bottom: 1px solid var(--lf-rule);
+  border-radius: 0;
+  padding: 10px 0;
+  background: transparent;
+  color: var(--lf-ink);
+  outline: 0;
+}
+
+.lf-bottom-action--single {
+  padding-top: 14px;
+}
+
+.lf-topbar {
+  position: relative;
+  display: grid;
+  grid-template-columns: minmax(75px, 1fr) auto minmax(75px, 1fr);
+  align-items: center;
+  min-height: 103px;
+  padding: 58px 16px 11px;
+}
+
+.lf-topbar > strong {
+  font-size: 16px;
+  font-weight: 600;
+}
+
+.lf-back {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.lf-chevron-right {
+  transform: rotate(180deg);
+}
+
+.lf-map-screen {
+  position: relative;
+  background: #edeeea;
+}
+
+.lf-route-map {
+  position: absolute;
+  z-index: 0;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  overflow: hidden;
+  background: #edeeea;
+}
+
+.lf-route-map-canvas {
+  position: absolute;
+  inset: 0;
+}
+
+.lf-route-map .leaflet-container {
+  background: #edeeea;
+  font-family: var(--font-fira-sans), "Fira Sans", sans-serif;
+}
+
+.lf-route-map .leaflet-tile-pane {
+  filter: saturate(0.72) contrast(0.92) brightness(1.04);
+  animation: lf-fade-in var(--lf-dur-sheet) var(--lf-motion-out) both;
+}
+
+/* The route is layered onto the map in the order it was reasoned about:
+   the base map, then alternatives, then the primary line, then the anchors
+   the whole estimate is built from. */
+.lf-route-line,
+.lf-route-venue-marker,
+.lf-route-anchor-icon {
+  animation: lf-fade-in var(--lf-dur-sheet) var(--lf-motion-out) both;
+}
+
+.lf-route-line--alternative {
+  animation-delay: 60ms;
+}
+
+.lf-route-line--primary {
+  animation-delay: 120ms;
+}
+
+.lf-route-venue-marker,
+.lf-route-anchor-icon {
+  animation-delay: 180ms;
+}
+
+.lf-route-anchor-icon {
+  display: grid !important;
+  place-items: center;
+  border: 3px solid #fff;
+  border-radius: 50%;
+  background: #d8232a;
+  box-shadow: 0 2px 8px rgb(16 22 28 / 30%);
+  color: #fff;
+  font-size: 11px;
+  font-weight: 700;
+}
+
+.lf-map-source-label,
+.lf-map-empty,
+.lf-map-attribution {
+  position: absolute;
+  z-index: 500;
+}
+
+.lf-map-source-label {
+  top: 114px;
+  left: 16px;
+  padding: 5px 8px;
+  background: rgb(255 255 255 / 92%);
+  box-shadow: 0 1px 5px rgb(16 22 28 / 12%);
+  color: var(--lf-muted);
+  font-size: 10px;
+  font-weight: 600;
+  animation: lf-rise-in var(--lf-dur-enter) 100ms var(--lf-motion-out) both;
+}
+
+.lf-map-empty {
+  top: 132px;
+  left: 50%;
+  display: flex;
+  width: min(280px, calc(100% - 40px));
+  flex-direction: column;
+  gap: 3px;
+  padding: 13px 15px;
+  transform: translateX(-50%);
+  border: 1px solid #d2d7dc;
+  background: rgb(255 255 255 / 94%);
+  box-shadow: 0 4px 14px rgb(16 22 28 / 12%);
+  text-align: center;
+  animation: lf-fade-in var(--lf-dur-enter) 120ms var(--lf-motion-out) both;
+}
+
+.lf-map-empty strong {
+  font-size: 14px;
+}
+
+.lf-map-empty span {
+  color: var(--lf-muted);
+  font-size: 12px;
+}
+
+.lf-map-attribution {
+  right: 4px;
+  bottom: calc(var(--lf-map-bottom-inset) + 4px);
+  padding: 2px 4px;
+  background: rgb(255 255 255 / 85%);
+  color: #4b5563;
+  font-size: 8px;
+  text-decoration: none;
+}
+
+.lf-map-controls {
+  position: absolute;
+  z-index: 10;
+  top: 58px;
+  left: 16px;
+  right: 16px;
+  display: flex;
+  gap: 8px;
+  animation: lf-rise-in var(--lf-dur-enter) 60ms var(--lf-motion-out) both;
+}
+
+.lf-map-controls button {
+  height: 46px;
+  border: 1px solid #d2d7dc;
+  border-radius: 0;
+  background: #fff;
+  box-shadow: 0 2px 8px rgb(16 22 28 / 8%);
+  color: var(--lf-navy);
+  cursor: pointer;
+}
+
+.lf-map-controls button:active {
+  border-color: #aeb8c2;
+  box-shadow: 0 1px 3px rgb(16 22 28 / 10%);
+}
+
+.lf-map-search {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  gap: 10px;
+  padding: 0 14px;
+  text-align: left;
+}
+
+.lf-map-search svg {
+  flex: none;
+  stroke: var(--lf-faint);
+  stroke-width: 2;
+}
+
+.lf-map-search span {
+  overflow: hidden;
+  color: var(--lf-faint);
+  font-size: 15px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-map-camera {
+  display: grid;
+  place-items: center;
+  width: 46px;
+  flex: none;
+  padding: 0;
+}
+
+.lf-map-camera svg {
+  stroke: currentColor;
+  stroke-width: 1.7;
+}
+
+.lf-day-sheet {
+  position: absolute;
+  z-index: 20;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  display: flex;
+  flex-direction: column;
+  height: 310px;
+  border-top: 1px solid #d2d7dc;
+  background: #fff;
+  box-shadow: 0 -6px 24px rgb(16 22 28 / 10%);
+  animation: lf-sheet-up var(--lf-dur-sheet) var(--lf-motion-out) both;
+  transition: height var(--lf-dur-sheet) var(--lf-motion-out);
+}
+
+.lf-day-sheet.is-expanded {
+  height: min(560px, calc(100% - 116px));
+}
+
+.lf-sheet-handle {
+  display: flex;
+  flex: none;
+  justify-content: center;
+  padding: 10px 0 6px;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.lf-sheet-handle i {
+  width: 42px;
+  height: 4px;
+  border-radius: 2px;
+  background: #c9d0d7;
+  transition:
+    width var(--lf-dur-state) var(--lf-motion-standard),
+    background-color var(--lf-dur-state) var(--lf-motion-standard);
+}
+
+.lf-day-sheet.is-expanded .lf-sheet-handle i {
+  width: 32px;
+  background: #aeb7c0;
+}
+
+/* After the expanded rule so the grab state wins in both sheet sizes. */
+.lf-day-sheet .lf-sheet-handle:active i {
+  width: 52px;
+  background: #8f99a3;
+}
+
+.lf-sheet-title {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  padding: 4px 20px 12px;
+}
+
+.lf-sheet-title strong {
+  font-size: 19px;
+  letter-spacing: -0.4px;
+}
+
+.lf-sheet-title span {
+  color: var(--lf-faint);
+  font-size: 11px;
+}
+
+.lf-sheet-message {
+  margin: 0 20px 8px;
+  padding: 8px 10px;
+}
+
+.lf-sheet-list {
+  flex: 1;
+  min-height: 0;
+  overflow-x: hidden;
+  overflow-y: auto;
+  padding: 0 20px;
+  scrollbar-width: none;
+}
+
+.lf-stop-row {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 11px 0;
+  border-top: 1px solid #e7ebef;
+}
+
+/* The stops list reads left-to-right like the route it describes, so it keeps
+   lf-row-enter instead of the vertical rise the other lists use. */
+.lf-sheet-list.lf-stagger > * {
+  animation-name: lf-row-enter;
+}
+
+.lf-stop-badge {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 26px;
+  flex: none;
+  overflow: hidden;
+  background: #224f86;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.lf-stop-badge--venue {
+  background: var(--lf-ink);
+}
+
+.lf-stop-row p {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0;
+}
+
+.lf-stop-row strong {
+  overflow: hidden;
+  font-size: 15px;
+  font-weight: 500;
+  line-height: 1.25;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-stop-row small {
+  overflow: hidden;
+  color: var(--lf-faint);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-stop-time {
+  color: var(--lf-muted);
+  font-size: 11px;
+}
+
+.lf-stop-row > button {
+  width: 25px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: #a6aeb6;
+  font-size: 20px;
+  cursor: pointer;
+}
+
+.lf-add-stop {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  padding: 12px 0;
+  border: 0;
+  border-top: 1px solid #e7ebef;
+  background: transparent;
+  color: var(--lf-navy);
+  font-size: 15px;
+  font-weight: 500;
+  text-align: left;
+  cursor: pointer;
+}
+
+.lf-add-stop > span {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 26px;
+  border: 1px dashed #b5bdc5;
+  color: var(--lf-muted);
+  font-size: 20px;
+  font-weight: 300;
+}
+
+.lf-sheet-footer {
+  flex: none;
+  padding: 12px 20px 18px;
+  border-top: 1px solid #e7ebef;
+}
+
+.lf-sheet-footer .lf-primary {
+  gap: 8px;
+}
+
+.lf-sheet-footer small {
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 12px;
+  font-weight: 500;
+  opacity: 0.7;
+}
+
+.lf-soft-screen {
+  background: var(--lf-soft);
+}
+
+.lf-screen-content {
+  flex: 1;
+  padding: 22px 20px 24px;
+}
+
+.lf-screen-content > h1 {
+  font-size: 26px;
+  letter-spacing: -0.6px;
+}
+
+.lf-muted {
+  margin: 7px 0 0;
+  color: var(--lf-muted);
+  font-size: 14px;
+  line-height: 1.45;
+}
+
+.lf-office-card {
+  position: relative;
+  display: flex;
+  width: 100%;
+  flex-direction: column;
+  align-items: flex-start;
+  margin-top: 12px;
+  padding: 16px;
+  border: 1px solid var(--lf-rule);
+  border-radius: 0;
+  background: #fff;
+  color: var(--lf-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lf-office-card:active {
+  border-color: #c3cad1;
+  box-shadow: 0 2px 8px rgb(16 22 28 / 7%);
+}
+
+.lf-office-card > strong {
+  margin-top: 7px;
+  padding-right: 70px;
+  font-size: 16px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.lf-office-card > small {
+  margin-top: 3px;
+  color: var(--lf-faint);
+  font-size: 13px;
+  line-height: 1.35;
+}
+
+.lf-status {
+  position: absolute;
+  top: 15px;
+  right: 15px;
+  padding: 4px 8px;
+  background: #f1f3f5;
+  color: var(--lf-muted);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+/* Reaching "sent" is the reward moment of the whole flow, so every place that
+   shows report state animates into it with the same confirmation curve. */
+.lf-status,
+.lf-status-text,
+.lf-state-dot {
+  transition:
+    background-color var(--lf-dur-state) var(--lf-motion-standard),
+    color var(--lf-dur-state) var(--lf-motion-standard);
+}
+
+.lf-status--sent,
+.lf-status--replied,
+.lf-status-text--sent,
+.lf-status-text--replied,
+.lf-state-dot--sent,
+.lf-state-dot--replied {
+  animation: lf-pop-in var(--lf-dur-enter) var(--lf-motion-settle) both;
+}
+
+.lf-status--sent,
+.lf-status--replied {
+  background: #e6f2ea;
+  color: #1b7f4b;
+}
+
+.lf-office-reason {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid #e7ebef;
+  color: #3a454f;
+  font-size: 13px;
+  line-height: 1.4;
+}
+
+.lf-office-reason svg {
+  flex: none;
+  margin-left: auto;
+  color: #c2c9d0;
+}
+
+.lf-empty {
+  margin-top: 18px;
+  padding: 24px 18px;
+  border: 1px dashed #b5bdc5;
+  color: var(--lf-muted);
+  font-size: 14px;
+  line-height: 1.5;
+  text-align: center;
+}
+
+.lf-tabbar {
+  display: flex;
+  flex: none;
+  min-height: 74px;
+  padding-bottom: 24px;
+  border-top: 1px solid var(--lf-rule);
+  background: #fff;
+}
+
+.lf-tabbar button {
+  position: relative;
+  display: flex;
+  flex: 1;
+  flex-direction: column;
+  align-items: center;
+  gap: 5px;
+  padding: 9px 0 4px;
+  border: 0;
+  background: transparent;
+  color: #9aa2aa;
+  cursor: pointer;
+}
+
+.lf-tabbar button.is-active {
+  color: var(--lf-navy);
+}
+
+/* A rule that grows out of the top border marks the current tab. It uses the
+   same square, hard-edged vocabulary as the case progress bar. */
+.lf-tabbar button::before {
+  position: absolute;
+  top: -1px;
+  left: 50%;
+  width: 26px;
+  height: 2px;
+  background: var(--lf-navy);
+  content: "";
+  transform: translateX(-50%) scaleX(0);
+  transform-origin: center;
+  transition: transform var(--lf-dur-enter) var(--lf-motion-out);
+}
+
+.lf-tabbar button.is-active::before {
+  transform: translateX(-50%) scaleX(1);
+}
+
+.lf-tabbar svg {
+  stroke: currentColor;
+  stroke-width: 1.7;
+  stroke-linecap: round;
+  transition: transform var(--lf-dur-state) var(--lf-motion-out);
+}
+
+.lf-tabbar button.is-active svg {
+  transform: translateY(-1px);
+}
+
+.lf-tabbar span {
+  font-size: 10px;
+  font-weight: 500;
+}
+
+.lf-report-content {
+  flex: 1;
+  padding: 20px 20px 24px;
+}
+
+.lf-report-content > h1 {
+  margin-top: 7px;
+  font-size: 22px;
+  letter-spacing: -0.4px;
+}
+
+/* The white pane is a single element that slides between segments rather than
+   a background that blinks on and off, so switching language or filter reads
+   as one continuous control. --lf-seg-index tracks which button is active. */
+.lf-segmented {
+  position: relative;
+  display: flex;
+  isolation: isolate;
+  margin-top: 18px;
+  padding: 3px;
+  background: #e4e7ea;
+  --lf-seg-count: 2;
+  --lf-seg-index: 0;
+}
+
+.lf-segmented:has(> button:nth-child(3)) {
+  --lf-seg-count: 3;
+}
+
+.lf-segmented:has(> button:nth-child(2).is-active) {
+  --lf-seg-index: 1;
+}
+
+.lf-segmented:has(> button:nth-child(3).is-active) {
+  --lf-seg-index: 2;
+}
+
+.lf-segmented::before {
+  position: absolute;
+  z-index: -1;
+  top: 3px;
+  bottom: 3px;
+  left: 3px;
+  width: calc((100% - 6px) / var(--lf-seg-count));
+  background: #fff;
+  content: "";
+  transform: translateX(calc(var(--lf-seg-index) * 100%));
+  transition: transform var(--lf-dur-enter) var(--lf-motion-out);
+}
+
+.lf-segmented button {
+  display: flex;
+  flex: 1;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  height: 36px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--lf-muted);
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.lf-segmented button.is-active {
+  color: var(--lf-ink);
+}
+
+.lf-contact-prompt {
+  display: grid;
+  gap: 4px;
+  margin-top: 12px;
+  padding: 14px 16px;
+  border-left: 3px solid var(--lf-red);
+  background: #fbf0ef;
+}
+
+.lf-contact-prompt strong {
+  color: #8e1b18;
+  font-size: 13px;
+}
+
+.lf-contact-prompt input {
+  border-color: #e4b3b1;
+  font-size: 13px;
+}
+
+.lf-report-draft {
+  position: relative;
+  margin-top: 12px;
+  border: 1px solid var(--lf-rule);
+  background: #fff;
+}
+
+.lf-report-draft > button {
+  position: absolute;
+  z-index: 1;
+  top: 10px;
+  right: 10px;
+  padding: 5px 8px;
+  border: 1px solid var(--lf-rule);
+  background: #fff;
+  color: var(--lf-navy);
+  font-size: 11px;
+  cursor: pointer;
+}
+
+/* Copying is invisible by nature — the button has to be the whole receipt. */
+.lf-report-draft > button.is-copied {
+  border-color: #c7decf;
+  background: var(--lf-success-soft);
+  color: var(--lf-success);
+  animation: lf-pop-in var(--lf-dur-state) var(--lf-motion-settle);
+}
+
+.lf-report-draft pre {
+  margin: 0;
+  padding: 18px 18px 20px;
+  color: #20272e;
+  font-family: var(--font-fira-sans), "Fira Sans", sans-serif;
+  font-size: 14px;
+  line-height: 1.6;
+  white-space: pre-wrap;
+}
+
+.lf-facts,
+.lf-case-links,
+.lf-settings-list {
+  margin-top: 12px;
+  border: 1px solid var(--lf-rule);
+  background: #fff;
+}
+
+.lf-facts > div,
+.lf-settings-list > div,
+.lf-settings-list > label {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 16px;
+  min-height: 45px;
+  padding: 12px 16px;
+  border-bottom: 1px solid #e7ebef;
+  font-size: 14px;
+}
+
+.lf-facts > div:last-child,
+.lf-settings-list > div:last-child,
+.lf-settings-list > label:last-child {
+  border-bottom: 0;
+}
+
+.lf-facts span,
+.lf-settings-fields label > span {
+  color: var(--lf-muted);
+}
+
+.lf-facts strong {
+  max-width: 65%;
+  overflow: hidden;
+  font-size: 13px;
+  font-weight: 500;
+  text-align: right;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-verified {
+  margin: 12px 2px 0;
+  color: var(--lf-muted);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lf-verified::first-letter {
+  color: #1b7f4b;
+}
+
+.lf-autofill-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 14px;
+  margin-top: 14px;
+  padding: 14px;
+  border: 1px solid #cbd4dd;
+  background: #f7f9fb;
+}
+
+.lf-autofill-card > div {
+  min-width: 0;
+}
+
+.lf-autofill-card strong,
+.lf-autofill-card small {
+  display: block;
+}
+
+.lf-autofill-card strong {
+  color: var(--lf-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lf-autofill-card small {
+  margin-top: 4px;
+  color: var(--lf-muted);
+  font-size: 11px;
+  line-height: 1.4;
+}
+
+.lf-autofill-card button {
+  flex: none;
+  min-height: 36px;
+  padding: 8px 10px;
+  border: 1px solid var(--lf-navy);
+  background: #fff;
+  color: var(--lf-navy);
+  font-size: 11px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lf-report-actions {
+  display: flex;
+  flex: none;
+  flex-direction: column;
+  gap: 8px;
+  padding: 14px 20px 29px;
+  border-top: 1px solid var(--lf-rule);
+  background: #fff;
+}
+
+.lf-report-actions .lf-secondary {
+  min-height: 48px;
+}
+
+.lf-case-header,
+.lf-tracking-header {
+  flex: none;
+  padding: 61px 20px 15px;
+  border-bottom: 1px solid var(--lf-rule);
+  background: #fff;
+}
+
+.lf-case-header > div > span,
+.lf-tracking-header > div > span {
+  color: var(--lf-faint);
+  font-size: 12px;
+  letter-spacing: 0.06em;
+}
+
+.lf-case-header h1 {
+  margin-top: 5px;
+  font-size: 27px;
+}
+
+.lf-case-header > p {
+  margin: 6px 0 0;
+  color: var(--lf-muted);
+  font-size: 14px;
+}
+
+.lf-progress {
+  display: flex;
+  gap: 4px;
+  margin-top: 16px;
+}
+
+.lf-progress i {
+  height: 4px;
+  flex: 1;
+  background: var(--lf-rule);
+  transition: background-color var(--lf-dur-enter) var(--lf-motion-standard);
+}
+
+.lf-progress i.is-done {
+  background: var(--lf-navy);
+}
+
+.lf-progress i:nth-child(2) { transition-delay: 60ms; }
+.lf-progress i:nth-child(3) { transition-delay: 120ms; }
+.lf-progress i:nth-child(4) { transition-delay: 180ms; }
+
+.lf-case-header > small {
+  display: block;
+  margin-top: 8px;
+  color: var(--lf-faint);
+  font-size: 11px;
+}
+
+.lf-next-card {
+  padding: 18px;
+  background: var(--lf-ink);
+  color: #fff;
+}
+
+.lf-next-card > span {
+  color: var(--lf-red);
+  font-size: 10px;
+  font-weight: 500;
+  letter-spacing: 0.14em;
+}
+
+.lf-next-card > strong {
+  display: block;
+  margin-top: 9px;
+  font-size: 18px;
+  line-height: 1.25;
+}
+
+.lf-next-card p {
+  margin: 5px 0 0;
+  color: #a7b0b9;
+  font-size: 13px;
+  line-height: 1.45;
+}
+
+.lf-next-card button {
+  width: 100%;
+  height: 46px;
+  margin-top: 14px;
+  border: 0;
+  background: #fff;
+  color: var(--lf-ink);
+  font-size: 15px;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.lf-case-links {
+  margin-top: 16px;
+}
+
+.lf-case-links button {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 66px;
+  padding: 14px 16px;
+  border: 0;
+  border-bottom: 1px solid #e7ebef;
+  background: #fff;
+  color: var(--lf-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lf-case-links button:last-child {
+  border-bottom: 0;
+}
+
+.lf-case-links button > span {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lf-case-links strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.lf-case-links small {
+  overflow: hidden;
+  color: var(--lf-faint);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-case-links svg {
+  color: #c2c9d0;
+}
+
+.lf-activity-label {
+  margin-top: 18px;
+}
+
+.lf-activity {
+  margin: 10px 0 0;
+  color: var(--lf-muted);
+  font-size: 13px;
+  line-height: 1.65;
+  white-space: pre-line;
+}
+
+.lf-tracking-header {
+  padding-bottom: 14px;
+}
+
+.lf-tracking-header h1 {
+  font-size: 26px;
+}
+
+.lf-tracking-header .lf-segmented {
+  margin-top: 14px;
+}
+
+.lf-tracking-header .lf-segmented button {
+  font-size: 13px;
+}
+
+.lf-tracking-header .lf-segmented small {
+  color: inherit;
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.lf-tracking-list {
+  flex: 1;
+  padding: 16px 20px 22px;
+}
+
+.lf-tracking-list > button {
+  display: grid;
+  grid-template-columns: 9px 1fr auto;
+  gap: 9px 10px;
+  width: 100%;
+  margin-bottom: 10px;
+  padding: 15px 16px;
+  border: 1px solid var(--lf-rule);
+  background: #fff;
+  color: var(--lf-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lf-tracking-list strong {
+  font-size: 15px;
+  font-weight: 600;
+  line-height: 1.25;
+}
+
+.lf-tracking-list small {
+  grid-column: 2 / 4;
+  color: var(--lf-muted);
+  font-size: 12px;
+  line-height: 1.5;
+}
+
+.lf-state-dot {
+  width: 9px;
+  height: 9px;
+  margin-top: 5px;
+  background: #c2c9d0;
+}
+
+.lf-state-dot--sent,
+.lf-state-dot--replied {
+  background: #1b7f4b;
+}
+
+.lf-status-text {
+  color: var(--lf-muted);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 11px;
+  font-weight: 500;
+  letter-spacing: 0.04em;
+}
+
+.lf-status-text--sent,
+.lf-status-text--replied {
+  color: #1b7f4b;
+}
+
+.lf-settings-content {
+  flex: 1;
+  padding: 18px 20px 34px;
+}
+
+.lf-settings-content > .lf-section-label:not(:first-child) {
+  margin-top: 22px;
+}
+
+.lf-settings-list {
+  margin-top: 10px;
+}
+
+.lf-settings-list > div {
+  align-items: flex-start;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.lf-settings-list strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.lf-settings-list small {
+  color: var(--lf-faint);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lf-settings-fields label {
+  align-items: center;
+  flex-direction: row;
+}
+
+.lf-settings-fields label > span {
+  width: 54px;
+  flex: none;
+  font-size: 14px;
+}
+
+.lf-settings-fields input {
+  padding: 0;
+  border: 0;
+  font-size: 14px;
+  font-weight: 500;
+  text-align: right;
+}
+
+.lf-source-list > div {
+  align-items: center;
+  flex-direction: row;
+}
+
+.lf-source-list small {
+  max-width: 68%;
+  margin-left: auto;
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  line-height: 1.35;
+  text-align: right;
+}
+
+.lf-refresh-data {
+  display: grid;
+  grid-template-columns: 28px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 58px;
+  margin-top: 10px;
+  padding: 10px 14px;
+  border: 1px solid var(--lf-rule);
+  background: #fff;
+  color: var(--lf-navy);
+  text-align: left;
+  cursor: pointer;
+}
+
+.lf-refresh-data:hover {
+  border-color: #aeb8c2;
+  background: #f7f8f9;
+}
+
+.lf-refresh-data-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border: 1px solid #c9d0d7;
+  color: var(--lf-navy);
+}
+
+.lf-refresh-data-icon svg {
+  width: 16px;
+  height: 16px;
+  stroke: currentColor;
+  stroke-width: 1.8;
+}
+
+.lf-refresh-data.is-loading .lf-refresh-data-icon svg {
+  animation: lf-data-spin 900ms linear infinite;
+}
+
+.lf-refresh-data-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lf-refresh-data-copy strong {
+  color: var(--lf-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lf-refresh-data-copy small {
+  overflow: hidden;
+  color: var(--lf-muted);
+  font-size: 12px;
+  line-height: 1.35;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lf-refresh-data:disabled {
+  border-color: #c9d0d7;
+  background: #f7f8f9;
+  cursor: wait;
+}
+
+.lf-data-notice {
+  display: grid;
+  grid-template-columns: 22px minmax(0, 1fr);
+  align-items: start;
+  gap: 10px;
+  margin-top: 18px;
+  padding: 11px 12px;
+  border: 1px solid var(--lf-rule);
+  border-left: 3px solid var(--lf-navy);
+  background: #f7f8f9;
+  animation: lf-rise-in var(--lf-dur-enter) var(--lf-motion-out) both;
+}
+
+.lf-data-notice-mark {
+  display: grid;
+  place-items: center;
+  width: 18px;
+  height: 18px;
+  margin-top: 1px;
+  border: 1.5px solid currentColor;
+  border-radius: 50%;
+  color: var(--lf-navy);
+  font-size: 11px;
+  font-weight: 700;
+  line-height: 1;
+}
+
+.lf-data-notice.is-checking .lf-data-notice-mark {
+  border-color: #c7ced5;
+  border-top-color: var(--lf-navy);
+  animation: lf-data-spin 900ms linear infinite;
+}
+
+.lf-data-notice.is-success {
+  border-left-color: var(--lf-success);
+  background: var(--lf-success-soft);
+}
+
+.lf-data-notice.is-success .lf-data-notice-mark {
+  color: var(--lf-success);
+}
+
+.lf-data-notice.is-warning {
+  border-left-color: #9b761e;
+  background: #fbf7eb;
+}
+
+.lf-data-notice.is-warning .lf-data-notice-mark::after {
+  color: #7b5b16;
+  content: "·";
+  font-size: 18px;
+  line-height: 0;
+}
+
+.lf-data-notice.is-error {
+  border-left-color: var(--lf-red);
+  background: #fbf0ef;
+}
+
+.lf-data-notice.is-error .lf-data-notice-mark {
+  color: var(--lf-red);
+}
+
+.lf-data-notice-copy {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lf-data-notice-copy strong {
+  color: var(--lf-ink);
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.3;
+}
+
+.lf-data-notice-copy small {
+  color: var(--lf-muted);
+  font-size: 11px;
+  line-height: 1.4;
+  overflow-wrap: anywhere;
+}
+
+.lf-data-warning {
+  margin: 9px 2px 0;
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lf-data-warning {
+  color: #7b5b16;
+}
+
+.lf-delete {
+  width: 100%;
+  height: 48px;
+  margin-top: 22px;
+  border: 1px solid #e4b3b1;
+  background: #fff;
+  color: var(--lf-red);
+  font-size: 15px;
+  font-weight: 500;
+  cursor: pointer;
+}
+
+.lf-tool-screen {
+  background: #fff;
+}
+
+.lf-tool-content {
+  flex: 1;
+  padding: 18px 20px 30px;
+}
+
+.lf-photo-flow-footer {
+  flex: none;
+  padding: 12px 20px calc(18px + env(safe-area-inset-bottom));
+  border-top: 1px solid var(--lf-rule);
+  background: #fff;
+}
+
+.lf-photo-flow-footer p {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin: 0 0 10px;
+}
+
+.lf-photo-flow-footer strong {
+  color: var(--lf-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lf-photo-flow-footer span {
+  color: var(--lf-muted);
+  font-size: 12px;
+}
+
+.lf-search-panel,
+.lf-photos-panel {
+  min-height: 100%;
+}
+
+.lf-photos-panel > h1 {
+  margin: 8px 0 7px;
+  color: var(--lf-ink);
+  font-size: 25px;
+  line-height: 1.15;
+  letter-spacing: -0.5px;
+}
+
+.lf-search-input {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  width: 100%;
+  height: 44px;
+  padding: 0 12px;
+  background: #f1f3f5;
+}
+
+.lf-search-input svg {
+  flex: none;
+  stroke: var(--lf-faint);
+  stroke-width: 2;
+}
+
+.lf-search-input input {
+  width: 100%;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: var(--lf-ink);
+  font-size: 15px;
+  outline: 0;
+}
+
+.lf-selected-itinerary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin: 12px 0 18px;
+}
+
+.lf-selected-itinerary > span {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  border: 1px solid var(--lf-rule);
+  padding: 5px 7px 5px 9px;
+  font-size: 12px;
+  transform-origin: left center;
+  animation: lf-pop-in var(--lf-dur-state) var(--lf-motion-settle) both;
+}
+
+.lf-selected-itinerary button {
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--lf-faint);
+  font-size: 17px;
+  line-height: 1;
+}
+
+.lf-search-panel > .lf-section-label,
+.lf-photo-days > .lf-section-label {
+  margin: 19px 0 8px;
+}
+
+.lf-quick-lines {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.lf-quick-lines button {
+  min-width: 38px;
+  padding: 7px 9px;
+  border: 0;
+  box-shadow: inset 0 0 0 1px rgb(0 0 0 / 8%);
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  cursor: pointer;
+}
+
+.lf-quick-lines button.is-added {
+  box-shadow: inset 0 0 0 2px #fff, 0 0 0 2px var(--lf-navy);
+  animation: lf-pop-in var(--lf-dur-state) var(--lf-motion-settle);
+}
+
+.lf-search-results {
+  border-top: 1px solid #e7ebef;
+}
+
+.lf-search-result {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  width: 100%;
+  min-height: 56px;
+  padding: 10px 0;
+  border: 0;
+  border-bottom: 1px solid #e7ebef;
+  background: #fff;
+  color: var(--lf-ink);
+  text-align: left;
+  cursor: pointer;
+}
+
+/* Adding a stop is the one gesture this screen exists for, so the row keeps a
+   permanent, legible "on the list" state instead of only swapping a glyph. */
+.lf-search-result.is-added {
+  background: var(--lf-success-soft);
+  box-shadow: inset 3px 0 var(--lf-success);
+}
+
+.lf-search-result.is-added .lf-search-result-action {
+  color: var(--lf-success);
+  animation: lf-pop-in var(--lf-dur-state) var(--lf-motion-settle) both;
+}
+
+.lf-search-result > span:first-child {
+  flex: none;
+  border-radius: 0 !important;
+  box-shadow: none !important;
+}
+
+.lf-place-symbol {
+  display: grid;
+  place-items: center;
+  width: 34px;
+  height: 26px;
+  border: 1px solid #c9d0d7;
+  font-size: 14px;
+}
+
+.lf-line-swatch {
+  display: inline-flex;
+  min-width: 38px;
+  min-height: 24px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 3px 6px;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+}
+
+.lf-search-result-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lf-search-result-copy strong,
+.lf-search-result-copy small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-search-result-copy strong {
+  font-size: 15px;
+  font-weight: 500;
+}
+
+.lf-search-result-copy small {
+  color: var(--lf-faint);
+  font-size: 12px;
+}
+
+.lf-search-result-action {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  color: var(--lf-navy);
+  font-size: 18px;
+}
+
+.lf-tool-alert {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-top: 14px;
+  padding: 10px 12px;
+}
+
+.lf-tool-alert span {
+  flex: 1;
+}
+
+.lf-tool-alert button {
+  border: 0;
+  background: transparent;
+  color: var(--lf-red);
+  font-weight: 600;
+}
+
+.lf-tool-note,
+.lf-photo-privacy,
+.lf-photo-message {
+  color: var(--lf-muted);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.lf-photo-privacy {
+  margin: 0;
+  font-size: 14px;
+}
+
+.lf-photo-import {
+  margin-top: 18px;
+  border: 1px solid var(--lf-rule);
+  padding: 16px;
+}
+
+.lf-photo-window-label {
+  display: block;
+  color: var(--lf-faint);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 10px;
+  letter-spacing: 0.12em;
+}
+
+.lf-photo-import > strong {
+  display: block;
+  margin: 4px 0 13px;
+  color: var(--lf-ink);
+  font-size: 14px;
+  font-weight: 600;
+}
+
+.lf-hidden-photo-input {
+  display: none;
+}
+
+.lf-photo-import > small {
+  display: block;
+  margin-top: 10px;
+  color: var(--lf-faint);
+  font-size: 12px;
+  line-height: 1.45;
+}
+
+.lf-photo-message {
+  margin: 14px 0 0;
+  padding: 12px 14px;
+  background: #f1f3f5;
+}
+
+.lf-photo-days > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.lf-photo-days button {
+  min-height: 38px;
+  padding: 7px 10px;
+  border: 1px solid #c9d0d7;
+  background: #fff;
+  color: #3a454f;
+  font-size: 12px;
+}
+
+.lf-photo-days button.is-active {
+  border-color: var(--lf-navy);
+  background: var(--lf-navy);
+  color: #fff;
+}
+
+.lf-photo-days small {
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+}
+
+.lf-photo-map,
+.lf-inference-card {
+  margin-top: 16px;
+  animation: lf-rise-in var(--lf-dur-enter) var(--lf-motion-out) both;
+}
+
+/* Booking-style date window. It is intentionally a plain, square bottom sheet
+   so it belongs to the same official-service design language as the app. */
+.lf-date-overlay {
+  position: fixed;
+  z-index: 500;
+  inset: 0;
+  display: grid;
+  place-items: end center;
+  background: rgb(10 20 30 / 42%);
+  animation: lf-fade-in var(--lf-dur-state) var(--lf-motion-standard) both;
+}
+
+.lf-date-picker {
+  width: min(402px, 100%);
+  max-height: min(820px, calc(100dvh - 8px));
+  overflow-y: auto;
+  padding: 20px 20px calc(18px + env(safe-area-inset-bottom));
+  border-top: 3px solid var(--lf-navy);
+  background: #fff;
+  box-shadow: 0 -20px 50px rgb(0 0 0 / 20%);
+  animation: lf-sheet-up var(--lf-dur-sheet) var(--lf-motion-out) both;
+  overscroll-behavior: contain;
+}
+
+.lf-date-picker-head {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.lf-date-picker-head h2 {
+  margin: 7px 0 0;
+  color: var(--lf-ink);
+  font-size: 22px;
+  line-height: 1.18;
+  letter-spacing: -0.35px;
+}
+
+.lf-date-picker-head > button {
+  width: 34px;
+  height: 34px;
+  flex: none;
+  border: 1px solid var(--lf-rule);
+  background: #fff;
+  color: var(--lf-muted);
+  font-size: 24px;
+  line-height: 1;
+}
+
+.lf-date-mode {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 17px;
+}
+
+.lf-date-mode button {
+  display: flex;
+  min-height: 57px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  gap: 3px;
+  padding: 9px 11px;
+  border: 1px solid #c9d0d7;
+  background: #fff;
+  color: #3a454f;
+  text-align: left;
+}
+
+.lf-date-mode button.is-active {
+  border-color: var(--lf-navy);
+  background: var(--lf-navy);
+  color: #fff;
+}
+
+.lf-date-mode strong {
+  font-size: 13px;
+}
+
+.lf-date-mode small,
+.lf-date-explainer {
+  font-size: 11px;
+}
+
+.lf-date-mode small {
+  opacity: 0.72;
+}
+
+.lf-date-explainer {
+  margin: 13px 0 9px;
+  color: var(--lf-muted);
+  line-height: 1.4;
+}
+
+.lf-range-fields {
+  display: grid;
+  grid-template-columns: 1fr auto 1fr;
+  align-items: center;
+  gap: 8px;
+}
+
+.lf-range-fields > button {
+  display: flex;
+  min-height: 49px;
+  flex-direction: column;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 7px 10px;
+  border: 1px solid var(--lf-rule);
+  background: #fff;
+  color: var(--lf-ink);
+}
+
+.lf-range-fields > button.is-active {
+  border-color: var(--lf-navy);
+  box-shadow: inset 0 -2px var(--lf-navy);
+}
+
+.lf-range-fields small {
+  color: var(--lf-faint);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 9px;
+  letter-spacing: 0.1em;
+}
+
+.lf-range-fields strong {
+  margin-top: 3px;
+  font-size: 12px;
+}
+
+.lf-range-fields > span {
+  color: var(--lf-faint);
+}
+
+.lf-calendar-head {
+  display: grid;
+  grid-template-columns: 36px 1fr 36px;
+  align-items: center;
+  margin-top: 16px;
+}
+
+.lf-calendar-head strong {
+  color: var(--lf-ink);
+  font-size: 14px;
+  text-align: center;
+}
+
+.lf-calendar-head button {
+  height: 34px;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--lf-navy);
+  font-size: 27px;
+}
+
+.lf-calendar-head button:disabled {
+  color: #c8cdd2;
+}
+
+/* Paging a month should feel like sliding a sheet of paper, so the label and
+   the grid travel in the direction the arrow points. Both are keyed on the
+   month in React, which is what restarts these animations. */
+.lf-calendar-head strong,
+.lf-calendar-grid {
+  animation: lf-page-in-next var(--lf-dur-enter) var(--lf-motion-out) both;
+}
+
+.lf-calendar-head[data-dir="prev"] strong,
+.lf-calendar-grid[data-dir="prev"] {
+  animation-name: lf-page-in-prev;
+}
+
+.lf-calendar-grid {
+  display: grid;
+  grid-template-columns: repeat(7, 1fr);
+  margin-top: 5px;
+}
+
+.lf-calendar-grid > small {
+  display: grid;
+  height: 25px;
+  place-items: center;
+  color: var(--lf-faint);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 9px;
+}
+
+.lf-calendar-grid > button,
+.lf-calendar-grid > i {
+  min-width: 0;
+  height: 38px;
+}
+
+.lf-calendar-grid > button {
+  position: relative;
+  z-index: 1;
+  padding: 0;
+  border: 0;
+  background: #fff;
+  color: #34404b;
+  font-size: 13px;
+}
+
+.lf-calendar-grid > button.is-in-range {
+  background: #e7ebef;
+  color: var(--lf-navy);
+}
+
+.lf-calendar-grid > button.is-selected {
+  background: var(--lf-navy);
+  color: #fff;
+  font-weight: 600;
+}
+
+.lf-calendar-grid > button:disabled {
+  background: #fff;
+  color: #c3c8cd;
+}
+
+.lf-date-time {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--lf-rule);
+}
+
+.lf-date-time > div {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 8px;
+}
+
+.lf-date-time button,
+.lf-date-time label {
+  position: relative;
+  display: flex;
+  min-height: 34px;
+  align-items: center;
+  padding: 6px 9px;
+  overflow: hidden;
+  border: 1px solid var(--lf-rule);
+  background: #fff;
+  color: var(--lf-muted);
+  font-size: 11px;
+}
+
+.lf-date-time button.is-active,
+.lf-date-time label.is-active {
+  border-color: var(--lf-navy);
+  background: var(--lf-navy);
+  color: #fff;
+}
+
+.lf-date-time input {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  opacity: 0;
+}
+
+.lf-date-confirm {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(142px, 0.9fr);
+  align-items: center;
+  gap: 12px;
+  margin-top: 15px;
+  padding-top: 14px;
+  border-top: 1px solid var(--lf-rule);
+}
+
+.lf-date-confirm p {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+}
+
+.lf-date-confirm strong {
+  overflow: hidden;
+  color: var(--lf-ink);
+  font-size: 12px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-date-confirm small {
+  color: var(--lf-faint);
+  font-size: 10px;
+  line-height: 1.35;
+}
+
+.lf-date-confirm .lf-primary {
+  min-height: 46px;
+  font-size: 13px;
+}
+
+/* Shared atoms. Components consume these semantic classes instead of palette
+   utilities so the iOS shell has one source of truth for colour and shape. */
+.lf-ui-button {
+  display: inline-flex;
+  min-height: 38px;
+  align-items: center;
+  justify-content: center;
+  gap: 7px;
+  padding: 8px 13px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  font-size: 13px;
+  font-weight: 600;
+  line-height: 1.2;
+  cursor: pointer;
+}
+
+.lf-ui-button--primary {
+  background: var(--lf-navy);
+  color: #fff;
+}
+
+.lf-ui-button--primary:hover,
+.lf-ui-button--primary:active {
+  background: #102f50;
+}
+
+.lf-ui-button--ghost {
+  border-color: #c9d0d7;
+  background: var(--lf-surface);
+  color: var(--lf-navy);
+}
+
+.lf-ui-button--ghost:hover,
+.lf-ui-button--ghost:active {
+  border-color: #aeb8c2;
+  background: var(--lf-soft);
+}
+
+.lf-ui-button:disabled {
+  border-color: transparent;
+  background: #b8c0c8;
+  color: #fff;
+  cursor: not-allowed;
+  transform: none;
+}
+
+.lf-ui-field {
+  display: block;
+}
+
+.lf-ui-field-label {
+  display: flex;
+  align-items: baseline;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: var(--lf-ink);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.lf-ui-field-label small {
+  color: var(--lf-faint);
+  font-size: 11px;
+  font-weight: 400;
+}
+
+.lf-ui-input {
+  width: 100%;
+  padding: 10px 11px;
+  border: 1px solid #c9d0d7;
+  border-radius: 0;
+  background: var(--lf-surface);
+  color: var(--lf-ink);
+  font-size: 14px;
+  outline: 0;
+}
+
+.lf-ui-input::placeholder {
+  color: var(--lf-faint);
+}
+
+.lf-ui-input:focus {
+  border-color: var(--lf-navy);
+}
+
+.lf-ui-textarea {
+  min-height: 76px;
+  resize: vertical;
+}
+
+.lf-ui-badge {
+  display: inline-flex;
+  align-items: center;
+  min-height: 20px;
+  padding: 3px 7px;
+  border: 1px solid transparent;
+  border-radius: 0;
+  font-size: 9px;
+  font-weight: 600;
+  line-height: 1.2;
+}
+
+.lf-ui-badge--neutral {
+  border-color: #d5dbe0;
+  background: var(--lf-soft);
+  color: var(--lf-muted);
+}
+
+.lf-ui-badge--info {
+  border-color: #c9d5e0;
+  background: #edf2f6;
+  color: var(--lf-navy);
+}
+
+.lf-ui-badge--success {
+  border-color: #c7decf;
+  background: var(--lf-success-soft);
+  color: var(--lf-success);
+}
+
+.lf-ui-badge--warning {
+  border-color: #e2d6b9;
+  background: var(--lf-warning-soft);
+  color: var(--lf-warning);
+}
+
+/* Photo route inference */
+.lf-journey {
+  padding: 16px;
+  border: 1px solid var(--lf-rule);
+  background: var(--lf-surface);
+  box-shadow: 0 2px 8px rgb(16 22 28 / 6%);
+}
+
+.lf-journey-busy {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 0;
+}
+
+.lf-journey-busy > span:last-child {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lf-journey-busy strong {
+  font-size: 14px;
+}
+
+.lf-journey-busy small,
+.lf-journey-header p,
+.lf-route-options small,
+.lf-anchor-copy small,
+.lf-journey-stats small,
+.lf-journey-leg-copy small,
+.lf-priority-meta small,
+.lf-priority-detail {
+  color: var(--lf-faint);
+}
+
+.lf-journey-pulse {
+  position: relative;
+  width: 11px;
+  height: 11px;
+  flex: none;
+  background: var(--lf-red);
+}
+
+.lf-journey-pulse::after {
+  position: absolute;
+  inset: -5px;
+  border: 1px solid rgb(216 35 42 / 35%);
+  content: "";
+  animation: lf-pulse-outline 900ms ease-out infinite;
+}
+
+@keyframes lf-pulse-outline {
+  from { opacity: 0.8; transform: scale(0.65); }
+  to { opacity: 0; transform: scale(1.2); }
+}
+
+.lf-journey-header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 14px;
+}
+
+.lf-journey-header > div:first-child {
+  min-width: 0;
+}
+
+.lf-journey-kicker {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.lf-journey-kicker > span,
+.lf-journey-section-title,
+.lf-priority-sections h4 {
+  color: var(--lf-navy);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.lf-journey-header h3 {
+  overflow: hidden;
+  margin: 6px 0 0;
+  color: var(--lf-ink);
+  font-size: 16px;
+  font-weight: 700;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-journey-header p {
+  margin: 4px 0 0;
+  font-size: 11px;
+}
+
+/* Up to four journey alternatives. This used to be a horizontally scrolling
+   strip of 132px cards: at phone width only two and a half fitted, the rest sat
+   off-screen with no affordance, and dragging the card sideways felt like the
+   screen itself had come loose. A two-column grid shows every option at once
+   and leaves nothing to scroll. */
+.lf-route-options {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin-top: 14px;
+}
+
+.lf-route-options button {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 3px;
+  padding: 8px 10px;
+  border: 1px solid var(--lf-rule);
+  background: var(--lf-surface);
+  color: var(--lf-ink);
+  text-align: left;
+}
+
+.lf-route-options button.is-active {
+  border-color: var(--lf-navy);
+  background: #edf2f6;
+}
+
+.lf-route-options strong {
+  font-size: 10px;
+}
+
+.lf-route-options small {
+  display: block;
+  max-width: 100%;
+  overflow: hidden;
+  font-size: 9px;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-journey-sketch {
+  position: relative;
+  margin-top: 16px;
+  overflow: hidden;
+  border: 1px solid var(--lf-rule);
+  background: var(--lf-soft);
+  color: var(--lf-muted);
+}
+
+.lf-journey-sketch svg {
+  display: block;
+  width: 100%;
+  height: 142px;
+}
+
+.lf-journey-sketch-caption {
+  position: absolute;
+  left: 8px;
+  bottom: 8px;
+  padding: 4px 6px;
+  border: 1px solid rgb(221 226 231 / 90%);
+  background: rgb(255 255 255 / 92%);
+  color: var(--lf-muted);
+  font-size: 9px;
+  font-weight: 600;
+}
+
+.lf-anchor-list {
+  display: grid;
+  gap: 7px;
+  margin: 14px 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lf-anchor-list li {
+  display: flex;
+  min-width: 0;
+  align-items: center;
+  gap: 10px;
+  padding: 8px 10px;
+  border: 1px solid #e7ebef;
+  background: var(--lf-soft);
+}
+
+.lf-anchor-index {
+  display: grid;
+  width: 24px;
+  height: 24px;
+  flex: none;
+  place-items: center;
+  background: var(--lf-red);
+  color: #fff;
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 10px;
+  font-weight: 600;
+}
+
+.lf-anchor-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.lf-anchor-copy > span {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lf-anchor-copy strong,
+.lf-anchor-copy small {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-anchor-copy strong {
+  font-size: 11px;
+}
+
+.lf-anchor-copy time,
+.lf-anchor-copy small {
+  font-size: 9px;
+}
+
+.lf-anchor-copy time {
+  flex: none;
+  color: var(--lf-muted);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+}
+
+.lf-journey-stats {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  margin-top: 16px;
+  border: 1px solid var(--lf-rule);
+  background: var(--lf-soft);
+}
+
+.lf-journey-stats > div {
+  display: flex;
+  min-width: 0;
+  flex-direction: column;
+  gap: 2px;
+  padding: 10px 6px;
+  text-align: center;
+}
+
+.lf-journey-stats > div + div {
+  border-left: 1px solid var(--lf-rule);
+}
+
+.lf-journey-stats strong {
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 11px;
+}
+
+.lf-journey-stats small {
+  font-size: 8px;
+}
+
+.lf-journey-section-title {
+  margin: 17px 0 6px;
+}
+
+.lf-journey-movements {
+  position: relative;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lf-journey-movements::before {
+  position: absolute;
+  top: 16px;
+  bottom: 16px;
+  left: 20px;
+  width: 1px;
+  background: var(--lf-rule);
+  content: "";
+}
+
+.lf-journey-movements li {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  padding: 9px 0;
+}
+
+.lf-transit-badge {
+  position: relative;
+  z-index: 1;
+  display: inline-flex;
+  min-width: 40px;
+  height: 30px;
+  flex: none;
+  align-items: center;
+  justify-content: center;
+  padding: 0 6px;
+  border: 2px solid #fff;
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.lf-journey-leg-copy,
+.lf-journey-leg-copy > span:first-child {
+  display: flex;
+  min-width: 0;
+}
+
+.lf-journey-leg-copy {
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+  color: var(--lf-muted);
+  font-size: 10px;
+}
+
+.lf-journey-leg-copy > span:first-child {
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+}
+
+.lf-journey-leg-copy strong {
+  color: var(--lf-ink);
+  font-family: var(--font-fira-mono), "Fira Mono", ui-monospace, monospace;
+  font-size: 10px;
+}
+
+.lf-priority-sections {
+  display: grid;
+  gap: 14px;
+  margin-top: 16px;
+}
+
+.lf-priority-sections h4 {
+  margin: 0 0 5px;
+}
+
+.lf-priority-sections h4 small {
+  color: var(--lf-faint);
+  font: inherit;
+  font-weight: 400;
+  text-transform: none;
+}
+
+.lf-priority-sections ol {
+  display: grid;
+  gap: 5px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.lf-priority-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 8px;
+  border: 1px solid #e7ebef;
+  background: var(--lf-soft);
+}
+
+.lf-priority-copy {
+  display: flex;
+  min-width: 0;
+  flex: 1;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.lf-priority-meta {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+}
+
+.lf-priority-meta small,
+.lf-priority-detail {
+  font-size: 9px;
+}
+
+.lf-priority-detail {
+  overflow: hidden;
+  white-space: nowrap;
+  text-overflow: ellipsis;
+}
+
+.lf-inline-add {
+  display: grid;
+  width: 28px;
+  height: 28px;
+  flex: none;
+  place-items: center;
+  border: 1px solid #c9d0d7;
+  background: var(--lf-surface);
+  color: var(--lf-navy);
+  font-size: 16px;
+  font-weight: 700;
+}
+
+.lf-inline-add.is-added {
+  border-color: #c7decf;
+  background: var(--lf-success-soft);
+  color: var(--lf-success);
+  animation: lf-pop-in var(--lf-dur-state) var(--lf-motion-settle);
+}
+
+.lf-journey-notice {
+  margin: 14px 0 0;
+  padding: 9px 10px;
+  border-left: 3px solid var(--lf-navy);
+  background: #edf2f6;
+  color: #3a5269;
+  font-size: 10px;
+  line-height: 1.5;
+}
+
+.lf-journey-use {
+  width: 100%;
+  margin-top: 16px;
+}
+
+.lf-journey-use.is-complete:disabled {
+  border: 1px solid #c7decf;
+  background: var(--lf-success-soft);
+  color: var(--lf-success);
+  animation: lf-pop-in var(--lf-dur-enter) var(--lf-motion-settle);
+}
+
+/* Photo-day replay and export */
+.lf-replay {
+  display: grid;
+  gap: 12px;
+}
+
+.lf-replay-header {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.lf-replay-header strong {
+  color: var(--lf-ink);
+  font-size: 13px;
+}
+
+.lf-replay-header span,
+.lf-replay-note {
+  color: var(--lf-faint);
+  font-size: 10px;
+}
+
+.lf-replay-header span {
+  text-align: right;
+}
+
+.lf-replay-card {
+  overflow: hidden;
+  border: 1px solid var(--lf-rule);
+  box-shadow: 0 4px 14px rgb(16 22 28 / 10%);
+}
+
+.lf-replay-svg {
+  display: block;
+  width: 100%;
+}
+
+/* Each stop fades in as the drawn line reaches it, using the app's enter
+   timing rather than a one-off duration inlined on the element. */
+.lf-replay-stop {
+  opacity: 0;
+  transition: opacity var(--lf-dur-enter) var(--lf-motion-out);
+}
+
+.lf-replay-stop[data-shown] {
+  opacity: 1;
+}
+
+.lf-replay-controls {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 9px;
+}
+
+.lf-replay-action {
+  min-height: 34px;
+  padding: 7px 10px;
+  font-size: 11px;
+}
+
+.lf-replay-range {
+  min-width: 100px;
+  height: 2px;
+  flex: 1;
+  appearance: none;
+  border: 0;
+  background: #c9d0d7;
+  accent-color: var(--lf-red);
+  cursor: pointer;
+}
+
+.lf-replay-range::-webkit-slider-thumb {
+  width: 16px;
+  height: 16px;
+  appearance: none;
+  border: 2px solid #fff;
+  border-radius: 50%;
+  background: var(--lf-red);
+  box-shadow: 0 0 0 1px #b5bdc5;
+}
+
+.lf-replay-note {
+  margin: 0;
+  line-height: 1.5;
+}
+
+@media (max-width: 600px) {
+  .lf-stage {
+    display: block;
+    min-height: 100dvh;
+    padding: 0;
+  }
+
+  .lf-device {
+    width: 100%;
+    height: 100dvh;
+    min-height: 100dvh;
+    border-radius: 0;
+    box-shadow: none;
+  }
+}
+
+@media (max-height: 700px) {
+  .lf-device {
+    min-height: 100dvh;
+  }
+
+  .lf-launch-steps > div {
+    padding-block: 13px;
+  }
+
+  .lf-brand-row {
+    margin-bottom: 28px;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .lf-brand-mark-piece {
+    translate: none;
+  }
+
+  /* Every animation above is decoration on top of a layout that is already
+     correct at its end state, so collapsing durations *and* delays leaves the
+     app fully usable. DayReplay's canvas is a requestAnimationFrame loop and
+     cannot be reached from here — it checks this query in JS instead. */
+  .lf-stage *,
+  .lf-stage *::before,
+  .lf-stage *::after {
+    scroll-behavior: auto !important;
+    animation-duration: 0.01ms !important;
+    animation-delay: 0ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 0.01ms !important;
+    transition-delay: 0ms !important;
   }
 }

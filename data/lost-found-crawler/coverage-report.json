@@ -1,0 +1,42 @@
+{
+  "version": 1,
+  "generatedAt": "2026-07-28T20:18:25.656Z",
+  "summary": {
+    "totalVenues": 4850,
+    "resolvedVenues": 4850,
+    "reviewedChannel": 539,
+    "officialContact": 1512,
+    "parentCandidate": 1217,
+    "manualGuidance": 1582,
+    "actionableCoverageRate": 0.4229,
+    "functionalCoverageRate": 1,
+    "addressableVenues": 2132,
+    "addressableWithRoute": 547,
+    "addressableWithSourceOnly": 1501,
+    "addressableRouteRate": 0.2566,
+    "inheritsFromParent": 1865,
+    "noVenueOfficePossible": 853
+  },
+  "tiers": [
+    {
+      "id": "reviewed_channel",
+      "label": "Reviewed venue/operator channel",
+      "count": 539
+    },
+    {
+      "id": "official_contact",
+      "label": "Official venue/operator website fallback",
+      "count": 1512
+    },
+    {
+      "id": "parent_candidate",
+      "label": "Parent venue candidate awaiting ownership review",
+      "count": 1217
+    },
+    {
+      "id": "manual_guidance",
+      "label": "Venue/public-space guidance fallback",
+      "count": 1582
+    }
+  ]
+}

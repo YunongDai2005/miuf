@@ -12,12 +12,23 @@ import {
   type AttractionSet,
 } from "../berlin-transit/attractions";
 import type { ItineraryJourney } from "./types";
+import { apiGetJson } from "./net";
 import {
   isChannelReviewCurrent,
   isPublishedChannelRegistry,
+  publishedChannelPurpose,
   type PublishedChannelRegistry,
   type PublishedLostFoundChannel,
 } from "../../lib/lost-found-channel-schema";
+import {
+  isPublicLostFoundResponsibilityIndex,
+  type PublicLostFoundResponsibilityIndex,
+  type ResolvedLostFoundResponsibility,
+} from "../../lib/lost-found-responsibility-schema";
+import {
+  fetchRemoteLostFoundData,
+  readCachedLostFoundData,
+} from "./remoteData";
 
 /** One thing the traveller can add to their retrace: a transit line or a venue. */
 export interface SearchItem {
@@ -39,6 +50,7 @@ export interface SearchItem {
   officialWebsiteSourceUrl?: string;
   contactUpdatedAt?: string;
   lostFoundChannels?: PublishedLostFoundChannel[];
+  lostFoundResponsibility?: ResolvedLostFoundResponsibility;
   keywords: string;
 }
 
@@ -46,6 +58,17 @@ export interface SourceIndex {
   items: SearchItem[];
   quickLines: SearchItem[]; // U-Bahn + S-Bahn, for one-tap adding
   quickVenues: SearchItem[]; // famous sights, for one-tap adding
+  dataUpdate: DataUpdateStatus;
+}
+
+export interface DataUpdateStatus {
+  source: "remote" | "cache" | "worker" | "bundled";
+  generatedAt: string;
+  checkedAt: string;
+  datasetVersion?: string;
+  channelCount: number;
+  reviewedVenueCount: number;
+  warning?: string;
 }
 
 type TransitLineSummary = Pick<
@@ -98,17 +121,111 @@ const MODE_RANK: Record<TransitMode, number> = {
 };
 
 export async function fetchSources(): Promise<SourceIndex> {
-  const [lineIndex, attractions, channelRegistry] = await Promise.all([
+  const [lineIndex, attractions, bundledChannels, bundledResponsibilities] = await Promise.all([
     fetchJson<TransitLineIndex>("/berlin-lines.json", "Berlin line index"),
     fetchJson<AttractionSet>("/berlin-attractions.json", "Berlin attractions"),
-    fetchChannelRegistry(),
+    fetchBundledChannelRegistry(),
+    fetchBundledResponsibilityIndex(),
   ]);
+  let remoteError: string | undefined;
+  let remoteData;
+  try {
+    remoteData = await fetchRemoteLostFoundData();
+  } catch (error) {
+    remoteError =
+      error instanceof Error
+        ? error.message
+        : "The update server could not be reached.";
+    remoteData = await readCachedLostFoundData();
+  }
+
+  const bundledGeneratedAt = [
+    bundledChannels?.generatedAt,
+    bundledResponsibilities?.generatedAt,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1) ?? "1970-01-01T00:00:00.000Z";
+  if (
+    remoteData &&
+    remoteData.manifest.generatedAt >= bundledGeneratedAt &&
+    (!bundledChannels ||
+      registryCoverageDoesNotRegress(remoteData.channels, bundledChannels))
+  ) {
+    return buildIndex(
+      lineIndex.lines,
+      attractions,
+      lineIndex.operators,
+      remoteData.channels,
+      remoteData.responsibilities,
+      {
+        source: remoteData.source,
+        generatedAt: remoteData.manifest.generatedAt,
+        checkedAt: remoteData.checkedAt,
+        datasetVersion: remoteData.manifest.datasetVersion,
+        channelCount: remoteData.channels.channels.length,
+        reviewedVenueCount:
+          remoteData.manifest.summary?.reviewedVenues ??
+          new Set(
+            remoteData.channels.channels.flatMap((channel) => channel.venueIds)
+          ).size,
+        warning: remoteData.warning,
+      }
+    );
+  }
+  if (
+    remoteData &&
+    bundledChannels &&
+    !registryCoverageDoesNotRegress(remoteData.channels, bundledChannels)
+  ) {
+    remoteError =
+      "The downloaded update would reduce reviewed venue coverage and was ignored.";
+  }
+
+  const liveChannels = await fetchLiveChannelRegistry();
+  const channelRegistry =
+    liveChannels &&
+    (!bundledChannels ||
+      (liveChannels.generatedAt >= bundledChannels.generatedAt &&
+        registryCoverageDoesNotRegress(liveChannels, bundledChannels)))
+      ? liveChannels
+      : bundledChannels;
+  const source = liveChannels === channelRegistry ? "worker" : "bundled";
+  const fallbackGeneratedAt = [
+    channelRegistry?.generatedAt,
+    bundledResponsibilities?.generatedAt,
+  ]
+    .filter((value): value is string => Boolean(value))
+    .sort()
+    .at(-1) ?? bundledGeneratedAt;
   return buildIndex(
     lineIndex.lines,
     attractions,
     lineIndex.operators,
-    channelRegistry
+    channelRegistry,
+    bundledResponsibilities,
+    {
+      source,
+      generatedAt: fallbackGeneratedAt,
+      checkedAt: new Date().toISOString(),
+      channelCount: channelRegistry?.channels.length ?? 0,
+      reviewedVenueCount: new Set(
+        channelRegistry?.channels.flatMap((channel) => channel.venueIds) ?? []
+      ).size,
+      warning: remoteError
+        ? `${remoteError} Using ${source === "worker" ? "the app service" : "built-in data"}.`
+        : undefined,
+    }
   );
+}
+
+export function registryCoverageDoesNotRegress(
+  candidate: PublishedChannelRegistry,
+  baseline: PublishedChannelRegistry
+): boolean {
+  const coveredVenues = (registry: PublishedChannelRegistry) =>
+    new Set(registry.channels.flatMap((channel) => channel.venueIds)).size;
+  return coveredVenues(candidate) >= coveredVenues(baseline);
 }
 
 let inferenceNetworkPromise: Promise<TransitNetwork> | null = null;
@@ -121,22 +238,48 @@ async function fetchJson<T>(url: string, label: string): Promise<T> {
   return (await response.json()) as T;
 }
 
-async function fetchChannelRegistry(): Promise<PublishedChannelRegistry | undefined> {
-  for (const [url, label] of [
-    ["/api/lost-found-channels", "Live reviewed channel registry"],
-    ["/berlin-lost-found-channels.json", "Bundled channel registry"],
-  ] as const) {
-    try {
-      const value = await fetchJson<unknown>(url, label);
-      if (isPublishedChannelRegistry(value)) return value;
-    } catch {
-      // Try the bundled snapshot before leaving the core itinerary without a registry.
-    }
+async function fetchBundledChannelRegistry(): Promise<
+  PublishedChannelRegistry | undefined
+> {
+  try {
+    const value = await fetchJson<unknown>(
+      "/berlin-lost-found-channels.json",
+      "Bundled channel registry"
+    );
+    return isPublishedChannelRegistry(value) ? value : undefined;
+  } catch {
+    return undefined;
   }
-  return undefined;
 }
 
-/** Load the 2.9 MB geometry only after the traveller explicitly asks for route inference. */
+async function fetchLiveChannelRegistry(): Promise<
+  PublishedChannelRegistry | undefined
+> {
+  try {
+    const value = await apiGetJson("/api/lost-found-channels");
+    return isPublishedChannelRegistry(value) ? value : undefined;
+  } catch {
+    return undefined;
+  }
+}
+
+async function fetchBundledResponsibilityIndex(): Promise<
+  PublicLostFoundResponsibilityIndex | undefined
+> {
+  try {
+    const value = await fetchJson<unknown>(
+      "/berlin-lost-found-responsibilities.json",
+      "Bundled responsibility index"
+    );
+    return isPublicLostFoundResponsibilityIndex(value) ? value : undefined;
+  } catch {
+    // The reviewed channel registry and per-venue official links still work
+    // when an older deployment does not yet contain the responsibility index.
+    return undefined;
+  }
+}
+
+/** Load the 2.9 MB geometry only after eligible photo anchors trigger route inference. */
 export function fetchInferenceNetwork(): Promise<TransitNetwork> {
   if (!inferenceNetworkPromise) {
     inferenceNetworkPromise = fetchJson<TransitNetwork>(
@@ -154,7 +297,17 @@ export function buildIndex(
   lines: TransitLineSummary[] | TransitNetwork,
   attractions: AttractionSet,
   operatorDirectory: Record<string, string | TransitOperator> = {},
-  channelRegistry?: PublishedChannelRegistry
+  channelRegistry?: PublishedChannelRegistry,
+  responsibilityIndex?: PublicLostFoundResponsibilityIndex,
+  dataUpdate: DataUpdateStatus = {
+    source: "bundled",
+    generatedAt: channelRegistry?.generatedAt ?? "1970-01-01T00:00:00.000Z",
+    checkedAt: new Date().toISOString(),
+    channelCount: channelRegistry?.channels.length ?? 0,
+    reviewedVenueCount: new Set(
+      channelRegistry?.channels.flatMap((channel) => channel.venueIds) ?? []
+    ).size,
+  }
 ): SourceIndex {
   const sourceLines = Array.isArray(lines) ? lines : lines.lines;
   const lineItems: SearchItem[] = sourceLines.map((line) => ({
@@ -189,6 +342,7 @@ export function buildIndex(
 
   const channelsByVenue = new Map<string, PublishedLostFoundChannel[]>();
   for (const channel of channelRegistry?.channels ?? []) {
+    if (!isChannelReviewCurrent(channel)) continue;
     for (const venueId of channel.venueIds) {
       const existing = channelsByVenue.get(venueId) ?? [];
       existing.push(channel);
@@ -208,13 +362,42 @@ export function buildIndex(
       (left, right) =>
         Number(isChannelReviewCurrent(right)) -
           Number(isChannelReviewCurrent(left)) ||
+        Number(publishedChannelPurpose(left) !== "lost_property") -
+          Number(publishedChannelPurpose(right) !== "lost_property") ||
         channelRank[left.kind] - channelRank[right.kind] ||
         right.verifiedAt.localeCompare(left.verifiedAt)
     );
   }
+  const responsibilitiesById = new Map(
+    (responsibilityIndex?.responsibilities ?? []).map((responsibility) => [
+      responsibility.id,
+      responsibility,
+    ])
+  );
+  const assignmentsByVenue = new Map(
+    (responsibilityIndex?.assignments ?? []).map((assignment) => [
+      assignment.venueId,
+      assignment,
+    ])
+  );
   const venueItems: SearchItem[] = attractions.attractions.map((a: Attraction) => {
-    const lostFoundChannels = channelsByVenue.get(a.id) ?? [];
+    const venueChannels = channelsByVenue.get(a.id) ?? [];
+    // A generic visitor-service form is a last resort. Once the same venue has
+    // a purpose-bound form, email or phone, showing the generic form beside it
+    // adds ambiguity and can route the traveller to an unrelated department.
+    const hasPurposeBoundChannel = venueChannels.some(
+      (channel) => publishedChannelPurpose(channel) === "lost_property"
+    );
+    const lostFoundChannels = hasPurposeBoundChannel
+      ? venueChannels.filter(
+          (channel) => publishedChannelPurpose(channel) === "lost_property"
+        )
+      : venueChannels;
     const primaryChannel = lostFoundChannels[0];
+    const responsibilityAssignment = assignmentsByVenue.get(a.id);
+    const responsibility = responsibilityAssignment
+      ? responsibilitiesById.get(responsibilityAssignment.responsibilityId)
+      : undefined;
     return {
       kind: "venue",
       refId: a.id,
@@ -230,6 +413,10 @@ export function buildIndex(
       officialWebsiteSourceUrl: a.websiteSourceUrl,
       contactUpdatedAt: primaryChannel?.verifiedAt ?? a.contactUpdatedAt,
       lostFoundChannels,
+      lostFoundResponsibility:
+        responsibility && responsibilityAssignment
+          ? { responsibility, assignment: responsibilityAssignment }
+          : undefined,
       keywords: `${a.name} ${a.nameEn ?? ""}`.toLowerCase(),
     };
   });
@@ -259,7 +446,12 @@ export function buildIndex(
     if (match && !quickVenues.includes(match)) quickVenues.push(match);
   }
 
-  return { items: [...lineItems, ...venueItems], quickLines, quickVenues };
+  return {
+    items: [...lineItems, ...venueItems],
+    quickLines,
+    quickVenues,
+    dataUpdate,
+  };
 }
 
 /** Case-insensitive search across lines + venues, best matches first. */

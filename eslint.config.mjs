@@ -11,6 +11,11 @@ const eslintConfig = defineConfig([
     ".next/**",
     "out/**",
     "build/**",
+    // Exported thesis/defence artifacts are distributable documents, not app source.
+    "docs/thesis/defense-deck/**/*.js",
+    "docs/thesis/ppt/**/*.js",
+    "ios/**/build/**",
+    "ios/App/App/public/**",
     "next-env.d.ts",
   ]),
 ]);

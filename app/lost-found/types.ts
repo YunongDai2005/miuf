@@ -4,6 +4,7 @@ import type {
 } from "../berlin-transit/transit";
 import type { AttractionCategory } from "../berlin-transit/attractions";
 import type { PublishedLostFoundChannel } from "../../lib/lost-found-channel-schema";
+import type { ResolvedLostFoundResponsibility } from "../../lib/lost-found-responsibility-schema";
 import { berlinDateKey } from "./time";
 
 /** What kind of thing the traveller lost. Drives the report wording and icon. */
@@ -18,10 +19,17 @@ export type ItemCategory =
   | "clothing"
   | "other";
 
+/** Whether the traveller knows one loss day or only the surrounding trip. */
+export type LossDateCertainty = "exact" | "range";
+
 export interface LostItem {
   category: ItemCategory | null; // optional one-tap hint
   description: string; // one-line free text: colour, brand, contents…
   lostDate: string; // yyyy-mm-dd
+  dateCertainty?: LossDateCertainty;
+  /** Inclusive trip/search window used when the exact loss day is unknown. */
+  travelStartDate?: string; // yyyy-mm-dd
+  travelEndDate?: string; // yyyy-mm-dd
   timeFrom?: string; // HH:mm
   timeTo?: string; // HH:mm
   brand?: string;
@@ -76,6 +84,8 @@ export interface ItineraryEntry {
   contactUpdatedAt?: string;
   /** Refreshed from the reviewed public registry; stale copies are discarded on load. */
   lostFoundChannels?: PublishedLostFoundChannel[];
+  /** Audited owner, parent candidate or city guidance for unreviewed venues. */
+  lostFoundResponsibility?: ResolvedLostFoundResponsibility;
 }
 
 export type ReportState = "todo" | "sent" | "replied";
@@ -116,6 +126,22 @@ export interface LostCase {
   updatedAt: string;
 }
 
+/** The inclusive calendar window that is honest to use for this case. */
+export function lossDateWindow(item: LostItem): { start: string; end: string } {
+  if (item.dateCertainty === "range") {
+    const start = item.travelStartDate?.trim() || item.lostDate;
+    const end = item.travelEndDate?.trim() || start;
+    return start <= end ? { start, end } : { start: end, end: start };
+  }
+  return { start: item.lostDate, end: item.lostDate };
+}
+
+/** Machine-readable value for summaries, subjects and free-text reports. */
+export function lossDateValue(item: LostItem): string {
+  const { start, end } = lossDateWindow(item);
+  return start === end ? start : `${start}–${end}`;
+}
+
 export function emptyCase(): LostCase {
   return {
     version: 1,
@@ -123,6 +149,9 @@ export function emptyCase(): LostCase {
       category: null,
       description: "",
       lostDate: berlinDateKey(),
+      dateCertainty: "exact",
+      travelStartDate: "",
+      travelEndDate: berlinDateKey(),
       timeFrom: "",
       timeTo: "",
       brand: "",

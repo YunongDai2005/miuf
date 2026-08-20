@@ -3,6 +3,38 @@ import type {
   ReviewDecision,
 } from "../scripts/lost-found-crawler/schemas";
 
+export const AUTOMATED_REVIEW_POLICY_VERSION =
+  "deepseek-official-contact-fallback-v4";
+
+const ACCEPTED_AUTOMATED_REVIEW_POLICY_VERSIONS = new Set([
+  "deepseek-lost-property-bound-v2",
+  "deepseek-official-contact-fallback-v3",
+  AUTOMATED_REVIEW_POLICY_VERSION,
+]);
+
+export function automatedReviewAttestationIsCurrent(
+  decision: ReviewDecision
+): boolean {
+  const audit = decision.automatedAudit;
+  let finalUrl: URL | undefined;
+  try {
+    finalUrl = audit ? new URL(audit.finalUrl) : undefined;
+  } catch {
+    finalUrl = undefined;
+  }
+  return Boolean(
+    decision.reviewerKind === "automated" &&
+      audit &&
+      audit.method === "source_grounded_model" &&
+      ACCEPTED_AUTOMATED_REVIEW_POLICY_VERSIONS.has(audit.policyVersion) &&
+      audit.model.trim() &&
+      /^[a-f0-9]{64}$/.test(audit.sourceHash) &&
+      /^[a-f0-9]{64}$/.test(audit.evidenceQuoteHash) &&
+      finalUrl &&
+      ["http:", "https:"].includes(finalUrl.protocol)
+  );
+}
+
 export type ReviewAction = ReviewDecision["decision"] | "clear";
 
 export interface ReviewWriteInput {
@@ -65,6 +97,7 @@ export function createReviewDecision(input: {
       decision: "reject",
       reviewedAt: input.reviewedAt ?? new Date().toISOString(),
       reviewedBy: reviewerName,
+      reviewerKind: "human",
       reviewedCandidateVersion: candidateReviewVersion(input.candidate),
       notes,
     };
@@ -73,6 +106,14 @@ export function createReviewDecision(input: {
   if (input.candidate.kind === "manual_review") {
     throw new Error(
       "Evidence-only pages cannot be accepted without a publishable channel."
+    );
+  }
+  if (
+    input.candidate.canonicalizationStatus === "pending" ||
+    input.candidate.venueIds.length === 0
+  ) {
+    throw new Error(
+      "This Google-discovered destination must be mapped to an open venue ID before it can be accepted."
     );
   }
   const submissionMode = input.submissionMode ?? "open_only";
@@ -102,6 +143,7 @@ export function createReviewDecision(input: {
     decision: "accept",
     reviewedAt: input.reviewedAt ?? new Date().toISOString(),
     reviewedBy: reviewerName,
+    reviewerKind: "human",
     reviewedCandidateVersion: candidateReviewVersion(input.candidate),
     notes,
     kindOverride: input.candidate.kind,
